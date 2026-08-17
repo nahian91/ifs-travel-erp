@@ -2,7 +2,7 @@
 /**
  * Plugin Name: IFS Travel ERP
  * Plugin URI:  https://infinityflamesoft.com
- * Description: Complete Management Software for Travel Agencies featuring Air Ticketing, Visa Processing, Hajj & Umrah, B2B Agents, and Accounts Management.
+ * Description: Complete Enterprise ERP for Travel Agencies featuring Air Ticketing, Refund & Reissue, Visa Processing, Hajj & Umrah, Tour Packages, Hotel Bookings, Suppliers/GDS, B2B Sub-Agents, Accounts, Staff/HR, and Reports.
  * Version:     1.0.0
  * Author:      Infinity Flame Soft (DevNahian)
  * Author URI:  https://infinityflamesoft.com
@@ -39,13 +39,13 @@ function ifs_terp_has_access( $allowed_roles = array() ) {
         return false;
     }
 
-    // Super Admin explicitly bypasses all checks
-    if ( in_array( 'administrator', $current_user->roles, true ) || current_user_can( 'manage_options' ) ) {
+    // Super Admin & Shop Managers bypass all restrictions
+    if ( in_array( 'administrator', (array) $current_user->roles, true ) || current_user_can( 'manage_options' ) ) {
         return true;
     }
 
     foreach ( $allowed_roles as $role ) {
-        if ( in_array( $role, $current_user->roles, true ) ) {
+        if ( in_array( $role, (array) $current_user->roles, true ) ) {
             return true;
         }
     }
@@ -85,16 +85,28 @@ function ifs_terp_admin_enqueue_assets( $hook ) {
 add_action( 'admin_enqueue_scripts', 'ifs_terp_admin_enqueue_assets' );
 
 /*--------------------------------------------------------------
-# 4. Include Modular Sub-Files
+# 4. Include All Modular Sub-Files
 --------------------------------------------------------------*/
 require_once ITERP_PATH . 'inc/dashboard.php';
 require_once ITERP_PATH . 'inc/customers.php';
 require_once ITERP_PATH . 'inc/ticketing.php';
+if ( file_exists( ITERP_PATH . 'inc/refund-reissue.php' ) ) {
+    require_once ITERP_PATH . 'inc/refund-reissue.php';
+}
 require_once ITERP_PATH . 'inc/visa.php';
 require_once ITERP_PATH . 'inc/hajj-umrah.php';
-require_once ITERP_PATH . 'inc/tours.php';
+if ( file_exists( ITERP_PATH . 'inc/tours.php' ) ) {
+    require_once ITERP_PATH . 'inc/tours.php';
+}
+if ( file_exists( ITERP_PATH . 'inc/hotels.php' ) ) {
+    require_once ITERP_PATH . 'inc/hotels.php';
+}
+if ( file_exists( ITERP_PATH . 'inc/suppliers.php' ) ) {
+    require_once ITERP_PATH . 'inc/suppliers.php';
+}
 require_once ITERP_PATH . 'inc/b2b-agents.php';
 require_once ITERP_PATH . 'inc/accounts.php';
+require_once ITERP_PATH . 'inc/staff.php';
 require_once ITERP_PATH . 'inc/reports.php';
 require_once ITERP_PATH . 'inc/settings.php';
 
@@ -106,7 +118,7 @@ function ifs_terp_create_system_tables() {
     $charset_collate = $wpdb->get_charset_collate();
     require_once ABSPATH . 'wp-admin/includes/upgrade.php';
 
-    // Core Customers Directory
+    // 1. Core Customers Directory
     $table_customers = $wpdb->prefix . 'iterp_customers';
     $sql_customers = "CREATE TABLE $table_customers (
         id bigint(20) NOT NULL AUTO_INCREMENT,
@@ -115,7 +127,9 @@ function ifs_terp_create_system_tables() {
         email varchar(100) DEFAULT '' NOT NULL,
         passport_no varchar(100) DEFAULT '' NOT NULL,
         passport_expiry date DEFAULT '1970-01-01' NOT NULL,
+        date_of_birth date DEFAULT '1970-01-01' NOT NULL,
         address text NOT NULL,
+        passport_copy_url text NOT NULL,
         client_type varchar(50) DEFAULT 'Retail' NOT NULL,
         created_at datetime DEFAULT '1970-01-01 00:00:00' NOT NULL,
         PRIMARY KEY  (id),
@@ -123,7 +137,7 @@ function ifs_terp_create_system_tables() {
     ) $charset_collate;";
     dbDelta( $sql_customers );
 
-    // Air Ticketing Ledger
+    // 2. Air Ticketing Ledger
     $table_tickets = $wpdb->prefix . 'iterp_tickets';
     $sql_tickets = "CREATE TABLE $table_tickets (
         id bigint(20) NOT NULL AUTO_INCREMENT,
@@ -132,11 +146,12 @@ function ifs_terp_create_system_tables() {
         ticket_no varchar(50) NOT NULL,
         airline varchar(100) NOT NULL,
         sector text NOT NULL,
+        cabin_class varchar(50) DEFAULT 'Economy' NOT NULL,
         travel_date date DEFAULT '1970-01-01' NOT NULL,
         supplier_id bigint(20) DEFAULT 0 NOT NULL,
-        buy_price decimal(10,2) DEFAULT '0.00' NOT NULL,
-        sell_price decimal(10,2) DEFAULT '0.00' NOT NULL,
-        profit decimal(10,2) DEFAULT '0.00' NOT NULL,
+        buy_price decimal(12,2) DEFAULT '0.00' NOT NULL,
+        sell_price decimal(12,2) DEFAULT '0.00' NOT NULL,
+        profit decimal(12,2) DEFAULT '0.00' NOT NULL,
         status varchar(50) DEFAULT 'Issued' NOT NULL,
         issued_by bigint(20) NOT NULL,
         created_at datetime DEFAULT '1970-01-01 00:00:00' NOT NULL,
@@ -146,7 +161,26 @@ function ifs_terp_create_system_tables() {
     ) $charset_collate;";
     dbDelta( $sql_tickets );
 
-    // Visa Processing Tracker
+    // 3. Ticket Refund, Reissue & Void Ledger
+    $table_refunds = $wpdb->prefix . 'iterp_refund_reissue';
+    $sql_refunds = "CREATE TABLE $table_refunds (
+        id bigint(20) NOT NULL AUTO_INCREMENT,
+        type varchar(30) NOT NULL,
+        ticket_id bigint(20) NOT NULL,
+        pnr varchar(50) NOT NULL,
+        ticket_no varchar(50) NOT NULL,
+        airline_penalty decimal(12,2) DEFAULT '0.00' NOT NULL,
+        agency_service_charge decimal(12,2) DEFAULT '0.00' NOT NULL,
+        refund_amount decimal(12,2) DEFAULT '0.00' NOT NULL,
+        status varchar(50) DEFAULT 'Processed' NOT NULL,
+        remarks text NOT NULL,
+        processed_by bigint(20) NOT NULL,
+        created_at datetime DEFAULT '1970-01-01 00:00:00' NOT NULL,
+        PRIMARY KEY  (id)
+    ) $charset_collate;";
+    dbDelta( $sql_refunds );
+
+    // 4. Visa Processing Tracker
     $table_visas = $wpdb->prefix . 'iterp_visas';
     $sql_visas = "CREATE TABLE $table_visas (
         id bigint(20) NOT NULL AUTO_INCREMENT,
@@ -156,8 +190,9 @@ function ifs_terp_create_system_tables() {
         submission_date date DEFAULT '1970-01-01' NOT NULL,
         expected_delivery date DEFAULT '1970-01-01' NOT NULL,
         supplier_id bigint(20) DEFAULT 0 NOT NULL,
-        buy_price decimal(10,2) DEFAULT '0.00' NOT NULL,
-        sell_price decimal(10,2) DEFAULT '0.00' NOT NULL,
+        buy_price decimal(12,2) DEFAULT '0.00' NOT NULL,
+        sell_price decimal(12,2) DEFAULT '0.00' NOT NULL,
+        profit decimal(12,2) DEFAULT '0.00' NOT NULL,
         status varchar(50) DEFAULT 'Processing' NOT NULL,
         documents_collected text NOT NULL,
         created_by bigint(20) NOT NULL,
@@ -166,7 +201,130 @@ function ifs_terp_create_system_tables() {
     ) $charset_collate;";
     dbDelta( $sql_visas );
 
-    // B2B Agents Sub-System
+    // 5. Visa Requirements Directory
+    $table_visa_reqs = $wpdb->prefix . 'iterp_visa_requirements';
+    $sql_visa_reqs = "CREATE TABLE $table_visa_reqs (
+        id bigint(20) NOT NULL AUTO_INCREMENT,
+        country_name varchar(100) NOT NULL,
+        visa_type varchar(100) NOT NULL,
+        processing_time varchar(100) DEFAULT '' NOT NULL,
+        standard_fee decimal(12,2) DEFAULT '0.00' NOT NULL,
+        requirements_list text NOT NULL,
+        created_at datetime DEFAULT '1970-01-01 00:00:00' NOT NULL,
+        PRIMARY KEY  (id)
+    ) $charset_collate;";
+    dbDelta( $sql_visa_reqs );
+
+    // 6. Hajj & Umrah Packages
+    $table_hajj_packages = $wpdb->prefix . 'iterp_hajj_packages';
+    $sql_hajj_packages = "CREATE TABLE $table_hajj_packages (
+        id bigint(20) NOT NULL AUTO_INCREMENT,
+        package_name varchar(255) NOT NULL,
+        package_type varchar(100) DEFAULT 'Umrah' NOT NULL,
+        cost_bdt decimal(12,2) DEFAULT '0.00' NOT NULL,
+        cost_sar decimal(12,2) DEFAULT '0.00' NOT NULL,
+        capacity int(11) DEFAULT 0 NOT NULL,
+        hotel_makkah varchar(255) DEFAULT '' NOT NULL,
+        hotel_madinah varchar(255) DEFAULT '' NOT NULL,
+        inclusions_json text NOT NULL,
+        created_at datetime DEFAULT '1970-01-01 00:00:00' NOT NULL,
+        PRIMARY KEY  (id)
+    ) $charset_collate;";
+    dbDelta( $sql_hajj_packages );
+
+    // 7. Hajj & Umrah Pilgrim Bookings
+    $table_hajj_bookings = $wpdb->prefix . 'iterp_hajj_bookings';
+    $sql_hajj_bookings = "CREATE TABLE $table_hajj_bookings (
+        id bigint(20) NOT NULL AUTO_INCREMENT,
+        customer_id bigint(20) NOT NULL,
+        package_id bigint(20) NOT NULL,
+        mahram_customer_id bigint(20) DEFAULT 0 NOT NULL,
+        room_sharing varchar(50) DEFAULT 'Quad' NOT NULL,
+        brn_no varchar(100) DEFAULT '' NOT NULL,
+        mofaza_no varchar(100) DEFAULT '' NOT NULL,
+        visa_status varchar(50) DEFAULT 'Pending' NOT NULL,
+        buy_price decimal(12,2) DEFAULT '0.00' NOT NULL,
+        sell_price decimal(12,2) DEFAULT '0.00' NOT NULL,
+        profit decimal(12,2) DEFAULT '0.00' NOT NULL,
+        status varchar(50) DEFAULT 'Booked' NOT NULL,
+        created_by bigint(20) NOT NULL,
+        created_at datetime DEFAULT '1970-01-01 00:00:00' NOT NULL,
+        PRIMARY KEY  (id)
+    ) $charset_collate;";
+    dbDelta( $sql_hajj_bookings );
+
+    // 8. Tour Packages & Holiday Bookings
+    $table_tours = $wpdb->prefix . 'iterp_tours';
+    $sql_tours = "CREATE TABLE $table_tours (
+        id bigint(20) NOT NULL AUTO_INCREMENT,
+        customer_id bigint(20) NOT NULL,
+        package_title varchar(255) NOT NULL,
+        destination varchar(100) NOT NULL,
+        duration varchar(50) DEFAULT '' NOT NULL,
+        travel_date date DEFAULT '1970-01-01' NOT NULL,
+        buy_price decimal(12,2) DEFAULT '0.00' NOT NULL,
+        sell_price decimal(12,2) DEFAULT '0.00' NOT NULL,
+        profit decimal(12,2) DEFAULT '0.00' NOT NULL,
+        status varchar(50) DEFAULT 'Confirmed' NOT NULL,
+        created_by bigint(20) NOT NULL,
+        created_at datetime DEFAULT '1970-01-01 00:00:00' NOT NULL,
+        PRIMARY KEY  (id)
+    ) $charset_collate;";
+    dbDelta( $sql_tours );
+
+    // 9. Hotel / Resort Reservations
+    $table_hotels = $wpdb->prefix . 'iterp_hotel_bookings';
+    $sql_hotels = "CREATE TABLE $table_hotels (
+        id bigint(20) NOT NULL AUTO_INCREMENT,
+        customer_id bigint(20) NOT NULL,
+        hotel_name varchar(255) NOT NULL,
+        city varchar(100) NOT NULL,
+        check_in date DEFAULT '1970-01-01' NOT NULL,
+        check_out date DEFAULT '1970-01-01' NOT NULL,
+        room_type varchar(100) DEFAULT 'Standard' NOT NULL,
+        voucher_no varchar(100) DEFAULT '' NOT NULL,
+        buy_price decimal(12,2) DEFAULT '0.00' NOT NULL,
+        sell_price decimal(12,2) DEFAULT '0.00' NOT NULL,
+        profit decimal(12,2) DEFAULT '0.00' NOT NULL,
+        status varchar(50) DEFAULT 'Confirmed' NOT NULL,
+        created_by bigint(20) NOT NULL,
+        created_at datetime DEFAULT '1970-01-01 00:00:00' NOT NULL,
+        PRIMARY KEY  (id)
+    ) $charset_collate;";
+    dbDelta( $sql_hotels );
+
+    // 10. Suppliers & GDS Portals
+    $table_suppliers = $wpdb->prefix . 'iterp_suppliers';
+    $sql_suppliers = "CREATE TABLE $table_suppliers (
+        id bigint(20) NOT NULL AUTO_INCREMENT,
+        supplier_name varchar(255) NOT NULL,
+        supplier_type varchar(100) DEFAULT 'GDS / IATA' NOT NULL,
+        contact_person varchar(100) DEFAULT '' NOT NULL,
+        phone varchar(50) NOT NULL,
+        email varchar(100) DEFAULT '' NOT NULL,
+        current_balance decimal(12,2) DEFAULT '0.00' NOT NULL,
+        status varchar(30) DEFAULT 'Active' NOT NULL,
+        created_at datetime DEFAULT '1970-01-01 00:00:00' NOT NULL,
+        PRIMARY KEY  (id)
+    ) $charset_collate;";
+    dbDelta( $sql_suppliers );
+
+    // 11. Supplier Transaction Ledger
+    $table_supplier_ledger = $wpdb->prefix . 'iterp_supplier_ledger';
+    $sql_supplier_ledger = "CREATE TABLE $table_supplier_ledger (
+        id bigint(20) NOT NULL AUTO_INCREMENT,
+        supplier_id bigint(20) NOT NULL,
+        reference_type varchar(50) NOT NULL,
+        debit decimal(12,2) DEFAULT '0.00' NOT NULL,
+        credit decimal(12,2) DEFAULT '0.00' NOT NULL,
+        balance_after decimal(12,2) DEFAULT '0.00' NOT NULL,
+        note text NOT NULL,
+        created_at datetime DEFAULT '1970-01-01 00:00:00' NOT NULL,
+        PRIMARY KEY  (id)
+    ) $charset_collate;";
+    dbDelta( $sql_supplier_ledger );
+
+    // 12. B2B Sub-Agents
     $table_agents = $wpdb->prefix . 'iterp_agents';
     $sql_agents = "CREATE TABLE $table_agents (
         id bigint(20) NOT NULL AUTO_INCREMENT,
@@ -182,7 +340,23 @@ function ifs_terp_create_system_tables() {
     ) $charset_collate;";
     dbDelta( $sql_agents );
 
-    // Centralized Invoicing & Billing
+    // 13. B2B Agent Individual Ledgers
+    $table_agent_ledgers = $wpdb->prefix . 'iterp_agent_ledgers';
+    $sql_agent_ledgers = "CREATE TABLE $table_agent_ledgers (
+        id bigint(20) NOT NULL AUTO_INCREMENT,
+        agent_id bigint(20) NOT NULL,
+        reference_type varchar(50) NOT NULL,
+        reference_id bigint(20) DEFAULT 0 NOT NULL,
+        debit decimal(12,2) DEFAULT '0.00' NOT NULL,
+        credit decimal(12,2) DEFAULT '0.00' NOT NULL,
+        balance_after decimal(12,2) DEFAULT '0.00' NOT NULL,
+        note text NOT NULL,
+        created_at datetime DEFAULT '1970-01-01 00:00:00' NOT NULL,
+        PRIMARY KEY  (id)
+    ) $charset_collate;";
+    dbDelta( $sql_agent_ledgers );
+
+    // 14. Centralized Invoicing & Billing
     $table_invoices = $wpdb->prefix . 'iterp_invoices';
     $sql_invoices = "CREATE TABLE $table_invoices (
         id bigint(20) NOT NULL AUTO_INCREMENT,
@@ -203,7 +377,7 @@ function ifs_terp_create_system_tables() {
     ) $charset_collate;";
     dbDelta( $sql_invoices );
 
-    // Accounts Ledger (Income, Expense, Bank Sync)
+    // 15. Accounts Ledger (Income, Expense, Cash Flow)
     $table_ledger = $wpdb->prefix . 'iterp_ledger';
     $sql_ledger = "CREATE TABLE $table_ledger (
         id bigint(20) NOT NULL AUTO_INCREMENT,
@@ -219,7 +393,7 @@ function ifs_terp_create_system_tables() {
     ) $charset_collate;";
     dbDelta( $sql_ledger );
 
-    // Security Audit Trail Logging
+    // 16. Security Audit Trail Logging
     $table_audit = $wpdb->prefix . 'iterp_audit_logs';
     $sql_audit = "CREATE TABLE $table_audit (
         id bigint(20) NOT NULL AUTO_INCREMENT,
@@ -241,7 +415,7 @@ function ifs_terp_log_activity( $action_description ) {
     global $wpdb;
     $current_user = wp_get_current_user();
     $user_id = $current_user->exists() ? $current_user->ID : 0;
-    $user_roles = $current_user->exists() ? implode( ', ', $current_user->roles ) : 'guest';
+    $user_roles = $current_user->exists() ? implode( ', ', (array) $current_user->roles ) : 'guest';
     
     $ip_address = '0.0.0.0';
     if ( ! empty( $_SERVER['REMOTE_ADDR'] ) ) {
@@ -301,6 +475,11 @@ function ifs_terp_main_router_page() {
             'svg'   => '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512"><path d="M482.3 192c34.2 0 93.7 29 93.7 64c0 36-59.5 64-93.7 64l-116.6 0L265.2 495.9c-5.7 10-16.3 16.1-27.8 16.1l-56.2 0c-10.6 0-18.3-10.2-15.4-20.4l49-171.6L112 320 68.8 377.6c-3 4-7.8 6.4-12.8 6.4l-42 0c-7.8 0-14-6.3-14-14c0-1.3 .2-2.6 .5-3.9L32 256 .5 145.9c-.4-1.3-.5-2.6-.5-3.9c0-7.8 6.3-14 14-14l42 0c5 0 9.8 2.4 12.8 6.4L112 192l102.9 0-49-171.6C162.9 10.2 170.6 0 181.2 0l56.2 0c11.5 0 22.1 6.2 27.8 16.1L365.7 192l116.6 0z"/></svg>',
             'roles' => array('admin_manager', 'ticketing_staff')
         ),
+        'refund_reissue' => array(
+            'label' => 'Refund / Reissue',
+            'svg'   => '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path d="M48 256c0 114.9 93.1 208 208 208c52.2 0 100-19.2 136.7-51l-43.6-43.6c-26.6 22.2-60.8 35.6-98.1 35.6c-85.9 0-155.6-69.7-155.6-155.6c0-42.5 17-81.1 44.5-109.1l52.5 52.5c6.7 6.7 17.5 6.7 24.2 0s6.7-17.5 0-24.2L123.6 25.4c-6.7-6.7-17.5-6.7-24.2 0L6.4 118.4c-6.7 6.7-6.7 17.5 0 24.2s17.5 6.7 24.2 0l42.6-42.6C34.4 142.1 16 196.8 16 256h32zm416 0c0-114.9-93.1-208-208-208c-52.2 0-100 19.2-136.7 51l43.6 43.6c26.6-22.2 60.8-35.6 98.1-35.6c85.9 0 155.6 69.7 155.6 155.6c0 42.5-17 81.1-44.5 109.1l-52.5-52.5c-6.7-6.7-17.5-6.7-24.2 0s-6.7 17.5 0 24.2l93.1 93.1c6.7 6.7 17.5 6.7 24.2 0l93.1-93.1c6.7-6.7 6.7-17.5 0-24.2s-17.5-6.7-24.2 0l-42.6 42.6c38.8-42.1 57.2-96.8 57.2-156h-32z"/></svg>',
+            'roles' => array('admin_manager', 'ticketing_staff')
+        ),
         'visa' => array(
             'label' => 'Visa Processing',
             'svg'   => '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path d="M0 96C0 60.7 28.7 32 64 32h384c35.3 0 64 28.7 64 64V416c0 35.3-28.7 64-64 64H64c-35.3 0-64-28.7-64-64V96zM48 232v32c0 8.8 7.2 16 16 16h48c8.8 0 16-7.2 16-16v-32c0-8.8-7.2-16-16-16H64c-8.8 0-16 7.2-16 16zm0 96v32c0 8.8 7.2 16 16 16h48c8.8 0 16-7.2 16-16v-32c0-8.8-7.2-16-16-16H64c-8.8 0-16 7.2-16 16zM192 216c-13.3 0-24 10.7-24 24v32c0 13.3 10.7 24 24 24h48c13.3 0 24-10.7 24-24v-32c0-13.3-10.7-24-24-24h-48zm-24 112v32c0 13.3 10.7 24 24 24h48c13.3 0 24-10.7 24-24v-32c0-13.3-10.7-24-24-24h-48c-13.3 0-24 10.7-24 24z"/></svg>',
@@ -309,7 +488,22 @@ function ifs_terp_main_router_page() {
         'hajj_umrah' => array(
             'label' => 'Hajj & Umrah',
             'svg'   => '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512"><path d="M575.8 255.5c0 18-15 32.1-32 32.1h-32l.7 160.2c0 2.7-.2 5.4-.5 8.1V472c0 22.1-17.9 40-40 40H456c-1.1 0-2.2 0-3.3-.1c-1.4 .1-2.8 .1-4.2 .1H416 392c-22.1 0-40-17.9-40-40V448 384c0-17.7-14.3-32-32-32H256c-17.7 0-32 14.3-32 32v64 24c0 22.1-17.9 40-40 40H160 128.1c-1.5 0-3-.1-4.5-.2c-1.2 .1-2.4 .2-3.6 .2H104c-22.1 0-40-17.9-40-40V360c0-.9 0-1.9 .1-2.8V287.6H32c-18 0-32-14-32-32.1c0-9 3-17 10-24L266.4 8c7-7 15-8 22-8s15 2 21 7L564.8 231.5c8 7 11 15 11 24z"/></svg>',
-            'roles' => array('admin_manager', 'visa_officer', 'travel_agent')
+            'roles' => array('admin_manager', 'visa_officer')
+        ),
+        'tours' => array(
+            'label' => 'Tour Packages',
+            'svg'   => '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path d="M512 96c0 53-43 96-96 96c-11.3 0-22.1-2-32-5.5V416c0 53-43 96-96 96s-96-43-96-96V186.5c-9.9 3.6-20.7 5.5-32 5.5c-53 0-96-43-96-96S107 0 160 0c41.3 0 76.6 26.1 90.4 63C261.2 26.6 288.6 0 320 0c26.2 0 49.4 18.5 56.6 44C390.4 18.1 423.8 0 464 0c26.5 0 48 21.5 48 48v48z"/></svg>',
+            'roles' => array('admin_manager', 'ticketing_staff')
+        ),
+        'hotels' => array(
+            'label' => 'Hotel Bookings',
+            'svg'   => '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path d="M0 32C0 14.3 14.3 0 32 0H480c17.7 0 32 14.3 32 32s-14.3 32-32 32V448c17.7 0 32 14.3 32 32s-14.3 32-32 32H304V384c0-26.5-21.5-48-48-48s-48 21.5-48 48v128H32c-17.7 0-32-14.3-32-32s14.3-32 32-32V64C14.3 64 0 49.7 0 32zm96 80v32c0 8.8 7.2 16 16 16h32c8.8 0 16-7.2 16-16V112c0-8.8-7.2-16-16-16H112c-8.8 0-16 7.2-16 16zm128 0v32c0 8.8 7.2 16 16 16h32c8.8 0 16-7.2 16-16V112c0-8.8-7.2-16-16-16H240c-8.8 0-16 7.2-16 16zm128 0v32c0 8.8 7.2 16 16 16h32c8.8 0 16-7.2 16-16V112c0-8.8-7.2-16-16-16H368c-8.8 0-16 7.2-16 16zm-256 96v32c0 8.8 7.2 16 16 16h32c8.8 0 16-7.2 16-16V208c0-8.8-7.2-16-16-16H112c-8.8 0-16 7.2-16 16zm128 0v32c0 8.8 7.2 16 16 16h32c8.8 0 16-7.2 16-16V208c0-8.8-7.2-16-16-16H240c-8.8 0-16 7.2-16 16zm128 0v32c0 8.8 7.2 16 16 16h32c8.8 0 16-7.2 16-16V208c0-8.8-7.2-16-16-16H368c-8.8 0-16 7.2-16 16z"/></svg>',
+            'roles' => array('admin_manager', 'ticketing_staff')
+        ),
+        'suppliers' => array(
+            'label' => 'Suppliers / GDS',
+            'svg'   => '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path d="M32 32c17.7 0 32 14.3 32 32V400c0 8.8 7.2 16 16 16H480c17.7 0 32 14.3 32 32s-14.3 32-32 32H80c-44.2 0-80-35.8-80-80V64C0 46.3 14.3 32 32 32zM160 224c17.7 0 32 14.3 32 32v96c0 17.7-14.3 32-32 32s-32-14.3-32-32V256c0-17.7 14.3-32 32-32zm128-64c17.7 0 32 14.3 32 32V352c0 17.7-14.3 32-32 32s-32-14.3-32-32V192c0-17.7 14.3-32 32-32zm128-64c17.7 0 32 14.3 32 32V352c0 17.7-14.3 32-32 32s-32-14.3-32-32V128c0-17.7 14.3-32 32-32z"/></svg>',
+            'roles' => array('admin_manager', 'accountant')
         ),
         'b2b_agents' => array(
             'label' => 'B2B Agents',
@@ -320,6 +514,11 @@ function ifs_terp_main_router_page() {
             'label' => 'Accounts',
             'svg'   => '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path d="M464 128H48c-26.5 0-48 21.5-48 48v240c0 26.5 21.5 48 48 48h416c26.5 0 48-21.5 48-48V176c0-26.5-21.5-48-48-48zm-16 240c0 13.3-10.7 24-24 24H96c-13.3 0-24-10.7-24-24V216c0-13.3 10.7-24 24-24h304c13.3 0 24 10.7 24 24v152zm-88-104c-22.1 0-40 17.9-40 40s17.9 40 40 40 40-17.9 40-40-17.9-40-40-40zM400 64H48c-8.8 0-16 7.2-16 16v16h448V80c0-8.8-7.2-16-16-16z"/></svg>',
             'roles' => array('accountant', 'admin_manager')
+        ),
+        'staff' => array(
+            'label' => 'Staff / HR',
+            'svg'   => '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512"><path d="M144 0a80 80 0 1 1 0 160A80 80 0 1 1 144 0zM512 0a80 80 0 1 1 0 160A80 80 0 1 1 512 0zM0 298.7C0 239.8 47.8 192 106.7 192h74.7c58.9 0 106.7 47.8 106.7 106.7V352H0v-53.3zM352 352v-53.3c0-58.9 47.8-106.7 106.7-106.7h74.7c58.9 0 106.7 47.8 106.7 106.7V352H352zm-32-160a64 64 0 1 1 0-128 64 64 0 1 1 0 128zm-80 160c0-44.2 35.8-80 80-80h0c44.2 0 80 35.8 80 80v32H240v-32zM0 416c0-17.7 14.3-32 32-32h576c17.7 0 32 14.3 32 32v32c0 17.7-14.3 32-32 32H32c-17.7 0-32-14.3-32-32v-32z"/></svg>',
+            'roles' => array('admin_manager')
         ),
         'reports' => array(
             'label' => 'Reports',
@@ -351,7 +550,6 @@ function ifs_terp_main_router_page() {
 
     $is_print_mode = ( isset( $_GET['action'] ) && $_GET['action'] === 'print' );
 
-    // Custom user variables for sidebar rendering
     $current_user_id = get_current_user_id();
     $current_user    = wp_get_current_user();
     
@@ -419,17 +617,32 @@ function ifs_terp_main_router_page() {
                 case 'ticketing':
                     if ( function_exists( 'ifs_terp_ticketing_tab' ) ) { ifs_terp_ticketing_tab(); }
                     break;
+                case 'refund_reissue':
+                    if ( function_exists( 'ifs_terp_refund_reissue_tab' ) ) { ifs_terp_refund_reissue_tab(); }
+                    break;
                 case 'visa':
                     if ( function_exists( 'ifs_terp_visa_tab' ) ) { ifs_terp_visa_tab(); }
                     break;
                 case 'hajj_umrah':
                     if ( function_exists( 'ifs_terp_hajj_umrah_tab' ) ) { ifs_terp_hajj_umrah_tab(); }
                     break;
+                case 'tours':
+                    if ( function_exists( 'ifs_terp_tours_tab' ) ) { ifs_terp_tours_tab(); }
+                    break;
+                case 'hotels':
+                    if ( function_exists( 'ifs_terp_hotels_tab' ) ) { ifs_terp_hotels_tab(); }
+                    break;
+                case 'suppliers':
+                    if ( function_exists( 'ifs_terp_suppliers_tab' ) ) { ifs_terp_suppliers_tab(); }
+                    break;
                 case 'b2b_agents':
                     if ( function_exists( 'ifs_terp_b2b_agents_tab' ) ) { ifs_terp_b2b_agents_tab(); }
                     break;
                 case 'accounts':
                     if ( function_exists( 'ifs_terp_accounts_tab' ) ) { ifs_terp_accounts_tab(); }
+                    break;
+                case 'staff':
+                    if ( function_exists( 'ifs_terp_staff_tab' ) ) { ifs_terp_staff_tab(); }
                     break;
                 case 'reports':
                     if ( function_exists( 'ifs_terp_reports_tab' ) ) { ifs_terp_reports_tab(); }
@@ -506,14 +719,14 @@ add_action( 'admin_head', function() {
                 color: #333;
                 text-decoration: none;
                 font-weight: 600;
-                font-size: 15px;
+                font-size: 14px;
                 transition: all 0.2s ease;
             }
 
             .ifs-terp-left-tabs li a svg {
-                width: 18px;
-                height: 18px;
-                margin-right: 14px;
+                width: 16px;
+                height: 16px;
+                margin-right: 12px;
                 fill: #64748b;
                 transition: all 0.2s ease;
                 flex-shrink: 0;
@@ -571,9 +784,8 @@ add_action( 'init', 'ifs_terp_root_to_admin_redirect', 5 );
 
 function ifs_terp_upper_safe_path_parse( $url ) {
     $path = parse_url( $url, PHP_URL_PATH );
-    return trim( $path, '/' );
+    return trim( (string) $path, '/' );
 }
-
 
 /**
  * 2. POST-LOGIN DASHBOARD REDIRECT
@@ -586,7 +798,6 @@ function ifs_terp_custom_login_redirect( $redirect_to, $request, $user ) {
 }
 add_filter( 'login_redirect', 'ifs_terp_custom_login_redirect', 10, 3 );
 
-
 /**
  * 3. LOGOUT ROUTING OVERRIDE
  */
@@ -596,16 +807,15 @@ function ifs_terp_custom_logout_routing() {
 }
 add_action( 'wp_logout', 'ifs_terp_custom_logout_routing' );
 
-
 /**
- * 4. CUSTOM WHITE-LABEL STYLES & DUMMY LOGO MASKING
+ * 4. CUSTOM WHITE-LABEL STYLES & LOGO MASKING
  */
 function ifs_terp_custom_login_styles() {
     $custom_logo_url = plugin_dir_url( __FILE__ ) . 'assets/img/logo.png';
     ?>
     <style type="text/css">
         #login h1 a, .login h1 a {
-            background-image: url('<?php echo $custom_logo_url; ?>') !important;
+            background-image: url('<?php echo esc_url($custom_logo_url); ?>') !important;
             height: 80px !important;
             width: 100% !important;
             background-size: contain !important;
@@ -673,14 +883,13 @@ add_filter( 'login_headerurl', 'ifs_terp_login_logo_url' );
 function ifs_terp_login_logo_title() { return get_bloginfo( 'name' ); }
 add_filter( 'login_headertext', 'ifs_terp_login_logo_title' );
 
-
 /**
  * 5. MATHEMATICAL CAPTCHA ENGINE
  */
 function ifs_terp_display_login_captcha() {
     $num1 = rand(1, 9);
     $num2 = rand(1, 9);
-    $captcha_token = md5( uniqid( rand(), true ) );
+    $captcha_token = md5( uniqid( (string) rand(), true ) );
     set_transient( 'iterp_captcha_' . $captcha_token, ($num1 + $num2), 300 );
     ?>
     <div class="ifs-terp-captcha-container">
