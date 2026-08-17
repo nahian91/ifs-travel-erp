@@ -57,7 +57,6 @@ function ifs_terp_has_access( $allowed_roles = array() ) {
 # 3. Scripts & Styles Enqueue
 --------------------------------------------------------------*/
 function ifs_terp_admin_enqueue_assets( $hook ) {
-    // Heavy admin assets are isolated solely to the app layout page to prevent site-wide bloat
     if ( $hook !== 'toplevel_page_ifs_travel_erp' ) {
         return;
     }
@@ -122,12 +121,17 @@ function ifs_terp_create_system_tables() {
     $table_customers = $wpdb->prefix . 'iterp_customers';
     $sql_customers = "CREATE TABLE $table_customers (
         id bigint(20) NOT NULL AUTO_INCREMENT,
+        title varchar(20) DEFAULT 'Mr' NOT NULL,
         full_name varchar(255) NOT NULL,
         mobile varchar(50) NOT NULL,
         email varchar(100) DEFAULT '' NOT NULL,
         passport_no varchar(100) DEFAULT '' NOT NULL,
         passport_expiry date DEFAULT '1970-01-01' NOT NULL,
         date_of_birth date DEFAULT '1970-01-01' NOT NULL,
+        nationality varchar(100) DEFAULT 'Bangladeshi' NOT NULL,
+        gender varchar(20) DEFAULT 'Male' NOT NULL,
+        blood_group varchar(10) DEFAULT '' NOT NULL,
+        emergency_contact varchar(50) DEFAULT '' NOT NULL,
         address text NOT NULL,
         passport_copy_url text NOT NULL,
         client_type varchar(50) DEFAULT 'Retail' NOT NULL,
@@ -142,17 +146,27 @@ function ifs_terp_create_system_tables() {
     $sql_tickets = "CREATE TABLE $table_tickets (
         id bigint(20) NOT NULL AUTO_INCREMENT,
         customer_id bigint(20) NOT NULL,
+        agent_id bigint(20) DEFAULT 0 NOT NULL,
+        supplier_id bigint(20) DEFAULT 0 NOT NULL,
         pnr varchar(20) NOT NULL,
         ticket_no varchar(50) NOT NULL,
         airline varchar(100) NOT NULL,
+        flight_no varchar(50) DEFAULT '' NOT NULL,
         sector text NOT NULL,
         cabin_class varchar(50) DEFAULT 'Economy' NOT NULL,
+        flight_type varchar(50) DEFAULT 'One Way' NOT NULL,
         travel_date date DEFAULT '1970-01-01' NOT NULL,
-        supplier_id bigint(20) DEFAULT 0 NOT NULL,
+        flight_time varchar(20) DEFAULT '' NOT NULL,
+        return_date date DEFAULT '1970-01-01' NOT NULL,
+        baggage varchar(50) DEFAULT '20 KG' NOT NULL,
+        gds_pcc varchar(50) DEFAULT 'Sabre' NOT NULL,
+        base_fare decimal(12,2) DEFAULT '0.00' NOT NULL,
+        tax_amount decimal(12,2) DEFAULT '0.00' NOT NULL,
         buy_price decimal(12,2) DEFAULT '0.00' NOT NULL,
         sell_price decimal(12,2) DEFAULT '0.00' NOT NULL,
         profit decimal(12,2) DEFAULT '0.00' NOT NULL,
         status varchar(50) DEFAULT 'Issued' NOT NULL,
+        remarks text,
         issued_by bigint(20) NOT NULL,
         created_at datetime DEFAULT '1970-01-01 00:00:00' NOT NULL,
         PRIMARY KEY  (id),
@@ -181,20 +195,25 @@ function ifs_terp_create_system_tables() {
     dbDelta( $sql_refunds );
 
     // 4. Visa Processing Tracker
-    $table_visas = $wpdb->prefix . 'iterp_visas';
+    $table_visas = $wpdb->prefix . 'iterp_visa_applications';
     $sql_visas = "CREATE TABLE $table_visas (
         id bigint(20) NOT NULL AUTO_INCREMENT,
         customer_id bigint(20) NOT NULL,
+        agent_id bigint(20) DEFAULT 0 NOT NULL,
+        supplier_id bigint(20) DEFAULT 0 NOT NULL,
         country varchar(100) NOT NULL,
-        visa_type varchar(50) NOT NULL,
+        visa_type varchar(100) NOT NULL,
+        entry_type varchar(50) DEFAULT 'Single Entry' NOT NULL,
+        tracking_no varchar(100) DEFAULT '' NOT NULL,
         submission_date date DEFAULT '1970-01-01' NOT NULL,
         expected_delivery date DEFAULT '1970-01-01' NOT NULL,
-        supplier_id bigint(20) DEFAULT 0 NOT NULL,
+        validity_days int(11) DEFAULT 30 NOT NULL,
         buy_price decimal(12,2) DEFAULT '0.00' NOT NULL,
         sell_price decimal(12,2) DEFAULT '0.00' NOT NULL,
         profit decimal(12,2) DEFAULT '0.00' NOT NULL,
         status varchar(50) DEFAULT 'Processing' NOT NULL,
         documents_collected text NOT NULL,
+        remarks text,
         created_by bigint(20) NOT NULL,
         created_at datetime DEFAULT '1970-01-01 00:00:00' NOT NULL,
         PRIMARY KEY  (id)
@@ -221,11 +240,16 @@ function ifs_terp_create_system_tables() {
         id bigint(20) NOT NULL AUTO_INCREMENT,
         package_name varchar(255) NOT NULL,
         package_type varchar(100) DEFAULT 'Umrah' NOT NULL,
+        total_days int(11) DEFAULT 15 NOT NULL,
         cost_bdt decimal(12,2) DEFAULT '0.00' NOT NULL,
+        selling_price decimal(12,2) DEFAULT '0.00' NOT NULL,
         cost_sar decimal(12,2) DEFAULT '0.00' NOT NULL,
         capacity int(11) DEFAULT 0 NOT NULL,
         hotel_makkah varchar(255) DEFAULT '' NOT NULL,
+        makkah_distance varchar(100) DEFAULT '' NOT NULL,
         hotel_madinah varchar(255) DEFAULT '' NOT NULL,
+        madinah_distance varchar(100) DEFAULT '' NOT NULL,
+        airline_name varchar(150) DEFAULT '' NOT NULL,
         inclusions_json text NOT NULL,
         created_at datetime DEFAULT '1970-01-01 00:00:00' NOT NULL,
         PRIMARY KEY  (id)
@@ -237,16 +261,24 @@ function ifs_terp_create_system_tables() {
     $sql_hajj_bookings = "CREATE TABLE $table_hajj_bookings (
         id bigint(20) NOT NULL AUTO_INCREMENT,
         customer_id bigint(20) NOT NULL,
+        agent_id bigint(20) DEFAULT 0 NOT NULL,
+        supplier_id bigint(20) DEFAULT 0 NOT NULL,
         package_id bigint(20) NOT NULL,
         mahram_customer_id bigint(20) DEFAULT 0 NOT NULL,
         room_sharing varchar(50) DEFAULT 'Quad' NOT NULL,
+        pilgrim_type varchar(50) DEFAULT 'Adult' NOT NULL,
         brn_no varchar(100) DEFAULT '' NOT NULL,
         mofaza_no varchar(100) DEFAULT '' NOT NULL,
+        tracking_id varchar(100) DEFAULT '' NOT NULL,
+        nusuk_id varchar(100) DEFAULT '' NOT NULL,
+        flight_date date DEFAULT '1970-01-01' NOT NULL,
+        return_flight_date date DEFAULT '1970-01-01' NOT NULL,
         visa_status varchar(50) DEFAULT 'Pending' NOT NULL,
         buy_price decimal(12,2) DEFAULT '0.00' NOT NULL,
         sell_price decimal(12,2) DEFAULT '0.00' NOT NULL,
         profit decimal(12,2) DEFAULT '0.00' NOT NULL,
         status varchar(50) DEFAULT 'Booked' NOT NULL,
+        remarks text,
         created_by bigint(20) NOT NULL,
         created_at datetime DEFAULT '1970-01-01 00:00:00' NOT NULL,
         PRIMARY KEY  (id)
@@ -258,6 +290,8 @@ function ifs_terp_create_system_tables() {
     $sql_tours = "CREATE TABLE $table_tours (
         id bigint(20) NOT NULL AUTO_INCREMENT,
         customer_id bigint(20) NOT NULL,
+        agent_id bigint(20) DEFAULT 0 NOT NULL,
+        supplier_id bigint(20) DEFAULT 0 NOT NULL,
         package_title varchar(255) NOT NULL,
         destination varchar(100) NOT NULL,
         duration varchar(50) DEFAULT '' NOT NULL,
@@ -265,33 +299,74 @@ function ifs_terp_create_system_tables() {
         buy_price decimal(12,2) DEFAULT '0.00' NOT NULL,
         sell_price decimal(12,2) DEFAULT '0.00' NOT NULL,
         profit decimal(12,2) DEFAULT '0.00' NOT NULL,
-        status varchar(50) DEFAULT 'Confirmed' NOT NULL,
+        status varchar(50) DEFAULT 'Reserved' NOT NULL,
         created_by bigint(20) NOT NULL,
         created_at datetime DEFAULT '1970-01-01 00:00:00' NOT NULL,
         PRIMARY KEY  (id)
     ) $charset_collate;";
     dbDelta( $sql_tours );
 
+    // 8.1. Tour Package Templates / Plans
+    $table_tour_packages = $wpdb->prefix . 'iterp_tour_packages';
+    $sql_tour_packages = "CREATE TABLE $table_tour_packages (
+        id bigint(20) NOT NULL AUTO_INCREMENT,
+        package_name varchar(255) NOT NULL,
+        destination varchar(255) NOT NULL,
+        total_days int(11) DEFAULT 4 NOT NULL,
+        total_nights int(11) DEFAULT 3 NOT NULL,
+        cost_bdt decimal(12,2) DEFAULT 0.00 NOT NULL,
+        selling_price decimal(12,2) DEFAULT 0.00 NOT NULL,
+        hotel_name varchar(255) DEFAULT '' NOT NULL,
+        inclusions_text text NOT NULL,
+        created_at datetime DEFAULT '1970-01-01 00:00:00' NOT NULL,
+        PRIMARY KEY  (id)
+    ) $charset_collate;";
+    dbDelta( $sql_tour_packages );
+
     // 9. Hotel / Resort Reservations
     $table_hotels = $wpdb->prefix . 'iterp_hotel_bookings';
     $sql_hotels = "CREATE TABLE $table_hotels (
         id bigint(20) NOT NULL AUTO_INCREMENT,
         customer_id bigint(20) NOT NULL,
+        agent_id bigint(20) DEFAULT 0 NOT NULL,
+        supplier_id bigint(20) DEFAULT 0 NOT NULL,
         hotel_name varchar(255) NOT NULL,
         city varchar(100) NOT NULL,
         check_in date DEFAULT '1970-01-01' NOT NULL,
         check_out date DEFAULT '1970-01-01' NOT NULL,
-        room_type varchar(100) DEFAULT 'Standard' NOT NULL,
+        room_type varchar(100) DEFAULT 'Deluxe Room' NOT NULL,
+        meal_plan varchar(150) DEFAULT 'Bed & Breakfast (BB)' NOT NULL,
         voucher_no varchar(100) DEFAULT '' NOT NULL,
+        confirmation_no varchar(100) DEFAULT '' NOT NULL,
         buy_price decimal(12,2) DEFAULT '0.00' NOT NULL,
         sell_price decimal(12,2) DEFAULT '0.00' NOT NULL,
         profit decimal(12,2) DEFAULT '0.00' NOT NULL,
         status varchar(50) DEFAULT 'Confirmed' NOT NULL,
+        special_req text,
         created_by bigint(20) NOT NULL,
         created_at datetime DEFAULT '1970-01-01 00:00:00' NOT NULL,
         PRIMARY KEY  (id)
     ) $charset_collate;";
     dbDelta( $sql_hotels );
+
+    // 9.1. Contracted Hotel Properties Directory
+    $table_hotel_properties = $wpdb->prefix . 'iterp_hotel_properties';
+    $sql_hotel_properties = "CREATE TABLE $table_hotel_properties (
+        id bigint(20) NOT NULL AUTO_INCREMENT,
+        property_name varchar(255) NOT NULL,
+        city varchar(150) NOT NULL,
+        country varchar(150) NOT NULL,
+        star_rating varchar(20) DEFAULT '4 Star' NOT NULL,
+        contact_person varchar(150) DEFAULT '' NOT NULL,
+        contact_phone varchar(50) DEFAULT '' NOT NULL,
+        contract_rate decimal(12,2) DEFAULT 0.00 NOT NULL,
+        standard_sell decimal(12,2) DEFAULT 0.00 NOT NULL,
+        address text,
+        amenities text,
+        created_at datetime DEFAULT '1970-01-01 00:00:00' NOT NULL,
+        PRIMARY KEY  (id)
+    ) $charset_collate;";
+    dbDelta( $sql_hotel_properties );
 
     // 10. Suppliers & GDS Portals
     $table_suppliers = $wpdb->prefix . 'iterp_suppliers';
@@ -328,7 +403,7 @@ function ifs_terp_create_system_tables() {
     $table_agents = $wpdb->prefix . 'iterp_agents';
     $sql_agents = "CREATE TABLE $table_agents (
         id bigint(20) NOT NULL AUTO_INCREMENT,
-        company_name varchar(255) NOT NULL,
+        agency_name varchar(255) NOT NULL,
         contact_person varchar(255) NOT NULL,
         mobile varchar(50) NOT NULL,
         email varchar(100) NOT NULL,
@@ -530,11 +605,6 @@ function ifs_terp_main_router_page() {
             'svg'   => '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path d="M487.4 315.7l-42.6-24.6c2.3-14.2 3.5-28.7 3.5-43.1s-1.2-28.9-3.5-43.1l42.6-24.6c11.5-6.6 15.4-21.3 8.7-32.8L447.5 61.2c-6.6-11.5-21.3-15.4-32.8-8.7L372 77.1c-22.1-14.8-46.7-26.3-72.9-33.8L292.8 12C291.1 5.2 285 0 278.1 0h-44.2c-6.9 0-13 5.2-14.7 12L213 43.3c-26.2 7.5-50.8 19-72.9 33.8l-42.7-24.6c-11.5-6.7-26.2-2.8-32.8 8.7L16.1 147.3c-6.7 11.5-2.8 26.2 8.7 32.8l42.6 24.6c-2.3 14.2-3.5 28.7-3.5 43.1s1.2 28.9 3.5 43.1l-42.6 24.6c-11.5 6.6-15.4 21.3-8.7 32.8l48.6 84.3c6.6 11.5 21.3 15.4 32.8 8.7l42.7-24.6c22.1 14.8 46.7 26.3 72.9 33.8L219.2 500c1.7 6.8 7.8 12 14.7 12h44.2c6.9 0 13-5.2 14.7-12l6.3-31.3c26.2-7.5 50.8-19 72.9-33.8l42.7 24.6c11.5 6.7 26.2 2.8 32.8-8.7l48.6-84.3c6.7-11.5 2.8-26.2-8.7-32.9zM256 336c-44.2 0-80-35.8-80-80s35.8-80 80-80 80 35.8 80 80-35.8 80-80 80z"/></svg>',
             'roles' => array('admin_manager')
         ),
-        'logout' => array(
-            'label' => 'Log Out',
-            'svg'   => '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path d="M160 96c17.7 0 32-14.3 32-32s-14.3-32-32-32H96C43 32 0 75 0 128v256c0 53 43 96 96 96h64c17.7 0 32-14.3 32-32s-14.3-32-32-32H96c-17.7 0-32-14.3-32-32V128c0-17.7 14.3-32 32-32h64zm273 135L313 111c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3l123 123H192c-17.7 0-32 14.3-32 32s14.3 32 32 32h198.7L267.7 401.7c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0l120-120c12.5-12.5 12.5-32.8 0-45.3z"/></svg>',
-            'roles' => array()
-        ),
     );
 
     $active_tab = isset( $_GET['tab'] ) ? sanitize_key( $_GET['tab'] ) : 'dashboard';
@@ -556,104 +626,142 @@ function ifs_terp_main_router_page() {
     $display_name  = ! empty( $current_user->display_name ) ? $current_user->display_name : $current_user->user_login;
     $designation   = ! empty( $current_user->roles ) ? ucfirst( reset( $current_user->roles ) ) : 'Travel Agent';
     $custom_avatar = '';
+    $logout_url    = wp_logout_url( admin_url( 'admin.php?page=ifs_travel_erp' ) );
 
     ?>
 
     <div id="ifs-terp-wrapper" class="ifs-travel-erp-system <?php echo $is_print_mode ? 'ifs-terp-print' : ''; ?>">
         
         <?php if ( ! $is_print_mode ) : ?>
-            <div class="ifs-terp-sidebar-container">
-                
-                <div class="ifs-terp-author-profile">
-                    <div class="profile-avatar">
-                        <?php 
-                        if ( ! empty( $custom_avatar ) ) {
-                            echo '<img src="' . esc_url( $custom_avatar ) . '" alt="' . esc_attr( $display_name ) . '" width="64" height="64" style="border-radius: 50%; object-fit: cover;" />';
-                        } else {
-                            echo get_avatar( $current_user_id, 64, '', '', array( 'class' => 'avatar-round' ) ); 
-                        }
-                        ?>
+            <div class="ifs-terp-sidebar-container" id="ifsSidebarContainer">
+                <div class="ifs-terp-sidebar-brand">
+                    <div class="brand-title-wrap">
+                        <span class="dashicons dashicons-airplane"></span>
+                        <h3 class="brand-text">IFS Travel ERP</h3>
                     </div>
-                    <div class="profile-meta">
-                        <h4 class="profile-name"><?php echo esc_html( $display_name ); ?></h4>
-                        <span class="profile-designation"><?php echo esc_html( str_replace('_', ' ', $designation) ); ?></span>
-                    </div>
+                    <button type="button" id="ifsSidebarToggle" class="ifs-sidebar-toggle-btn" title="Toggle Sidebar">
+                        <span class="dashicons dashicons-menu-alt3"></span>
+                    </button>
                 </div>
 
-                <ul class="ifs-terp-left-tabs">
-                    <?php 
-                    foreach ( $all_tabs as $slug => $config ) : 
-                        if ( ! ifs_terp_has_access( $config['roles'] ) ) {
-                            continue; 
-                        }
-                        $active_class = ( $active_tab === $slug ) ? 'active' : '';
-                        
-                        if ( $slug === 'logout' ) {
-                            $target_url = wp_logout_url( admin_url( 'admin.php?page=ifs_travel_erp' ) );
-                        } else {
+                <div class="ifs-terp-sidebar-scroll-box">
+                    <ul class="ifs-terp-left-tabs">
+                        <?php 
+                        foreach ( $all_tabs as $slug => $config ) : 
+                            if ( ! ifs_terp_has_access( $config['roles'] ) ) {
+                                continue; 
+                            }
+                            $active_class = ( $active_tab === $slug ) ? 'active' : '';
                             $target_url = admin_url( 'admin.php?page=ifs_travel_erp&tab=' . $slug );
-                        }
-                        ?>
-                        <li class="<?php echo esc_attr( 'tab-' . $slug ); ?>">
-                            <a class="<?php echo esc_attr( $active_class ); ?>" href="<?php echo esc_url( $target_url ); ?>">
-                                <?php echo $config['svg']; ?>
-                                <span><?php echo esc_html( $config['label'] ); ?></span>
-                            </a>
-                        </li>
-                    <?php endforeach; ?>
-                </ul>
+                            ?>
+                            <li class="<?php echo esc_attr( 'tab-' . $slug ); ?>">
+                                <a class="<?php echo esc_attr( $active_class ); ?>" href="<?php echo esc_url( $target_url ); ?>" title="<?php echo esc_attr( $config['label'] ); ?>">
+                                    <?php echo $config['svg']; ?>
+                                    <span class="tab-label"><?php echo esc_html( $config['label'] ); ?></span>
+                                </a>
+                            </li>
+                        <?php endforeach; ?>
+                    </ul>
+                </div>
             </div>
         <?php endif; ?>
 
         <div class="ifs-terp-right-box">
-            <?php
-            switch ( $active_tab ) {
-                case 'dashboard':
-                    if ( function_exists( 'ifs_terp_dashboard_tab' ) ) { ifs_terp_dashboard_tab(); }
-                    break;
-                case 'customers':
-                    if ( function_exists( 'ifs_terp_customers_tab' ) ) { ifs_terp_customers_tab(); }
-                    break;
-                case 'ticketing':
-                    if ( function_exists( 'ifs_terp_ticketing_tab' ) ) { ifs_terp_ticketing_tab(); }
-                    break;
-                case 'refund_reissue':
-                    if ( function_exists( 'ifs_terp_refund_reissue_tab' ) ) { ifs_terp_refund_reissue_tab(); }
-                    break;
-                case 'visa':
-                    if ( function_exists( 'ifs_terp_visa_tab' ) ) { ifs_terp_visa_tab(); }
-                    break;
-                case 'hajj_umrah':
-                    if ( function_exists( 'ifs_terp_hajj_umrah_tab' ) ) { ifs_terp_hajj_umrah_tab(); }
-                    break;
-                case 'tours':
-                    if ( function_exists( 'ifs_terp_tours_tab' ) ) { ifs_terp_tours_tab(); }
-                    break;
-                case 'hotels':
-                    if ( function_exists( 'ifs_terp_hotels_tab' ) ) { ifs_terp_hotels_tab(); }
-                    break;
-                case 'suppliers':
-                    if ( function_exists( 'ifs_terp_suppliers_tab' ) ) { ifs_terp_suppliers_tab(); }
-                    break;
-                case 'b2b_agents':
-                    if ( function_exists( 'ifs_terp_b2b_agents_tab' ) ) { ifs_terp_b2b_agents_tab(); }
-                    break;
-                case 'accounts':
-                    if ( function_exists( 'ifs_terp_accounts_tab' ) ) { ifs_terp_accounts_tab(); }
-                    break;
-                case 'staff':
-                    if ( function_exists( 'ifs_terp_staff_tab' ) ) { ifs_terp_staff_tab(); }
-                    break;
-                case 'reports':
-                    if ( function_exists( 'ifs_terp_reports_tab' ) ) { ifs_terp_reports_tab(); }
-                    break;
-                case 'settings':
-                    if ( function_exists( 'ifs_terp_settings_tab' ) ) { ifs_terp_settings_tab(); }
-                    break;
-            }
-            ?>
+            
+            <?php if ( ! $is_print_mode ) : ?>
+                <!-- Ultra-Modern Premium Top Header Bar -->
+                <div class="ifs-top-header-bar">
+                    <div class="ifs-top-left-cluster">
+                        <div class="ifs-top-brand-badge">
+                            <span class="dashicons dashicons-shield-alt"></span>
+                            <span>IFS Enterprise Core</span>
+                        </div>
+                        <div class="ifs-top-search-indicator">
+                            <span class="dashicons dashicons-dashboard"></span>
+                            <span>Live Operations Console</span>
+                        </div>
+                    </div>
+
+                    <div class="ifs-top-user-menu">
+                        <div class="top-user-avatar">
+                            <?php 
+                            if ( ! empty( $custom_avatar ) ) {
+                                echo '<img src="' . esc_url( $custom_avatar ) . '" alt="' . esc_attr( $display_name ) . '" width="42" height="42" />';
+                            } else {
+                                echo get_avatar( $current_user_id, 42, '', '', array( 'class' => 'avatar-round' ) ); 
+                            }
+                            ?>
+                        </div>
+                        <div class="top-user-info">
+                            <span class="top-user-name"><?php echo esc_html( $display_name ); ?></span>
+                            <span class="top-user-role"><?php echo esc_html( str_replace('_', ' ', $designation) ); ?></span>
+                        </div>
+                        <a href="<?php echo esc_url( $logout_url ); ?>" class="ifs-top-logout-btn" title="Log Out">
+                            <span class="dashicons dashicons-button-power"></span> Logout
+                        </a>
+                    </div>
+                </div>
+            <?php endif; ?>
+
+            <div class="ifs-content-body-area">
+                <?php
+                switch ( $active_tab ) {
+                    case 'dashboard':
+                        if ( function_exists( 'ifs_terp_dashboard_tab' ) ) { ifs_terp_dashboard_tab(); }
+                        break;
+                    case 'customers':
+                        if ( function_exists( 'ifs_terp_customers_tab' ) ) { ifs_terp_customers_tab(); }
+                        break;
+                    case 'ticketing':
+                        if ( function_exists( 'ifs_terp_ticketing_tab' ) ) { ifs_terp_ticketing_tab(); }
+                        break;
+                    case 'refund_reissue':
+                        if ( function_exists( 'ifs_terp_refund_reissue_tab' ) ) { ifs_terp_refund_reissue_tab(); }
+                        break;
+                    case 'visa':
+                        if ( function_exists( 'ifs_terp_visa_tab' ) ) { ifs_terp_visa_tab(); }
+                        break;
+                    case 'hajj_umrah':
+                        if ( function_exists( 'ifs_terp_hajj_umrah_tab' ) ) { ifs_terp_hajj_umrah_tab(); }
+                        break;
+                    case 'tours':
+                        if ( function_exists( 'ifs_terp_tours_tab' ) ) { ifs_terp_tours_tab(); }
+                        break;
+                    case 'hotels':
+                        if ( function_exists( 'ifs_terp_hotels_tab' ) ) { ifs_terp_hotels_tab(); }
+                        break;
+                    case 'suppliers':
+                        if ( function_exists( 'ifs_terp_suppliers_tab' ) ) { ifs_terp_suppliers_tab(); }
+                        break;
+                    case 'b2b_agents':
+                        if ( function_exists( 'ifs_terp_b2b_agents_tab' ) ) { ifs_terp_b2b_agents_tab(); }
+                        break;
+                    case 'accounts':
+                        if ( function_exists( 'ifs_terp_accounts_tab' ) ) { ifs_terp_accounts_tab(); }
+                        break;
+                    case 'staff':
+                        if ( function_exists( 'ifs_terp_staff_tab' ) ) { ifs_terp_staff_tab(); }
+                        break;
+                    case 'reports':
+                        if ( function_exists( 'ifs_terp_reports_tab' ) ) { ifs_terp_reports_tab(); }
+                        break;
+                    case 'settings':
+                        if ( function_exists( 'ifs_terp_settings_tab' ) ) { ifs_terp_settings_tab(); }
+                        break;
+                }
+                ?>
+            </div>
         </div>
     </div>
+
+    <!-- Sidebar Collapse & Scroll Script -->
+    <script>
+    jQuery(document).ready(function($) {
+        $('#ifsSidebarToggle').on('click', function() {
+            $('#ifsSidebarContainer').toggleClass('collapsed');
+        });
+    });
+    </script>
     <?php
 }
 
@@ -677,64 +785,136 @@ add_action( 'admin_head', function() {
                 display: flex;
                 position: relative;
                 min-height: 100vh;
+                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             }
 
-            .ifs-terp-left-tabs, .ifs-terp-author-profile {
-                width: 240px;
+            /* Sidebar Container */
+            .ifs-terp-sidebar-container {
+                width: 260px;
+                height: 100vh;
+                position: sticky;
+                top: 0;
                 margin: 0;
                 list-style: none;
                 flex-shrink: 0;
-                background: #fff;
+                background: #ffffff;
                 border-right: 1px solid #e2e8f0;
+                display: flex;
+                flex-direction: column;
+                transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                z-index: 100;
+                box-shadow: 4px 0 16px rgba(15, 23, 42, 0.02);
             }
 
-            .ifs-terp-author-profile {
+            .ifs-terp-sidebar-brand {
+                padding: 16px 20px;
                 display: flex;
                 align-items: center;
-                gap: 15px;
+                justify-content: space-between;
+                border-bottom: 1px solid #f1f5f9;
+                background: #ffffff;
+                height: 75px;
+                box-sizing: border-box;
+                flex-shrink: 0;
+            }
+            .brand-title-wrap {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                overflow: hidden;
+            }
+            .ifs-terp-sidebar-brand .dashicons {
+                font-size: 24px;
+                width: 24px;
+                height: 24px;
+                color: #003376;
+                flex-shrink: 0;
+            }
+            .ifs-terp-sidebar-brand h3 {
+                margin: 0;
+                font-size: 16px;
+                font-weight: 800;
+                color: #0f172a;
+                letter-spacing: -0.3px;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+
+            .ifs-sidebar-toggle-btn {
+                background: #f8fafc;
+                border: 1px solid #e2e8f0;
+                border-radius: 8px;
+                width: 34px;
+                height: 34px;
+                display: flex;
+                align-items: center;
                 justify-content: center;
-                padding: 20px;
-                border-bottom: 1px solid #ddd;
+                cursor: pointer;
+                color: #475569;
+                transition: all 0.2s ease;
+                flex-shrink: 0;
             }
-            .ifs-terp-author-profile img {
-                width: 60px !important;
-                height: 60px;
-                border-radius: 50%;
-                border: 3px solid #003376;
+            .ifs-sidebar-toggle-btn:hover {
+                background: #003376;
+                color: #ffffff;
+                border-color: #003376;
             }
-            .ifs-terp-author-profile .profile-name {
-                margin-bottom: 0;
-                font-size: 14px;
-                font-weight: 700;
+            .ifs-sidebar-toggle-btn .dashicons {
+                font-size: 18px;
+                width: 18px;
+                height: 18px;
+                color: inherit;
             }
-            .profile-meta span {
-                font-size: 13px;
-                font-weight: 500;
-                text-transform: capitalize;
+
+            /* Scrollable Navigation Area */
+            .ifs-terp-sidebar-scroll-box {
+                flex-grow: 1;
+                overflow-y: auto;
+                overflow-x: hidden;
+                padding: 15px 0;
+            }
+            .ifs-terp-sidebar-scroll-box::-webkit-scrollbar {
+                width: 5px;
+            }
+            .ifs-terp-sidebar-scroll-box::-webkit-scrollbar-thumb {
+                background: #cbd5e1;
+                border-radius: 4px;
+            }
+
+            .ifs-terp-left-tabs {
+                list-style: none;
+                margin: 0;
+                padding: 0;
+            }
+            .ifs-terp-left-tabs li {
+                margin: 4px 12px;
             }
             .ifs-terp-left-tabs li a {
                 display: flex;
                 align-items: center;
-                padding: 10px 24px;
-                color: #333;
+                padding: 11px 16px;
+                color: #475569;
                 text-decoration: none;
                 font-weight: 600;
-                font-size: 14px;
+                font-size: 13.5px;
                 transition: all 0.2s ease;
+                white-space: nowrap;
+                border-radius: 8px;
             }
 
             .ifs-terp-left-tabs li a svg {
                 width: 16px;
                 height: 16px;
-                margin-right: 12px;
+                margin-right: 14px;
                 fill: #64748b;
                 transition: all 0.2s ease;
                 flex-shrink: 0;
             }
 
             .ifs-terp-left-tabs li a:hover {
-                background: #f8fafc;
-                color: #1e293b;
+                background: #f1f5f9;
+                color: #0f172a;
             }
 
             .ifs-terp-left-tabs li a:hover svg {
@@ -742,22 +922,167 @@ add_action( 'admin_head', function() {
             }
 
             .ifs-terp-left-tabs li a.active {
-                background: #003376;
+                background: linear-gradient(135deg, #003376 0%, #0284c7 100%);
                 color: #fff;
-                font-weight: 600;
+                font-weight: 700;
+                box-shadow: 0 4px 12px rgba(0, 51, 118, 0.2);
             }
 
             .ifs-terp-left-tabs li a.active svg {
                 fill: #fff;
             }
 
+            /* Collapsed Sidebar State */
+            .ifs-terp-sidebar-container.collapsed {
+                width: 76px;
+            }
+            .ifs-terp-sidebar-container.collapsed .brand-text,
+            .ifs-terp-sidebar-container.collapsed .tab-label {
+                display: none !important;
+            }
+            .ifs-terp-sidebar-container.collapsed .ifs-terp-sidebar-brand {
+                justify-content: center;
+                padding: 16px 10px;
+            }
+            // .ifs-terp-sidebar-container.collapsed .ifs-sidebar-toggle-btn {
+            //     display: none;
+            // }
+            .ifs-terp-sidebar-container.collapsed .ifs-terp-left-tabs li {
+                margin: 4px 8px;
+            }
+            .ifs-terp-sidebar-container.collapsed .ifs-terp-left-tabs li a {
+                padding: 12px 0;
+                justify-content: center;
+            }
+            .ifs-terp-sidebar-container.collapsed .ifs-terp-left-tabs li a svg {
+                margin-right: 0;
+            }
+
             .ifs-terp-right-box {
                 flex-grow: 1;
                 background: #f8fafc;
-                padding: 30px;
+                display: flex;
+                flex-direction: column;
+                min-width: 0;
             }
 
-            .ifs-terp-print .ifs-terp-left-tabs {
+            /* Ultra-Modern Premium Top Header Bar */
+            .ifs-top-header-bar {
+                background: #ffffff;
+                border-bottom: 1px solid #e2e8f0;
+                padding: 0 30px;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                height: 75px;
+                box-sizing: border-box;
+                box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.04);
+                position: sticky;
+                top: 0;
+                z-index: 90;
+            }
+            .ifs-top-left-cluster {
+                display: flex;
+                align-items: center;
+                gap: 16px;
+            }
+            .ifs-top-brand-badge {
+                display: inline-flex;
+                align-items: center;
+                gap: 6px;
+                background: #eff6ff;
+                color: #1d4ed8;
+                padding: 5px 12px;
+                border-radius: 20px;
+                font-size: 11.5px;
+                font-weight: 800;
+                letter-spacing: 0.3px;
+                border: 1px solid #dbeafe;
+            }
+            .ifs-top-brand-badge .dashicons {
+                font-size: 14px;
+                width: 14px;
+                height: 14px;
+            }
+            .ifs-top-search-indicator {
+                display: flex;
+                align-items: center;
+                gap: 6px;
+                font-size: 13px;
+                font-weight: 600;
+                color: #64748b;
+                padding-left: 16px;
+                border-left: 1px solid #e2e8f0;
+            }
+            .ifs-top-search-indicator .dashicons {
+                color: #0284c7;
+                font-size: 17px;
+                width: 17px;
+                height: 17px;
+            }
+
+            .ifs-top-user-menu {
+                display: flex;
+                align-items: center;
+                gap: 14px;
+                background: #f8fafc;
+                padding: 6px 14px 6px 6px;
+                border-radius: 30px;
+                border: 1px solid #e2e8f0;
+            }
+            .top-user-avatar img {
+                border-radius: 50%;
+                object-fit: cover;
+                border: 2px solid #003376;
+            }
+            .top-user-info {
+                display: flex;
+                flex-direction: column;
+                line-height: 1.25;
+            }
+            .top-user-name {
+                font-size: 13px;
+                font-weight: 800;
+                color: #0f172a;
+            }
+            .top-user-role {
+                font-size: 10.5px;
+                color: #64748b;
+                text-transform: capitalize;
+                font-weight: 600;
+            }
+            .ifs-top-logout-btn {
+                background: #fef2f2;
+                color: #dc2626 !important;
+                border: 1px solid #fecaca;
+                padding: 5px 12px;
+                border-radius: 20px;
+                font-size: 12px;
+                font-weight: 700;
+                text-decoration: none;
+                display: inline-flex;
+                align-items: center;
+                gap: 4px;
+                transition: all 0.2s ease;
+                margin-left: 6px;
+            }
+            .ifs-top-logout-btn:hover {
+                background: #fee2e2;
+                color: #b91c1c !important;
+            }
+            .ifs-top-logout-btn .dashicons {
+                font-size: 14px;
+                width: 14px;
+                height: 14px;
+            }
+
+            .ifs-content-body-area {
+                padding: 30px;
+                flex-grow: 1;
+            }
+
+            .ifs-terp-print .ifs-terp-sidebar-container,
+            .ifs-terp-print .ifs-top-header-bar {
                 display: none !important;
             }
         </style>';

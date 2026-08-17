@@ -118,204 +118,542 @@ function ifs_terp_dashboard_tab() {
     $user_display_name = ! empty( $current_wp_user->display_name ) ? $current_wp_user->display_name : 'Partner';
     $rendered_greeting = $greeting_prefix . ', ' . $user_display_name;
     ?>
-    <div class="ifs-terp-dashboard-wrapper">
+    <div class="ifs-dashboard-container">
         
-        <!-- Header Banner -->
-        <div class="ifs-terp-header-block" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; background: #fff; padding: 20px; border-radius: 8px; border: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,0.02);">
-            <div style="display: flex; align-items: center; gap: 18px;">
-                <div class="ifs-terp-header-logo">
+        <!-- Premium Header Hero Banner -->
+        <div class="ifs-dash-hero-banner">
+            <div class="ifs-hero-intro">
+                <div class="ifs-hero-avatar-box">
                     <img src="<?php echo esc_url( ITERP_URL . 'assets/img/logo.png' ); ?>" 
-                         alt="System Logo" style="height: 52px; width: auto; display: block;" onerror="this.style.display='none'">
+                         alt="System Logo" onerror="this.style.display='none'">
+                    <div class="status-online-dot"></div>
                 </div>
                 <div>
-                    <h1 style="margin: 0 0 4px 0; font-size: 20px; color: #0f172a; font-weight: 700;"><?php echo esc_html( $rendered_greeting ); ?></h1>
-                    <p style="margin: 0; color: #64748b; font-size: 13px;">IFS Travel ERP Operations Desk & Live Financial Summary</p>
+                    <span class="hero-badge">Enterprise Operations Hub</span>
+                    <h1 class="hero-title"><?php echo esc_html( $rendered_greeting ); ?></h1>
+                    <p class="hero-subtitle">Real-time financial reconciliation, multi-module ticketing, and agency audit workflows.</p>
                 </div>
             </div>
 
-            <div class="ifs-terp-live-timer-container" style="text-align: right;">
-                <div style="color: #64748b; font-size: 13px; margin-bottom: 4px;">
-                    <span class="dashicons dashicons-calendar-alt" style="font-size:15px; vertical-align:middle; margin-right:4px;"></span> 
+            <div class="ifs-hero-datetime-box">
+                <div class="hero-date">
+                    <span class="dashicons dashicons-calendar-alt"></span> 
                     <?php echo date( 'l, jS F Y' ); ?>
                 </div>
-                <div class="ifs-terp-ticker-digits" style="font-size: 16px; font-weight: 700; color: #003376; font-family: monospace;">
-                    <span class="dashicons dashicons-clock" style="font-size:16px; vertical-align:middle; margin-right:4px;"></span>
+                <div class="hero-time">
+                    <span class="dashicons dashicons-clock"></span>
                     <span id="ifsTerpLiveTickerClock">00:00:00</span>
                 </div>
             </div>
         </div>
 
-        <!-- Quick Action Shortcuts -->
-        <div style="display: flex; gap: 12px; margin-bottom: 25px; flex-wrap: wrap;">
-            <a href="<?php echo esc_url( $ticketing_tab_url . '&sub=add' ); ?>" style="background: #003376; color: #fff; text-decoration: none; padding: 10px 16px; border-radius: 6px; font-size: 13px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px;">
-                <span class="dashicons dashicons-tickets-alt"></span> Issue Air Ticket
-            </a>
-            <a href="<?php echo esc_url( $visa_tab_url . '&sub=add' ); ?>" style="background: #fff; color: #0f172a; border: 1px solid #cbd5e1; text-decoration: none; padding: 10px 16px; border-radius: 6px; font-size: 13px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px;">
-                <span class="dashicons dashicons-admin-site-alt3" style="color: #d97706;"></span> New Visa File
-            </a>
-            <a href="<?php echo esc_url( $hajj_tab_url . '&sub=add' ); ?>" style="background: #fff; color: #0f172a; border: 1px solid #cbd5e1; text-decoration: none; padding: 10px 16px; border-radius: 6px; font-size: 13px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px;">
-                <span class="dashicons dashicons-groups" style="color: #0284c7;"></span> Pilgrim Booking
-            </a>
-            <a href="<?php echo esc_url( $accounts_tab_url . '&sub=create_invoice' ); ?>" style="background: #fff; color: #0f172a; border: 1px solid #cbd5e1; text-decoration: none; padding: 10px 16px; border-radius: 6px; font-size: 13px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px;">
-                <span class="dashicons dashicons-media-document" style="color: #7c3aed;"></span> Generate Invoice
-            </a>
-            <a href="<?php echo esc_url( $accounts_tab_url . '&sub=ledger' ); ?>" style="background: #fff; color: #0f172a; border: 1px solid #cbd5e1; text-decoration: none; padding: 10px 16px; border-radius: 6px; font-size: 13px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px;">
-                <span class="dashicons dashicons-money-alt" style="color: #dc2626;"></span> Record Expense
-            </a>
+        <!-- Quick Action Shortcuts Bar -->
+        <div class="ifs-quick-action-strip">
+            <span class="strip-label">Quick Actions:</span>
+            <div class="strip-links">
+                <a href="<?php echo esc_url( $ticketing_tab_url . '&sub=add' ); ?>" class="ifs-action-chip primary">
+                    <span class="dashicons dashicons-tickets-alt"></span> Issue Air Ticket
+                </a>
+                <a href="<?php echo esc_url( $visa_tab_url . '&sub=add' ); ?>" class="ifs-action-chip">
+                    <span class="dashicons dashicons-admin-site-alt3" style="color: #d97706;"></span> New Visa File
+                </a>
+                <a href="<?php echo esc_url( $hajj_tab_url . '&sub=add' ); ?>" class="ifs-action-chip">
+                    <span class="dashicons dashicons-groups" style="color: #0284c7;"></span> Pilgrim Booking
+                </a>
+                <a href="<?php echo esc_url( $accounts_tab_url . '&sub=create_invoice' ); ?>" class="ifs-action-chip">
+                    <span class="dashicons dashicons-media-document" style="color: #7c3aed;"></span> Generate Invoice
+                </a>
+                <a href="<?php echo esc_url( $accounts_tab_url . '&sub=ledger' ); ?>" class="ifs-action-chip">
+                    <span class="dashicons dashicons-money-alt" style="color: #dc2626;"></span> Record Expense
+                </a>
+            </div>
         </div>
 
-        <!-- Metric KPI Cards -->
-        <div class="ifs-terp-summary-grid-matrix" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; margin-bottom: 30px;">
+        <!-- Metric KPI Cards Matrix -->
+        <div class="ifs-metric-cards-grid">
             
-            <div style="background: #fff; padding: 20px; border-radius: 8px; border-left: 4px solid #3b82f6; border-top: 1px solid #e2e8f0; border-right: 1px solid #e2e8f0; border-bottom: 1px solid #e2e8f0;">
-                <div style="color: #64748b; font-size: 12px; font-weight: 600; text-transform: uppercase;">Tickets Issued (Today)</div>
-                <div style="font-size: 26px; font-weight: 700; color: #0f172a; margin: 8px 0;"><?php echo $total_tickets_today; ?></div>
-                <div style="font-size: 12px; color: #2563eb;">
-                    <a href="<?php echo esc_url( $ticketing_tab_url ); ?>" style="text-decoration:none; color:inherit; font-weight:600;">View Flight Ledger &rarr;</a>
+            <div class="ifs-kpi-card border-blue">
+                <div class="kpi-icon-wrap bg-blue"><span class="dashicons dashicons-tickets-alt"></span></div>
+                <div class="kpi-content">
+                    <span class="kpi-title">Tickets Issued (Today)</span>
+                    <div class="kpi-value"><?php echo number_format( $total_tickets_today ); ?></div>
+                    <a href="<?php echo esc_url( $ticketing_tab_url ); ?>" class="kpi-link">View Flight Ledger &rarr;</a>
                 </div>
             </div>
 
-            <div style="background: #fff; padding: 20px; border-radius: 8px; border-left: 4px solid #f59e0b; border-top: 1px solid #e2e8f0; border-right: 1px solid #e2e8f0; border-bottom: 1px solid #e2e8f0;">
-                <div style="color: #64748b; font-size: 12px; font-weight: 600; text-transform: uppercase;">Visas in Processing</div>
-                <div style="font-size: 26px; font-weight: 700; color: #0f172a; margin: 8px 0;"><?php echo $processing_visas_count; ?></div>
-                <div style="font-size: 12px; color: #d97706;">
-                    <a href="<?php echo esc_url( $visa_tab_url ); ?>" style="text-decoration:none; color:inherit; font-weight:600;">Track Applications &rarr;</a>
+            <div class="ifs-kpi-card border-amber">
+                <div class="kpi-icon-wrap bg-amber"><span class="dashicons dashicons-admin-site-alt3"></span></div>
+                <div class="kpi-content">
+                    <span class="kpi-title">Visas in Processing</span>
+                    <div class="kpi-value"><?php echo number_format( $processing_visas_count ); ?></div>
+                    <a href="<?php echo esc_url( $visa_tab_url ); ?>" class="kpi-link">Track Applications &rarr;</a>
                 </div>
             </div>
 
-            <div style="background: #fff; padding: 20px; border-radius: 8px; border-left: 4px solid #0284c7; border-top: 1px solid #e2e8f0; border-right: 1px solid #e2e8f0; border-bottom: 1px solid #e2e8f0;">
-                <div style="color: #64748b; font-size: 12px; font-weight: 600; text-transform: uppercase;">Active Hajj & Umrah</div>
-                <div style="font-size: 26px; font-weight: 700; color: #0f172a; margin: 8px 0;"><?php echo $active_hajj_count; ?> <span style="font-size: 14px; font-weight: normal; color: #64748b;">Pilgrims</span></div>
-                <div style="font-size: 12px; color: #0284c7;">
-                    <a href="<?php echo esc_url( $hajj_tab_url ); ?>" style="text-decoration:none; color:inherit; font-weight:600;">Pilgrim Directory &rarr;</a>
+            <div class="ifs-kpi-card border-cyan">
+                <div class="kpi-icon-wrap bg-cyan"><span class="dashicons dashicons-groups"></span></div>
+                <div class="kpi-content">
+                    <span class="kpi-title">Active Hajj & Umrah</span>
+                    <div class="kpi-value"><?php echo number_format( $active_hajj_count ); ?> <span class="unit-sub">Pilgrims</span></div>
+                    <a href="<?php echo esc_url( $hajj_tab_url ); ?>" class="kpi-link">Pilgrim Directory &rarr;</a>
                 </div>
             </div>
 
-            <div style="background: #fff; padding: 20px; border-radius: 8px; border-left: 4px solid #ef4444; border-top: 1px solid #e2e8f0; border-right: 1px solid #e2e8f0; border-bottom: 1px solid #e2e8f0;">
-                <div style="color: #64748b; font-size: 12px; font-weight: 600; text-transform: uppercase;">Total Market Due</div>
-                <div style="font-size: 24px; font-weight: 800; color: #dc2626; margin: 8px 0;">৳<?php echo number_format( $pending_dues_amount, 2 ); ?></div>
-                <div style="font-size: 12px; color: #dc2626;">
-                    <a href="<?php echo esc_url( $accounts_tab_url ); ?>" style="text-decoration:none; color:inherit; font-weight:600;">Collect Receivables &rarr;</a>
+            <div class="ifs-kpi-card border-rose">
+                <div class="kpi-icon-wrap bg-rose"><span class="dashicons dashicons-warning"></span></div>
+                <div class="kpi-content">
+                    <span class="kpi-title">Total Market Due</span>
+                    <div class="kpi-value text-rose">৳<?php echo number_format( $pending_dues_amount, 2 ); ?></div>
+                    <a href="<?php echo esc_url( $accounts_tab_url ); ?>" class="kpi-link text-rose">Collect Receivables &rarr;</a>
                 </div>
             </div>
 
-            <div style="background: #fff; padding: 20px; border-radius: 8px; border-left: 4px solid #10b981; border-top: 1px solid #e2e8f0; border-right: 1px solid #e2e8f0; border-bottom: 1px solid #e2e8f0;">
-                <div style="color: #64748b; font-size: 12px; font-weight: 600; text-transform: uppercase;">Today's Inflow (Income)</div>
-                <div style="font-size: 24px; font-weight: 700; color: #166534; margin: 8px 0;">৳<?php echo number_format( $today_income, 2 ); ?></div>
-                <div style="font-size: 12px; color: #64748b;">Daily Cash Register</div>
-            </div>
-
-            <div style="background: #fff; padding: 20px; border-radius: 8px; border-left: 4px solid #64748b; border-top: 1px solid #e2e8f0; border-right: 1px solid #e2e8f0; border-bottom: 1px solid #e2e8f0;">
-                <div style="color: #64748b; font-size: 12px; font-weight: 600; text-transform: uppercase;">Today's Outflow (Expense)</div>
-                <div style="font-size: 24px; font-weight: 700; color: #475569; margin: 8px 0;">৳<?php echo number_format( $today_expense, 2 ); ?></div>
-                <div style="font-size: 12px; color: #64748b;">Office & Operating Cost</div>
-            </div>
-
-            <div style="background: #fff; padding: 20px; border-radius: 8px; border-left: 4px solid <?php echo ( $net_profit_loss >= 0 ) ? '#10b981' : '#ef4444'; ?>; border-top: 1px solid #e2e8f0; border-right: 1px solid #e2e8f0; border-bottom: 1px solid #e2e8f0;">
-                <div style="color: #64748b; font-size: 12px; font-weight: 600; text-transform: uppercase;">Net Margin (This Month)</div>
-                <div style="font-size: 24px; font-weight: 800; color: <?php echo ( $net_profit_loss >= 0 ) ? '#166534' : '#dc2626'; ?>; margin: 8px 0;">
-                    ৳<?php echo number_format( $net_profit_loss, 2 ); ?>
-                </div>
-                <div style="font-size: 12px; color: <?php echo ( $net_profit_loss >= 0 ) ? '#166534' : '#dc2626'; ?>; font-weight:600;">
-                    <?php echo ( $net_profit_loss >= 0 ) ? 'Profitable Month' : 'Net Loss Status'; ?>
+            <div class="ifs-kpi-card border-emerald">
+                <div class="kpi-icon-wrap bg-emerald"><span class="dashicons dashicons-arrow-down-alt"></span></div>
+                <div class="kpi-content">
+                    <span class="kpi-title">Today's Inflow (Income)</span>
+                    <div class="kpi-value text-emerald">৳<?php echo number_format( $today_income, 2 ); ?></div>
+                    <span class="kpi-sub-text">Daily Cash Register</span>
                 </div>
             </div>
 
-            <div style="background: #fff; padding: 20px; border-radius: 8px; border-left: 4px solid #8b5cf6; border-top: 1px solid #e2e8f0; border-right: 1px solid #e2e8f0; border-bottom: 1px solid #e2e8f0;">
-                <div style="color: #64748b; font-size: 12px; font-weight: 600; text-transform: uppercase;">Active B2B Sub-Agents</div>
-                <div style="font-size: 26px; font-weight: 700; color: #0f172a; margin: 8px 0;"><?php echo $active_agents_count; ?></div>
-                <div style="font-size: 12px; color: #7c3aed;">
-                    <a href="<?php echo esc_url( $agents_tab_url ); ?>" style="text-decoration:none; color:inherit; font-weight:600;">B2B Network &rarr;</a>
+            <div class="ifs-kpi-card border-slate">
+                <div class="kpi-icon-wrap bg-slate"><span class="dashicons dashicons-arrow-up-alt"></span></div>
+                <div class="kpi-content">
+                    <span class="kpi-title">Today's Outflow (Expense)</span>
+                    <div class="kpi-value text-slate">৳<?php echo number_format( $today_expense, 2 ); ?></div>
+                    <span class="kpi-sub-text">Office & Operating Cost</span>
+                </div>
+            </div>
+
+            <div class="ifs-kpi-card border-<?php echo ( $net_profit_loss >= 0 ) ? 'emerald' : 'rose'; ?>">
+                <div class="kpi-icon-wrap <?php echo ( $net_profit_loss >= 0 ) ? 'bg-emerald' : 'bg-rose'; ?>"><span class="dashicons dashicons-chart-line"></span></div>
+                <div class="kpi-content">
+                    <span class="kpi-title">Net Margin (This Month)</span>
+                    <div class="kpi-value <?php echo ( $net_profit_loss >= 0 ) ? 'text-emerald' : 'text-rose'; ?>">
+                        ৳<?php echo number_format( $net_profit_loss, 2 ); ?>
+                    </div>
+                    <span class="kpi-sub-text font-bold"><?php echo ( $net_profit_loss >= 0 ) ? 'Profitable Month' : 'Net Loss Status'; ?></span>
+                </div>
+            </div>
+
+            <div class="ifs-kpi-card border-indigo">
+                <div class="kpi-icon-wrap bg-indigo"><span class="dashicons dashicons-networking"></span></div>
+                <div class="kpi-content">
+                    <span class="kpi-title">Active B2B Sub-Agents</span>
+                    <div class="kpi-value"><?php echo number_format( $active_agents_count ); ?></div>
+                    <a href="<?php echo esc_url( $agents_tab_url ); ?>" class="kpi-link">B2B Network &rarr;</a>
                 </div>
             </div>
 
         </div>
 
         <!-- Recent Operations Feeds (Two Column Layout) -->
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(450px, 1fr)); gap: 25px;">
+        <div class="ifs-feed-dual-grid">
             
             <!-- Latest Air Tickets Feed -->
-            <div style="background: #fff; padding: 20px; border-radius: 8px; border: 1px solid #e2e8f0;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid #f1f5f9; padding-bottom: 10px;">
-                    <h3 style="margin: 0; font-size: 15px; color: #0f172a; font-weight: 700;">
-                        <span class="dashicons dashicons-tickets-alt" style="color: #003376; vertical-align: middle;"></span> Recent Air Tickets
+            <div class="ifs-feed-card">
+                <div class="feed-card-header">
+                    <h3 class="feed-title">
+                        <span class="dashicons dashicons-tickets-alt"></span> Recent Air Tickets
                     </h3>
-                    <a href="<?php echo esc_url( $ticketing_tab_url ); ?>" style="font-size: 12px; color: #003376; text-decoration: none; font-weight: 600;">View All</a>
+                    <a href="<?php echo esc_url( $ticketing_tab_url ); ?>" class="feed-view-all">View All</a>
                 </div>
 
-                <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
-                    <thead>
-                        <tr style="text-align: left; color: #64748b; border-bottom: 1px solid #f1f5f9;">
-                            <th style="padding: 8px 0;">Passenger / PNR</th>
-                            <th style="padding: 8px 0;">Sector</th>
-                            <th style="padding: 8px 0; text-align: right;">Sell (৳)</th>
-                            <th style="padding: 8px 0; text-align: right;">Status</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php if ( $recent_tickets ) : foreach ( $recent_tickets as $t ) : ?>
-                            <tr style="border-bottom: 1px solid #f8fafc;">
-                                <td style="padding: 10px 0;">
-                                    <div style="font-weight: 600; color: #0f172a;"><?php echo esc_html( $t->customer_name ?: 'Direct Client' ); ?></div>
-                                    <div style="font-family: monospace; font-size: 11px; color: #0284c7; font-weight: bold;"><?php echo esc_html( $t->pnr ); ?></div>
-                                </td>
-                                <td style="padding: 10px 0;">
-                                    <div><?php echo esc_html( $t->airline ); ?></div>
-                                    <div style="font-size: 11px; color: #64748b;"><?php echo esc_html( $t->sector ); ?></div>
-                                </td>
-                                <td style="padding: 10px 0; text-align: right; font-weight: 600; color: #0f172a;">৳<?php echo number_format( $t->sell_price, 2 ); ?></td>
-                                <td style="padding: 10px 0; text-align: right;">
-                                    <span style="background: #dcfce7; color: #166534; padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: 600;"><?php echo esc_html( $t->status ); ?></span>
-                                </td>
+                <div class="table-responsive-wrap">
+                    <table class="ifs-premium-table">
+                        <thead>
+                            <tr>
+                                <th>Passenger / PNR</th>
+                                <th>Sector / Airline</th>
+                                <th style="text-align: right;">Sell (৳)</th>
+                                <th style="text-align: right;">Status</th>
                             </tr>
-                        <?php endforeach; else : ?>
-                            <tr><td colspan="4" style="text-align: center; padding: 15px; color: #94a3b8;">No recent tickets found.</td></tr>
-                        <?php endif; ?>
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+                            <?php if ( $recent_tickets ) : foreach ( $recent_tickets as $t ) : ?>
+                                <tr>
+                                    <td>
+                                        <div class="row-main-title"><?php echo esc_html( $t->customer_name ?: 'Direct Client' ); ?></div>
+                                        <div class="row-sub-code"><?php echo esc_html( $t->pnr ); ?></div>
+                                    </td>
+                                    <td>
+                                        <div class="row-main-title"><?php echo esc_html( $t->airline ); ?></div>
+                                        <div class="row-sub-code"><?php echo esc_html( $t->sector ); ?></div>
+                                    </td>
+                                    <td style="text-align: right; font-weight: 700; font-family: ui-monospace, monospace;">৳<?php echo number_format( $t->sell_price, 2 ); ?></td>
+                                    <td style="text-align: right;">
+                                        <span class="ifs-badge-status status-issued"><?php echo esc_html( $t->status ); ?></span>
+                                    </td>
+                                </tr>
+                            <?php endforeach; else : ?>
+                                <tr><td colspan="4" class="empty-feed-row">No recent air tickets found.</td></tr>
+                            <?php endif; ?>
+                        </tbody>
+                    </table>
+                </div>
             </div>
 
             <!-- Latest Visa Applications Feed -->
-            <div style="background: #fff; padding: 20px; border-radius: 8px; border: 1px solid #e2e8f0;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid #f1f5f9; padding-bottom: 10px;">
-                    <h3 style="margin: 0; font-size: 15px; color: #0f172a; font-weight: 700;">
-                        <span class="dashicons dashicons-admin-site-alt3" style="color: #d97706; vertical-align: middle;"></span> Recent Visa Applications
+            <div class="ifs-feed-card">
+                <div class="feed-card-header">
+                    <h3 class="feed-title">
+                        <span class="dashicons dashicons-admin-site-alt3"></span> Recent Visa Applications
                     </h3>
-                    <a href="<?php echo esc_url( $visa_tab_url ); ?>" style="font-size: 12px; color: #003376; text-decoration: none; font-weight: 600;">View All</a>
+                    <a href="<?php echo esc_url( $visa_tab_url ); ?>" class="feed-view-all">View All</a>
                 </div>
 
-                <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
-                    <thead>
-                        <tr style="text-align: left; color: #64748b; border-bottom: 1px solid #f1f5f9;">
-                            <th style="padding: 8px 0;">Applicant Name</th>
-                            <th style="padding: 8px 0;">Country</th>
-                            <th style="padding: 8px 0;">Exp. Delivery</th>
-                            <th style="padding: 8px 0; text-align: right;">Status</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php if ( $recent_visas ) : foreach ( $recent_visas as $v ) : ?>
-                            <tr style="border-bottom: 1px solid #f8fafc;">
-                                <td style="padding: 10px 0;">
-                                    <div style="font-weight: 600; color: #0f172a;"><?php echo esc_html( $v->customer_name ?: 'Direct Client' ); ?></div>
-                                    <div style="font-size: 11px; color: #64748b;"><?php echo esc_html( $v->visa_type ); ?></div>
-                                </td>
-                                <td style="padding: 10px 0; font-weight: 600; color: #0f172a;"><?php echo esc_html( $v->country ); ?></td>
-                                <td style="padding: 10px 0; color: #64748b; font-size: 12px;"><?php echo ( $v->expected_delivery != '1970-01-01' ) ? date('d M Y', strtotime($v->expected_delivery)) : '-'; ?></td>
-                                <td style="padding: 10px 0; text-align: right;">
-                                    <span style="background: #fef3c7; color: #b45309; padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: 600;"><?php echo esc_html( $v->status ); ?></span>
-                                </td>
+                <div class="table-responsive-wrap">
+                    <table class="ifs-premium-table">
+                        <thead>
+                            <tr>
+                                <th>Applicant Name</th>
+                                <th>Country</th>
+                                <th>Exp. Delivery</th>
+                                <th style="text-align: right;">Status</th>
                             </tr>
-                        <?php endforeach; else : ?>
-                            <tr><td colspan="4" style="text-align: center; padding: 15px; color: #94a3b8;">No visa applications found.</td></tr>
-                        <?php endif; ?>
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+                            <?php if ( $recent_visas ) : foreach ( $recent_visas as $v ) : ?>
+                                <tr>
+                                    <td>
+                                        <div class="row-main-title"><?php echo esc_html( $v->customer_name ?: 'Direct Client' ); ?></div>
+                                        <div class="row-sub-code"><?php echo esc_html( $v->visa_type ); ?></div>
+                                    </td>
+                                    <td><strong style="color: #0f172a;"><?php echo esc_html( $v->country ); ?></strong></td>
+                                    <td style="color: #64748b; font-size: 12.5px;"><?php echo ( $v->expected_delivery != '1970-01-01' ) ? date('d M Y', strtotime($v->expected_delivery)) : '-'; ?></td>
+                                    <td style="text-align: right;">
+                                        <span class="ifs-badge-status status-processing"><?php echo esc_html( $v->status ); ?></span>
+                                    </td>
+                                </tr>
+                            <?php endforeach; else : ?>
+                                <tr><td colspan="4" class="empty-feed-row">No visa applications found.</td></tr>
+                            <?php endif; ?>
+                        </tbody>
+                    </table>
+                </div>
             </div>
 
         </div>
 
     </div>
+
+    <!-- Premium Dashboard Stylesheet -->
+    <style>
+        .ifs-dashboard-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            color: #0f172a;
+        }
+
+        /* Hero Banner */
+        .ifs-dash-hero-banner {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 16px;
+            padding: 24px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+            box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.04);
+            margin-bottom: 24px;
+        }
+        .ifs-hero-intro {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        .ifs-hero-avatar-box {
+            position: relative;
+            width: 56px;
+            height: 56px;
+            border-radius: 14px;
+            background: #f1f5f9;
+            border: 1px solid #e2e8f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            overflow: hidden;
+        }
+        .ifs-hero-avatar-box img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            padding: 6px;
+        }
+        .status-online-dot {
+            position: absolute;
+            bottom: 4px;
+            right: 4px;
+            width: 10px;
+            height: 10px;
+            background: #10b981;
+            border: 2px solid #ffffff;
+            border-radius: 50%;
+        }
+        .hero-badge {
+            display: inline-block;
+            font-size: 10.5px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            background: #e0f2fe;
+            color: #0369a1;
+            padding: 2px 8px;
+            border-radius: 6px;
+            margin-bottom: 4px;
+        }
+        .hero-title {
+            margin: 0 0 2px 0;
+            font-size: 22px;
+            font-weight: 900;
+            color: #0f172a;
+            letter-spacing: -0.4px;
+        }
+        .hero-subtitle {
+            margin: 0;
+            font-size: 13px;
+            color: #64748b;
+        }
+        .ifs-hero-datetime-box {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 12px 18px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            text-align: right;
+        }
+        .hero-date {
+            font-size: 12.5px;
+            font-weight: 700;
+            color: #334155;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            justify-content: flex-end;
+        }
+        .hero-date .dashicons { font-size: 15px; width: 15px; height: 15px; color: #0284c7; }
+        .hero-time {
+            font-size: 15px;
+            font-weight: 800;
+            color: #003376;
+            font-family: ui-monospace, monospace;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            justify-content: flex-end;
+        }
+        .hero-time .dashicons { font-size: 15px; width: 15px; height: 15px; color: #003376; }
+
+        /* Quick Action Strip */
+        .ifs-quick-action-strip {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 14px 22px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 24px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+            flex-wrap: wrap;
+        }
+        .strip-label {
+            font-size: 12px;
+            font-weight: 800;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+        }
+        .strip-links {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .ifs-action-chip {
+            background: #f8fafc;
+            color: #334155;
+            border: 1px solid #cbd5e1;
+            padding: 7px 14px;
+            border-radius: 8px;
+            font-size: 12.5px;
+            font-weight: 700;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s ease;
+        }
+        .ifs-action-chip.primary {
+            background: linear-gradient(135deg, #003376 0%, #0284c7 100%);
+            color: #ffffff;
+            border-color: transparent;
+            box-shadow: 0 4px 12px rgba(0, 51, 118, 0.2);
+        }
+        .ifs-action-chip:hover {
+            transform: translateY(-1px);
+            background: #f1f5f9;
+            color: #0f172a;
+            border-color: #94a3b8;
+        }
+        .ifs-action-chip.primary:hover {
+            background: linear-gradient(135deg, #002255 0%, #026aa2 100%);
+            color: #ffffff;
+        }
+        .ifs-action-chip .dashicons { font-size: 15px; width: 15px; height: 15px; }
+
+        /* Metric KPI Cards Matrix */
+        .ifs-metric-cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 20px;
+            margin-bottom: 26px;
+        }
+        .ifs-kpi-card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 14px;
+            padding: 20px 22px;
+            display: flex;
+            align-items: flex-start;
+            gap: 16px;
+            box-shadow: 0 4px 16px -2px rgba(15, 23, 42, 0.03);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .ifs-kpi-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px -4px rgba(15, 23, 42, 0.06);
+        }
+        .ifs-kpi-card.border-blue { border-left: 5px solid #3b82f6; }
+        .ifs-kpi-card.border-amber { border-left: 5px solid #f59e0b; }
+        .ifs-kpi-card.border-cyan { border-left: 5px solid #0284c7; }
+        .ifs-kpi-card.border-rose { border-left: 5px solid #ef4444; }
+        .ifs-kpi-card.border-emerald { border-left: 5px solid #10b981; }
+        .ifs-kpi-card.border-slate { border-left: 5px solid #64748b; }
+        .ifs-kpi-card.border-indigo { border-left: 5px solid #8b5cf6; }
+
+        .kpi-icon-wrap {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #ffffff;
+            flex-shrink: 0;
+        }
+        .kpi-icon-wrap.bg-blue { background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); }
+        .kpi-icon-wrap.bg-amber { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); }
+        .kpi-icon-wrap.bg-cyan { background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%); }
+        .kpi-icon-wrap.bg-rose { background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); }
+        .kpi-icon-wrap.bg-emerald { background: linear-gradient(135deg, #10b981 0%, #059669 100%); }
+        .kpi-icon-wrap.bg-slate { background: linear-gradient(135deg, #64748b 0%, #475569 100%); }
+        .kpi-icon-wrap.bg-indigo { background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%); }
+        .kpi-icon-wrap .dashicons { font-size: 20px; width: 20px; height: 20px; }
+
+        .kpi-content { flex: 1; min-width: 0; }
+        .kpi-title { font-size: 11px; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 0.4px; display: block; margin-bottom: 4px; }
+        .kpi-value { font-size: 24px; font-weight: 900; color: #0f172a; letter-spacing: -0.5px; line-height: 1.1; margin-bottom: 6px; font-family: ui-monospace, monospace; }
+        .unit-sub { font-size: 13px; font-weight: 600; color: #64748b; font-family: -apple-system, sans-serif; }
+        .kpi-sub-text { font-size: 12px; color: #64748b; font-weight: 600; display: block; }
+        .kpi-link { font-size: 12px; font-weight: 700; color: #0284c7; text-decoration: none; display: inline-block; }
+        .kpi-link:hover { text-decoration: underline; }
+        .text-rose { color: #dc2626 !important; }
+        .text-emerald { color: #059669 !important; }
+        .text-slate { color: #475569 !important; }
+        .font-bold { font-weight: 800 !important; }
+
+        /* Feeds Grid */
+        .ifs-feed-dual-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(480px, 1fr));
+            gap: 24px;
+        }
+        .ifs-feed-card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 14px;
+            padding: 24px;
+            box-shadow: 0 4px 16px -2px rgba(15, 23, 42, 0.03);
+        }
+        .feed-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 18px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #f1f5f9;
+        }
+        .feed-title {
+            margin: 0;
+            font-size: 16px;
+            font-weight: 800;
+            color: #0f172a;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .feed-title .dashicons { color: #003376; font-size: 20px; width: 20px; height: 20px; }
+        .feed-view-all {
+            font-size: 12.5px;
+            font-weight: 700;
+            color: #003376;
+            text-decoration: none;
+            background: #f1f5f9;
+            padding: 4px 10px;
+            border-radius: 6px;
+            transition: background 0.15s ease;
+        }
+        .feed-view-all:hover { background: #e2e8f0; }
+
+        /* Premium Table Design */
+        .table-responsive-wrap { overflow-x: auto; }
+        .ifs-premium-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+        .ifs-premium-table thead th {
+            background: #f8fafc;
+            color: #475569;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 10px 14px;
+            border-bottom: 2px solid #e2e8f0;
+            text-align: left;
+        }
+        .ifs-premium-table tbody td {
+            padding: 12px 14px;
+            border-bottom: 1px solid #f1f5f9;
+            vertical-align: middle;
+            color: #334155;
+        }
+        .ifs-premium-table tbody tr:hover td { background: #f8fafc; }
+        .row-main-title { font-weight: 700; color: #0f172a; font-size: 13px; }
+        .row-sub-code { font-family: ui-monospace, monospace; font-size: 11px; color: #64748b; margin-top: 2px; }
+
+        .ifs-badge-status {
+            display: inline-flex;
+            align-items: center;
+            padding: 3px 8px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+        .status-issued { background: #dcfce7; color: #15803d; }
+        .status-processing { background: #fef3c7; color: #b45309; }
+        .empty-feed-row { text-align: center; padding: 25px !important; color: #94a3b8; font-style: italic; }
+    </style>
 
     <script>
     document.addEventListener('DOMContentLoaded', function() {
