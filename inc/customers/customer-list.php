@@ -5,7 +5,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 /**
  * Enterprise Next-Gen Customer List & Directory Console
- * Features: Live Search, Expiry Badge Warnings, Quick Profile Drawers, Batch Data Export & Modern DataTables
+ * Features: Live Search Box, Custom Pagination, Per Page Selector, Avatar Photo Sync, Expiry Badge Warnings & Action Pills
  */
 function ifs_terp_customer_list_page() {
     global $wpdb;
@@ -92,15 +92,32 @@ function ifs_terp_customer_list_page() {
                 </div>
             </div>
 
+            <!-- Custom DataTables Controls Toolbar (Search Box & Per Page Selector) -->
+            <div class="ifs-custom-table-controls">
+                <div class="ifs-per-page-wrap">
+                    <label for="ifsPerPageSelect">Show</label>
+                    <select id="ifsPerPageSelect" class="ifs-select-control">
+                        <option value="10">10</option>
+                        <option value="15" selected>15</option>
+                        <option value="25">25</option>
+                        <option value="50">50</option>
+                        <option value="100">100</option>
+                    </select>
+                    <span>entries</span>
+                </div>
+                <div class="ifs-live-search-wrap">
+                    <label for="ifsLiveSearchInput"><span class="dashicons dashicons-search"></span></label>
+                    <input type="text" id="ifsLiveSearchInput" class="ifs-search-input" placeholder="Search by name, mobile, email...">
+                </div>
+            </div>
+
             <div class="ifs-table-responsive-wrapper">
                 <table class="ifs-pro-datatable" id="ifsCustomerTable">
                     <thead>
                         <tr>
                             <th style="width: 80px;">Client ID</th>
-                            <th>Passenger Bio & Demographics</th>
+                            <th>Passenger Bio &amp; Demographics</th>
                             <th>Primary Contact</th>
-                            <th>Tier / Type</th>
-                            <th>Passport & Nationality</th>
                             <th>Validity Status</th>
                             <th style="text-align: right; width: 170px;">Quick Actions</th>
                         </tr>
@@ -110,11 +127,11 @@ function ifs_terp_customer_list_page() {
                             $title_prefix = ! empty( $row->title ) ? esc_html( $row->title ) . '. ' : '';
                             $full_name    = esc_html( $row->full_name );
                             $gender       = ! empty( $row->gender ) ? esc_html( $row->gender ) : 'Male';
-                            $nationality  = ! empty( $row->nationality ) ? esc_html( $row->nationality ) : 'Bangladeshi';
-                            $client_type  = ! empty( $row->client_type ) ? esc_html( $row->client_type ) : 'Retail';
+                            $ptype        = ! empty( $row->passenger_type ) ? esc_html( $row->passenger_type ) : 'Adult';
                             $mobile       = esc_html( $row->mobile );
+                            $whatsapp     = ! empty( $row->whatsapp_no ) ? esc_html( $row->whatsapp_no ) : '';
                             $email        = ! empty( $row->email ) ? esc_html( $row->email ) : '';
-                            $passport_no  = ! empty( $row->passport_no ) ? esc_html( $row->passport_no ) : '-';
+                            $photo_url    = ! empty( $row->photo_url ) ? esc_url( $row->photo_url ) : '';
 
                             // Name Initials for Avatar
                             $parts   = explode( ' ', trim( $full_name ) );
@@ -146,11 +163,6 @@ function ifs_terp_customer_list_page() {
                                 $badge_class = 'badge-none';
                                 $badge_text  = 'No Passport';
                             }
-
-                            // Classification Badges
-                            $tier_badge = 'tier-retail';
-                            if ( $client_type === 'Corporate' ) $tier_badge = 'tier-corporate';
-                            if ( $client_type === 'VIP' ) $tier_badge = 'tier-vip';
                         ?>
                             <tr>
                                 <td>
@@ -158,13 +170,19 @@ function ifs_terp_customer_list_page() {
                                 </td>
                                 <td>
                                     <div class="ifs-passenger-cell">
-                                        <div class="ifs-cell-avatar"><?php echo esc_html( $initial ); ?></div>
+                                        <div class="ifs-cell-avatar">
+                                            <?php if ( ! empty( $photo_url ) ) : ?>
+                                                <img src="<?php echo $photo_url; ?>" alt="Passenger Photo" class="avatar-img-fit" />
+                                            <?php else : ?>
+                                                <?php echo esc_html( $initial ); ?>
+                                            <?php endif; ?>
+                                        </div>
                                         <div>
                                             <a href="<?php echo esc_url( $base_url . '&sub=view&id=' . $row->id ); ?>" class="ifs-passenger-name">
                                                 <?php echo $title_prefix . $full_name; ?>
                                             </a>
                                             <div class="ifs-passenger-submeta">
-                                                <span><?php echo $gender; ?></span>
+                                                <span><?php echo $gender; ?> (<?php echo $ptype; ?>)</span>
                                                 <span class="meta-dot"></span>
                                                 <span><?php echo ( ! empty( $row->date_of_birth ) && $row->date_of_birth !== '1970-01-01' ) ? date( 'd M Y', strtotime( $row->date_of_birth ) ) : 'DOB: N/A'; ?></span>
                                             </div>
@@ -176,20 +194,14 @@ function ifs_terp_customer_list_page() {
                                         <a href="tel:<?php echo esc_attr( $mobile ); ?>" class="ifs-phone-link">
                                             <span class="dashicons dashicons-phone"></span> <?php echo $mobile; ?>
                                         </a>
+                                        <?php if ( $whatsapp ) : ?>
+                                            <a href="https://wa.me/<?php echo preg_replace( '/[^0-9]/', '', $whatsapp ); ?>" target="_blank" class="ifs-whatsapp-text">
+                                                <span class="dashicons dashicons-format-chat"></span> <?php echo $whatsapp; ?>
+                                            </a>
+                                        <?php endif; ?>
                                         <?php if ( $email ) : ?>
                                             <div class="ifs-email-text"><span class="dashicons dashicons-email"></span> <?php echo $email; ?></div>
                                         <?php endif; ?>
-                                    </div>
-                                </td>
-                                <td>
-                                    <span class="ifs-tier-pill <?php echo esc_attr( $tier_badge ); ?>">
-                                        <?php echo $client_type; ?>
-                                    </span>
-                                </td>
-                                <td>
-                                    <div class="ifs-passport-cell">
-                                        <span class="passport-num font-mono"><?php echo $passport_no; ?></span>
-                                        <span class="passport-nation"><?php echo $nationality; ?></span>
                                     </div>
                                 </td>
                                 <td>
@@ -221,7 +233,7 @@ function ifs_terp_customer_list_page() {
                             </tr>
                         <?php endforeach; else : ?>
                             <tr>
-                                <td colspan="7" class="ifs-empty-table">
+                                <td colspan="5" class="ifs-empty-table">
                                     <div class="ifs-empty-state">
                                         <span class="dashicons dashicons-admin-users"></span>
                                         <h4>No Passenger Profiles Found</h4>
@@ -323,6 +335,71 @@ function ifs_terp_customer_list_page() {
         .ifs-table-heading .dashicons { color: #003376; font-size: 20px; width: 20px; height: 20px; }
         .ifs-table-caption { margin: 3px 0 0 0; font-size: 13px; color: #64748b; }
 
+        /* Custom Table Controls Toolbar (Per Page & Search Box) */
+        .ifs-custom-table-controls {
+            padding: 16px 26px;
+            background: #f8fafc;
+            border-bottom: 1px solid #f1f5f9;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        .ifs-per-page-wrap {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            color: #475569;
+            font-weight: 600;
+        }
+        .ifs-select-control {
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            padding: 5px 28px 5px 10px;
+            font-size: 13px;
+            color: #0f172a;
+            background: #ffffff;
+            outline: none;
+            cursor: pointer;
+            appearance: none;
+            -webkit-appearance: none;
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right 8px center;
+            background-size: 12px;
+        }
+        .ifs-select-control:focus { border-color: #003376; box-shadow: 0 0 0 3px rgba(0, 51, 118, 0.12); }
+
+        .ifs-live-search-wrap {
+            position: relative;
+            display: flex;
+            align-items: center;
+            min-width: 280px;
+        }
+        .ifs-live-search-wrap label {
+            position: absolute;
+            left: 12px;
+            color: #94a3b8;
+            display: flex;
+            align-items: center;
+            pointer-events: none;
+        }
+        .ifs-live-search-wrap label .dashicons { font-size: 16px; width: 16px; height: 16px; }
+        .ifs-search-input {
+            width: 100%;
+            padding: 7px 12px 7px 36px !important;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            font-size: 13px;
+            color: #0f172a;
+            background: #ffffff;
+            outline: none;
+            transition: all 0.2s ease;
+        }
+        .ifs-search-input:focus { border-color: #003376; box-shadow: 0 0 0 3px rgba(0, 51, 118, 0.12); }
+
         .ifs-btn-primary {
             background: linear-gradient(135deg, #003376 0%, #0284c7 100%);
             color: #ffffff !important;
@@ -394,17 +471,24 @@ function ifs_terp_customer_list_page() {
             gap: 12px;
         }
         .ifs-cell-avatar {
-            width: 36px;
-            height: 36px;
+            width: 38px;
+            height: 38px;
             border-radius: 10px;
             background: linear-gradient(135deg, #003376 0%, #0284c7 100%);
             color: #ffffff;
             font-weight: 800;
-            font-size: 12px;
+            font-size: 12.5px;
             display: flex;
             align-items: center;
             justify-content: center;
             flex-shrink: 0;
+            overflow: hidden;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+        }
+        .avatar-img-fit {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
         }
         .ifs-passenger-name {
             font-weight: 700;
@@ -445,6 +529,16 @@ function ifs_terp_customer_list_page() {
             gap: 4px;
         }
         .ifs-phone-link .dashicons { font-size: 14px; width: 14px; height: 14px; color: #0284c7; }
+        .ifs-whatsapp-text {
+            font-size: 11.5px;
+            color: #15803d;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .ifs-whatsapp-text .dashicons { font-size: 13px; width: 13px; height: 13px; color: #16a34a; }
         .ifs-email-text {
             font-size: 11.5px;
             color: #64748b;
@@ -454,36 +548,7 @@ function ifs_terp_customer_list_page() {
         }
         .ifs-email-text .dashicons { font-size: 13px; width: 13px; height: 13px; color: #94a3b8; }
 
-        /* Tiers */
-        .ifs-tier-pill {
-            display: inline-flex;
-            align-items: center;
-            padding: 3px 9px;
-            border-radius: 6px;
-            font-size: 11px;
-            font-weight: 700;
-            letter-spacing: 0.3px;
-            text-transform: uppercase;
-        }
-        .tier-retail     { background: #e0f2fe; color: #0369a1; }
-        .tier-corporate  { background: #eef2ff; color: #4338ca; }
-        .tier-vip        { background: #fdf4ff; color: #a21caf; }
-
-        .ifs-passport-cell {
-            display: flex;
-            flex-direction: column;
-            gap: 2px;
-        }
-        .font-mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
-        .passport-num { font-size: 12.5px; font-weight: 700; color: #0f172a; }
-        .passport-nation { font-size: 11px; color: #64748b; }
-
         /* Expiry Statuses */
-        .ifs-expiry-cell {
-            display: flex;
-            flex-direction: column;
-            gap: 3px;
-        }
         .ifs-status-badge {
             display: inline-flex;
             align-items: center;
@@ -572,21 +637,7 @@ function ifs_terp_customer_list_page() {
         /* DataTables Custom Polish */
         .dataTables_wrapper .dataTables_length,
         .dataTables_wrapper .dataTables_filter {
-            margin-bottom: 16px;
-            font-size: 13px;
-            color: #475569;
-        }
-        .dataTables_wrapper .dataTables_filter input {
-            border: 1px solid #cbd5e1;
-            border-radius: 8px;
-            padding: 6px 12px;
-            margin-left: 8px;
-            outline: none;
-            font-size: 13px;
-        }
-        .dataTables_wrapper .dataTables_filter input:focus {
-            border-color: #003376;
-            box-shadow: 0 0 0 3px rgba(0, 51, 118, 0.12);
+            display: none !important; /* Replaced by custom toolbar controls */
         }
         .dataTables_wrapper .dataTables_info,
         .dataTables_wrapper .dataTables_paginate {
@@ -594,33 +645,57 @@ function ifs_terp_customer_list_page() {
             font-size: 13px;
             color: #64748b;
         }
+        .dataTables_wrapper .dataTables_paginate .paginate_button {
+            background: #ffffff !important;
+            border: 1px solid #cbd5e1 !important;
+            border-radius: 6px !important;
+            color: #334155 !important;
+            padding: 6px 12px !important;
+            margin-left: 4px;
+            font-weight: 600;
+        }
         .dataTables_wrapper .dataTables_paginate .paginate_button.current {
             background: #003376 !important;
             color: #ffffff !important;
             border: 1px solid #003376 !important;
-            border-radius: 6px;
             font-weight: 700;
+        }
+        .dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+            background: #e2e8f0 !important;
+            color: #0f172a !important;
         }
     </style>
 
     <script>
     jQuery(document).ready(function($) {
         if ($.fn.DataTable) {
-            $('#ifsCustomerTable').DataTable({
+            var table = $('#ifsCustomerTable').DataTable({
                 "pageLength": 15,
                 "ordering": true,
                 "info": true,
                 "searching": true,
+                "lengthChange": false,
                 "order": [[ 0, "desc" ]],
                 "language": {
-                    "search": "_INPUT_",
-                    "searchPlaceholder": "Search by name, mobile, passport...",
-                    "lengthMenu": "Show _MENU_ entries",
+                    "info": "Showing _START_ to _END_ of _TOTAL_ passenger profiles",
+                    "infoEmpty": "Showing 0 to 0 of 0 profiles",
+                    "infoFiltered": "(filtered from _MAX_ total profiles)",
                     "paginate": {
                         "previous": "&larr; Prev",
                         "next": "Next &rarr;"
                     }
                 }
+            });
+
+            // Bind Custom Per Page Selector
+            $('#ifsPerPageSelect').on('change', function() {
+                var lengthVal = parseInt($(this).val());
+                table.page.len(lengthVal).draw();
+            });
+
+            // Bind Custom Live Search Box
+            $('#ifsLiveSearchInput').on('keyup', function() {
+                table.search(this.value).draw();
             });
         }
     });

@@ -43,7 +43,7 @@ function ifs_terp_visa_list_page() {
 
     $query = "
         SELECT v.*, 
-               c.title AS customer_title, c.full_name AS customer_name, c.mobile AS customer_mobile, c.passport_no,
+               c.title AS customer_title, c.full_name AS customer_name, c.mobile AS customer_mobile, c.passport_no AS customer_passport, c.photo_url AS customer_photo,
                a.agency_name
         FROM $table_visas v
         LEFT JOIN $table_customers c ON v.customer_id = c.id
@@ -75,7 +75,7 @@ function ifs_terp_visa_list_page() {
             <div class="ifs-metric-chip">
                 <div class="chip-icon bg-emerald"><span class="dashicons dashicons-yes-alt"></span></div>
                 <div>
-                    <span class="chip-label">Approved & Delivered</span>
+                    <span class="chip-label">Approved &amp; Delivered</span>
                     <strong class="chip-val color-emerald"><?php echo number_format( $approved_count ); ?></strong>
                 </div>
             </div>
@@ -107,33 +107,43 @@ function ifs_terp_visa_list_page() {
                     <thead>
                         <tr>
                             <th style="width: 80px;">File ID</th>
-                            <th>Applicant & Passport Meta</th>
-                            <th>Destination & Category</th>
-                            <th>Tracking Ref</th>
-                            <th>Submission Date</th>
-                            <th>Expected Delivery</th>
+                            <th>Applicant &amp; Passport Info</th>
+                            <th>Destination &amp; Category</th>
+                            <th>Tracking &amp; Ref No</th>
+                            <th>Submission</th>
+                            <th>Exp. Delivery</th>
                             <th style="text-align: right;">Cost (৳)</th>
                             <th style="text-align: right;">Sell (৳)</th>
                             <th style="text-align: right;">Profit (৳)</th>
+                            <th style="text-align: center;">Payment</th>
                             <th style="text-align: center;">Status</th>
-                            <th style="text-align: right; width: 120px;">Actions</th>
+                            <th style="text-align: right; width: 140px;">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
                         <?php if ( $visas ) : foreach ( $visas as $row ) : 
                             $status_class = 'status-processing';
                             $status_lower = strtolower( $row->status );
-                            if ( $status_lower === 'approved' )   $status_class = 'status-approved';
+                            if ( $status_lower === 'approved' )     $status_class = 'status-approved';
                             elseif ( $status_lower === 'delivered' ) $status_class = 'status-delivered';
                             elseif ( $status_lower === 'rejected' )  $status_class = 'status-rejected';
 
                             $title_prefix = ! empty( $row->customer_title ) ? esc_html( $row->customer_title ) . '. ' : '';
-                            $pax_name     = ! empty( $row->customer_name ) ? $title_prefix . esc_html( $row->customer_name ) : 'Guest Applicant';
-                            $pax_mobile   = esc_html( $row->customer_mobile ?? '' );
-                            $passport_no  = ! empty( $row->passport_no ) ? esc_html( $row->passport_no ) : '-';
+                            $pax_name     = ! empty( $row->passenger_name ) ? esc_html( $row->passenger_name ) : ( ! empty( $row->customer_name ) ? $title_prefix . esc_html( $row->customer_name ) : 'Guest Applicant' );
+                            $passport_no  = ! empty( $row->passport_no ) ? esc_html( $row->passport_no ) : ( ! empty( $row->customer_passport ) ? esc_html( $row->customer_passport ) : '-' );
+                            $photo_url    = ! empty( $row->photo_url ) ? esc_url( $row->photo_url ) : ( ! empty( $row->customer_photo ) ? esc_url( $row->customer_photo ) : '' );
+
+                            // Avatar Initials
+                            $parts   = explode( ' ', trim( $pax_name ) );
+                            $initial = ( count( $parts ) > 1 ) ? ( mb_substr( $parts[0], 0, 1 ) . mb_substr( $parts[count($parts)-1], 0, 1 ) ) : mb_substr( $pax_name, 0, 2 );
+                            $initial = strtoupper( $initial );
+
+                            // Payment Status Tag
+                            $pay_status = $row->payment_status ?? 'Unpaid';
+                            $pay_class  = ( $pay_status === 'Paid' ) ? 'pay-paid' : ( ( $pay_status === 'Partial' ) ? 'pay-partial' : 'pay-due' );
 
                             // Channel tag: Direct vs B2B Sub-Agent
-                            $channel_tag  = ! empty( $row->agency_name ) ? '<span class="ifs-agent-tag"><span class="dashicons dashicons-groups"></span> ' . esc_html( $row->agency_name ) . '</span>' : '<span class="ifs-direct-tag">Direct Retail</span>';
+                            $channel_tag = ! empty( $row->agency_name ) ? '<span class="ifs-agent-tag"><span class="dashicons dashicons-groups"></span> ' . esc_html( $row->agency_name ) . '</span>' : '<span class="ifs-direct-tag">Direct Retail</span>';
                         ?>
                             <tr>
                                 <td>
@@ -141,6 +151,13 @@ function ifs_terp_visa_list_page() {
                                 </td>
                                 <td>
                                     <div class="ifs-passenger-cell">
+                                        <div class="ifs-cell-avatar">
+                                            <?php if ( ! empty( $photo_url ) ) : ?>
+                                                <img src="<?php echo $photo_url; ?>" alt="Applicant Photo" class="avatar-img-fit" />
+                                            <?php else : ?>
+                                                <?php echo esc_html( $initial ); ?>
+                                            <?php endif; ?>
+                                        </div>
                                         <div>
                                             <a href="<?php echo esc_url( admin_url( 'admin.php?page=ifs_travel_erp&tab=customers&sub=view&id=' . $row->customer_id ) ); ?>" class="ifs-passenger-name">
                                                 <?php echo $pax_name; ?>
@@ -165,7 +182,12 @@ function ifs_terp_visa_list_page() {
                                     </div>
                                 </td>
                                 <td>
-                                    <span class="ifs-tracking-pill font-mono"><?php echo esc_html( $row->tracking_no ?: 'PENDING' ); ?></span>
+                                    <div style="display: flex; flex-direction: column; gap: 2px;">
+                                        <span class="ifs-tracking-pill font-mono"><?php echo esc_html( $row->tracking_no ?: 'PENDING' ); ?></span>
+                                        <?php if ( ! empty( $row->embassy_app_no ) ) : ?>
+                                            <span style="font-size: 10px; color: #64748b; font-family: ui-monospace, monospace;">MOFA: <?php echo esc_html( $row->embassy_app_no ); ?></span>
+                                        <?php endif; ?>
+                                    </div>
                                 </td>
                                 <td>
                                     <div class="ifs-date-cell">
@@ -178,13 +200,18 @@ function ifs_terp_visa_list_page() {
                                     </div>
                                 </td>
                                 <td style="text-align: right; color: #64748b; font-family: ui-monospace, monospace;">
-                                    ৳<?php echo number_format( $row->buy_price, 2 ); ?>
+                                    ৳<?php echo number_format( (float) $row->buy_price, 2 ); ?>
                                 </td>
                                 <td style="text-align: right; font-weight: 700; color: #0f172a; font-family: ui-monospace, monospace;">
-                                    ৳<?php echo number_format( $row->sell_price, 2 ); ?>
+                                    ৳<?php echo number_format( (float) $row->sell_price, 2 ); ?>
                                 </td>
                                 <td style="text-align: right; font-weight: 800; font-family: ui-monospace, monospace;" class="<?php echo ( $row->profit >= 0 ) ? 'color-emerald' : 'color-rose'; ?>">
-                                    ৳<?php echo number_format( $row->profit, 2 ); ?>
+                                    ৳<?php echo number_format( (float) $row->profit, 2 ); ?>
+                                </td>
+                                <td style="text-align: center;">
+                                    <span class="ifs-pay-badge <?php echo esc_attr( $pay_class ); ?>">
+                                        <?php echo esc_html( $pay_status ); ?>
+                                    </span>
                                 </td>
                                 <td style="text-align: center;">
                                     <span class="ifs-status-badge <?php echo esc_attr( $status_class ); ?>">
@@ -192,15 +219,15 @@ function ifs_terp_visa_list_page() {
                                     </span>
                                 </td>
                                 <td style="text-align: right;">
-                                    <div class="ifs-action-buttons">
-                                        <a href="<?php echo esc_url( $base_url . '&sub=view&id=' . $row->id ); ?>" class="ifs-btn-action view" title="View Visa Dossier">
-                                            <span class="dashicons dashicons-visibility"></span>
+                                    <div class="ifs-action-pills">
+                                        <a href="<?php echo esc_url( $base_url . '&sub=view&id=' . $row->id ); ?>" class="ifs-action-pill view" title="View Visa Dossier">
+                                            <span class="dashicons dashicons-visibility"></span> View
                                         </a>
-                                        <a href="<?php echo esc_url( $base_url . '&sub=edit&id=' . $row->id ); ?>" class="ifs-btn-action edit" title="Edit Visa File">
-                                            <span class="dashicons dashicons-edit"></span>
+                                        <a href="<?php echo esc_url( $base_url . '&sub=edit&id=' . $row->id ); ?>" class="ifs-action-pill edit" title="Edit Visa File">
+                                            <span class="dashicons dashicons-edit"></span> Edit
                                         </a>
                                         <a href="<?php echo wp_nonce_url( $base_url . '&sub=delete&id=' . $row->id, 'delete_visa_' . $row->id ); ?>" 
-                                           class="ifs-btn-action delete" 
+                                           class="ifs-action-pill delete" 
                                            onclick="return confirm('Are you sure you want to permanently delete this visa application?');" 
                                            title="Delete Record">
                                             <span class="dashicons dashicons-trash"></span>
@@ -210,7 +237,7 @@ function ifs_terp_visa_list_page() {
                             </tr>
                         <?php endforeach; else : ?>
                             <tr>
-                                <td colspan="11" class="ifs-empty-table">
+                                <td colspan="12" class="ifs-empty-table">
                                     <div class="ifs-empty-state">
                                         <span class="dashicons dashicons-id-alt"></span>
                                         <h4>No Visa Applications Recorded</h4>
@@ -280,10 +307,10 @@ function ifs_terp_visa_list_page() {
             color: #ffffff;
             flex-shrink: 0;
         }
-        .chip-icon.bg-blue   { background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%); }
-        .chip-icon.bg-amber  { background: linear-gradient(135deg, #d97706 0%, #b45309 100%); }
-        .chip-icon.bg-emerald{ background: linear-gradient(135deg, #059669 0%, #047857 100%); }
-        .chip-icon.bg-indigo { background: linear-gradient(135deg, #4f46e5 0%, #3730a3 100%); }
+        .chip-icon.bg-blue    { background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%); }
+        .chip-icon.bg-amber   { background: linear-gradient(135deg, #d97706 0%, #b45309 100%); }
+        .chip-icon.bg-emerald { background: linear-gradient(135deg, #059669 0%, #047857 100%); }
+        .chip-icon.bg-indigo  { background: linear-gradient(135deg, #4f46e5 0%, #3730a3 100%); }
         .chip-icon .dashicons { font-size: 22px; width: 22px; height: 22px; }
 
         .chip-label { font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.4px; display: block; margin-bottom: 2px; }
@@ -379,6 +406,32 @@ function ifs_terp_visa_list_page() {
             display: inline-block;
         }
 
+        .ifs-passenger-cell {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .ifs-cell-avatar {
+            width: 38px;
+            height: 38px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+            color: #ffffff;
+            font-weight: 800;
+            font-size: 12.5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            overflow: hidden;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+        }
+        .avatar-img-fit {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
         .ifs-passenger-name {
             font-weight: 700;
             color: #0f172a;
@@ -404,13 +457,26 @@ function ifs_terp_visa_list_page() {
         .ifs-country-cell { display: flex; flex-direction: column; gap: 2px; }
         .country-title { font-size: 13px; color: #0f172a; display: inline-flex; align-items: center; gap: 4px; }
         .country-title .dashicons { font-size: 14px; width: 14px; height: 14px; color: #0284c7; }
-        .visa-meta { font-size: 11px; color: #64748b; display: flex; align-items: center; gap: 6px; margin-top: 1px; }
+        .visa-meta { font-size: 11px; color: #64748b; display: flex; align-items: center; gap: 4px; margin-top: 1px; flex-wrap: wrap; }
         .visa-type-tag { background: #e0f2fe; color: #0369a1; padding: 1px 5px; border-radius: 3px; font-size: 10px; font-weight: 600; }
         .entry-tag { background: #f1f5f9; padding: 1px 4px; border-radius: 3px; font-size: 9.5px; }
 
         .ifs-tracking-pill { background: #f8fafc; border: 1px solid #e2e8f0; color: #003376; font-weight: 700; font-size: 11px; padding: 2px 6px; border-radius: 4px; width: fit-content; }
 
         .ifs-date-cell .date-main { font-weight: 600; color: #0f172a; font-size: 12px; }
+
+        /* Payment Badges */
+        .ifs-pay-badge {
+            font-size: 10px;
+            font-weight: 800;
+            text-transform: uppercase;
+            padding: 2px 6px;
+            border-radius: 4px;
+            display: inline-block;
+        }
+        .pay-paid    { background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; }
+        .pay-partial { background: #fffbeb; color: #b45309; border: 1px solid #fde68a; }
+        .pay-due     { background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca; }
 
         /* Status Badges */
         .ifs-status-badge {
@@ -428,24 +494,32 @@ function ifs_terp_visa_list_page() {
         .status-rejected   { background: #fee2e2; color: #b91c1c; }
 
         /* Actions */
-        .ifs-action-buttons { display: flex; gap: 5px; justify-content: flex-end; }
-        .ifs-btn-action {
-            width: 30px;
-            height: 30px;
-            border-radius: 6px;
+        .ifs-action-pills {
+            display: flex;
+            gap: 4px;
+            justify-content: flex-end;
+            align-items: center;
+        }
+        .ifs-action-pill {
             display: inline-flex;
             align-items: center;
-            justify-content: center;
+            gap: 3px;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 11.5px;
+            font-weight: 600;
             text-decoration: none;
             transition: all 0.15s ease;
+            border: 1px solid transparent;
+            white-space: nowrap;
         }
-        .ifs-btn-action.view   { background: #f1f5f9; color: #475569; }
-        .ifs-btn-action.view:hover { background: #e2e8f0; color: #0f172a; }
-        .ifs-btn-action.edit   { background: #eff6ff; color: #2563eb; }
-        .ifs-btn-action.edit:hover { background: #dbeafe; color: #1d4ed8; }
-        .ifs-btn-action.delete { background: #fef2f2; color: #dc2626; }
-        .ifs-btn-action.delete:hover { background: #fee2e2; color: #b91c1c; }
-        .ifs-btn-action .dashicons { font-size: 14px; width: 14px; height: 14px; }
+        .ifs-action-pill.view { background: #f1f5f9; color: #475569; border-color: #e2e8f0; }
+        .ifs-action-pill.view:hover { background: #e2e8f0; color: #0f172a; }
+        .ifs-action-pill.edit { background: #eff6ff; color: #2563eb; border-color: #dbeafe; }
+        .ifs-action-pill.edit:hover { background: #dbeafe; color: #1d4ed8; }
+        .ifs-action-pill.delete { background: #fef2f2; color: #dc2626; border-color: #fee2e2; padding: 4px 6px; }
+        .ifs-action-pill.delete:hover { background: #fee2e2; color: #b91c1c; }
+        .ifs-action-pill .dashicons { font-size: 12px; width: 12px; height: 12px; }
 
         .font-mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
 

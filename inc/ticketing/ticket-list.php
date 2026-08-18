@@ -5,7 +5,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 /**
  * Enterprise Next-Gen Air Ticketing Ledger & Inventory Desk
- * Features: Live Summary Analytics, GDS PNR Pills, Dynamic Search, Batch Filters & Action Controls
+ * Features: Live Summary Analytics, Dual PNR Badges, Financial Tokens, Dynamic Search, Batch Filters & Action Controls
  */
 function ifs_terp_ticket_list_page() {
     global $wpdb;
@@ -44,7 +44,7 @@ function ifs_terp_ticket_list_page() {
 
     $query = "
         SELECT t.*, 
-               c.title AS customer_title, c.full_name AS customer_name, c.mobile AS customer_mobile, c.passport_no,
+               c.title AS customer_title, c.full_name AS customer_name, c.mobile AS customer_mobile, c.passport_no AS customer_passport,
                s.supplier_name,
                a.agency_name
         FROM $table_tickets t
@@ -96,7 +96,7 @@ function ifs_terp_ticket_list_page() {
             <div class="ifs-table-top-bar">
                 <div class="ifs-table-title-group">
                     <h3 class="ifs-table-heading"><span class="dashicons dashicons-airplane"></span> Air Tickets Ledger & Inventory</h3>
-                    <p class="ifs-table-caption">GDS issued e-tickets, passenger manifests, carrier routings, and margin statements</p>
+                    <p class="ifs-table-caption">GDS issued e-tickets, passenger manifests, carrier routings, and commercial margin statements</p>
                 </div>
                 <div class="ifs-table-btn-group">
                     <a href="<?php echo esc_url( $base_url . '&sub=add' ); ?>" class="ifs-btn-primary">
@@ -111,15 +111,16 @@ function ifs_terp_ticket_list_page() {
                         <tr>
                             <th style="width: 80px;">TKT ID</th>
                             <th>Passenger & Client Info</th>
-                            <th>GDS & PNR Ref</th>
+                            <th>GDS / Airline PNR</th>
                             <th>E-Ticket Number</th>
-                            <th>Carrier & Sector Routing</th>
-                            <th>Departure Date</th>
+                            <th>Carrier & Sector</th>
+                            <th>Travel Schedule</th>
                             <th style="text-align: right;">Cost (৳)</th>
                             <th style="text-align: right;">Sell (৳)</th>
-                            <th style="text-align: right;">Profit (৳)</th>
+                            <th style="text-align: right;">Net Profit (৳)</th>
+                            <th style="text-align: center;">Payment</th>
                             <th style="text-align: center;">Status</th>
-                            <th style="text-align: right; width: 120px;">Actions</th>
+                            <th style="text-align: right; width: 150px;">Quick Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -130,13 +131,18 @@ function ifs_terp_ticket_list_page() {
                             elseif ( $status_lower === 'void' )  $status_class = 'status-void';
                             elseif ( $status_lower === 'reissued' ) $status_class = 'status-reissued';
 
+                            // Fallback snapshot resolution
                             $title_prefix = ! empty( $row->customer_title ) ? esc_html( $row->customer_title ) . '. ' : '';
-                            $pax_name     = ! empty( $row->customer_name ) ? $title_prefix . esc_html( $row->customer_name ) : 'Guest Passenger';
+                            $pax_name     = ! empty( $row->passenger_name ) ? esc_html( $row->passenger_name ) : ( ! empty( $row->customer_name ) ? $title_prefix . esc_html( $row->customer_name ) : 'Guest Passenger' );
                             $pax_mobile   = esc_html( $row->customer_mobile ?? '' );
                             $gds_label    = ! empty( $row->gds_pcc ) ? esc_html( $row->gds_pcc ) : 'GDS';
 
+                            // Payment Status Pill
+                            $pay_status = $row->payment_status ?? 'Paid';
+                            $pay_class  = ( $pay_status === 'Paid' ) ? 'pay-paid' : ( ( $pay_status === 'Partial' ) ? 'pay-partial' : 'pay-due' );
+
                             // Channel tag: Direct vs B2B Agent
-                            $channel_tag  = ! empty( $row->agency_name ) ? '<span class="ifs-agent-tag"><span class="dashicons dashicons-groups"></span> ' . esc_html( $row->agency_name ) . '</span>' : '<span class="ifs-direct-tag">Direct Retail</span>';
+                            $channel_tag = ! empty( $row->agency_name ) ? '<span class="ifs-agent-tag"><span class="dashicons dashicons-groups"></span> ' . esc_html( $row->agency_name ) . '</span>' : '<span class="ifs-direct-tag">Direct Retail</span>';
                         ?>
                             <tr>
                                 <td>
@@ -158,7 +164,12 @@ function ifs_terp_ticket_list_page() {
                                 </td>
                                 <td>
                                     <div class="ifs-pnr-cell">
-                                        <span class="ifs-pnr-pill font-mono"><?php echo esc_html( $row->pnr ); ?></span>
+                                        <div style="display: flex; align-items: center; gap: 4px;">
+                                            <span class="ifs-pnr-pill font-mono"><?php echo esc_html( $row->pnr ); ?></span>
+                                            <?php if ( ! empty( $row->airline_pnr ) ) : ?>
+                                                <span class="ifs-airpnr-pill font-mono" title="Airline PNR"><?php echo esc_html( $row->airline_pnr ); ?></span>
+                                            <?php endif; ?>
+                                        </div>
                                         <span class="ifs-gds-source"><?php echo $gds_label; ?></span>
                                     </div>
                                 </td>
@@ -171,6 +182,9 @@ function ifs_terp_ticket_list_page() {
                                         <div class="routing-meta font-mono">
                                             <span class="sector-code"><?php echo esc_html( $row->sector ); ?></span>
                                             <span class="cabin-tag"><?php echo esc_html( $row->cabin_class ); ?></span>
+                                            <?php if ( ! empty( $row->via_transit ) && $row->via_transit !== 'Direct' ) : ?>
+                                                <span class="transit-tag"><?php echo esc_html( $row->via_transit ); ?></span>
+                                            <?php endif; ?>
                                         </div>
                                     </div>
                                 </td>
@@ -183,13 +197,18 @@ function ifs_terp_ticket_list_page() {
                                     </div>
                                 </td>
                                 <td style="text-align: right; color: #64748b; font-family: ui-monospace, monospace;">
-                                    ৳<?php echo number_format( $row->buy_price, 2 ); ?>
+                                    ৳<?php echo number_format( (float) $row->buy_price, 2 ); ?>
                                 </td>
                                 <td style="text-align: right; font-weight: 700; color: #0f172a; font-family: ui-monospace, monospace;">
-                                    ৳<?php echo number_format( $row->sell_price, 2 ); ?>
+                                    ৳<?php echo number_format( (float) $row->sell_price, 2 ); ?>
                                 </td>
                                 <td style="text-align: right; font-weight: 800; font-family: ui-monospace, monospace;" class="<?php echo ( $row->profit >= 0 ) ? 'color-emerald' : 'color-rose'; ?>">
-                                    ৳<?php echo number_format( $row->profit, 2 ); ?>
+                                    ৳<?php echo number_format( (float) $row->profit, 2 ); ?>
+                                </td>
+                                <td style="text-align: center;">
+                                    <span class="ifs-pay-badge <?php echo esc_attr( $pay_class ); ?>">
+                                        <?php echo esc_html( $pay_status ); ?>
+                                    </span>
                                 </td>
                                 <td style="text-align: center;">
                                     <span class="ifs-status-badge <?php echo esc_attr( $status_class ); ?>">
@@ -197,15 +216,15 @@ function ifs_terp_ticket_list_page() {
                                     </span>
                                 </td>
                                 <td style="text-align: right;">
-                                    <div class="ifs-action-buttons">
-                                        <a href="<?php echo esc_url( $base_url . '&sub=view&id=' . $row->id ); ?>" class="ifs-btn-action view" title="View E-Ticket Voucher">
-                                            <span class="dashicons dashicons-visibility"></span>
+                                    <div class="ifs-action-pills">
+                                        <a href="<?php echo esc_url( $base_url . '&sub=view&id=' . $row->id ); ?>" class="ifs-action-pill view" title="View E-Ticket Voucher">
+                                            <span class="dashicons dashicons-visibility"></span> View
                                         </a>
-                                        <a href="<?php echo esc_url( $base_url . '&sub=edit&id=' . $row->id ); ?>" class="ifs-btn-action edit" title="Edit Ticket Record">
-                                            <span class="dashicons dashicons-edit"></span>
+                                        <a href="<?php echo esc_url( $base_url . '&sub=edit&id=' . $row->id ); ?>" class="ifs-action-pill edit" title="Edit Ticket Record">
+                                            <span class="dashicons dashicons-edit"></span> Edit
                                         </a>
                                         <a href="<?php echo wp_nonce_url( $base_url . '&sub=delete&id=' . $row->id, 'delete_ticket_' . $row->id ); ?>" 
-                                           class="ifs-btn-action delete" 
+                                           class="ifs-action-pill delete" 
                                            onclick="return confirm('Are you sure you want to permanently delete this ticket record?');" 
                                            title="Delete Record">
                                             <span class="dashicons dashicons-trash"></span>
@@ -215,7 +234,7 @@ function ifs_terp_ticket_list_page() {
                             </tr>
                         <?php endforeach; else : ?>
                             <tr>
-                                <td colspan="11" class="ifs-empty-table">
+                                <td colspan="12" class="ifs-empty-table">
                                     <div class="ifs-empty-state">
                                         <span class="dashicons dashicons-tickets-alt"></span>
                                         <h4>No Air Ticket Records Found</h4>
@@ -407,21 +426,36 @@ function ifs_terp_ticket_list_page() {
         .ifs-direct-tag { font-size: 10.5px; color: #059669; font-weight: 600; }
 
         .ifs-pnr-cell { display: flex; flex-direction: column; gap: 2px; }
-        .ifs-pnr-pill { background: #e0f2fe; color: #003376; font-weight: 800; font-size: 12px; padding: 2px 6px; border-radius: 4px; width: fit-content; }
+        .ifs-pnr-pill { background: #e0f2fe; color: #003376; font-weight: 800; font-size: 11.5px; padding: 2px 6px; border-radius: 4px; width: fit-content; }
+        .ifs-airpnr-pill { background: #f1f5f9; color: #475569; font-weight: 700; font-size: 10px; padding: 2px 5px; border-radius: 4px; border: 1px solid #e2e8f0; }
         .ifs-gds-source { font-size: 10px; color: #64748b; text-transform: uppercase; font-weight: 600; }
 
         .ifs-tkt-no { font-size: 12.5px; font-weight: 700; color: #0f172a; }
 
         .ifs-routing-cell { display: flex; flex-direction: column; gap: 2px; }
         .airline-title { font-size: 12.5px; color: #0f172a; }
-        .routing-meta { font-size: 11px; color: #64748b; display: flex; align-items: center; gap: 6px; }
+        .routing-meta { font-size: 11px; color: #64748b; display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
         .sector-code { font-weight: 700; color: #0284c7; }
         .cabin-tag { background: #f1f5f9; padding: 1px 4px; border-radius: 3px; font-size: 9.5px; }
+        .transit-tag { background: #fef3c7; color: #92400e; padding: 1px 4px; border-radius: 3px; font-size: 9.5px; font-weight: 700; }
 
         .ifs-date-cell { display: flex; flex-direction: column; gap: 2px; }
         .flight-date { font-weight: 600; color: #0f172a; font-size: 12px; }
         .flight-time { font-size: 10.5px; color: #64748b; display: inline-flex; align-items: center; gap: 2px; }
         .flight-time .dashicons { font-size: 12px; width: 12px; height: 12px; }
+
+        /* Payment Badges */
+        .ifs-pay-badge {
+            font-size: 10px;
+            font-weight: 800;
+            text-transform: uppercase;
+            padding: 2px 6px;
+            border-radius: 4px;
+            display: inline-block;
+        }
+        .pay-paid    { background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; }
+        .pay-partial { background: #fffbeb; color: #b45309; border: 1px solid #fde68a; }
+        .pay-due     { background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca; }
 
         /* Status Pills */
         .ifs-status-badge {
@@ -439,24 +473,32 @@ function ifs_terp_ticket_list_page() {
         .status-void     { background: #fee2e2; color: #b91c1c; }
 
         /* Action Buttons */
-        .ifs-action-buttons { display: flex; gap: 5px; justify-content: flex-end; }
-        .ifs-btn-action {
-            width: 30px;
-            height: 30px;
-            border-radius: 6px;
+        .ifs-action-pills {
+            display: flex;
+            gap: 4px;
+            justify-content: flex-end;
+            align-items: center;
+        }
+        .ifs-action-pill {
             display: inline-flex;
             align-items: center;
-            justify-content: center;
+            gap: 3px;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 11.5px;
+            font-weight: 600;
             text-decoration: none;
             transition: all 0.15s ease;
+            border: 1px solid transparent;
+            white-space: nowrap;
         }
-        .ifs-btn-action.view   { background: #f1f5f9; color: #475569; }
-        .ifs-btn-action.view:hover { background: #e2e8f0; color: #0f172a; }
-        .ifs-btn-action.edit   { background: #eff6ff; color: #2563eb; }
-        .ifs-btn-action.edit:hover { background: #dbeafe; color: #1d4ed8; }
-        .ifs-btn-action.delete { background: #fef2f2; color: #dc2626; }
-        .ifs-btn-action.delete:hover { background: #fee2e2; color: #b91c1c; }
-        .ifs-btn-action .dashicons { font-size: 14px; width: 14px; height: 14px; }
+        .ifs-action-pill.view { background: #f1f5f9; color: #475569; border-color: #e2e8f0; }
+        .ifs-action-pill.view:hover { background: #e2e8f0; color: #0f172a; }
+        .ifs-action-pill.edit { background: #eff6ff; color: #2563eb; border-color: #dbeafe; }
+        .ifs-action-pill.edit:hover { background: #dbeafe; color: #1d4ed8; }
+        .ifs-action-pill.delete { background: #fef2f2; color: #dc2626; border-color: #fee2e2; padding: 4px 6px; }
+        .ifs-action-pill.delete:hover { background: #fee2e2; color: #b91c1c; }
+        .ifs-action-pill .dashicons { font-size: 12px; width: 12px; height: 12px; }
 
         .font-mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
 

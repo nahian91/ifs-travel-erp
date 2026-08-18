@@ -117,108 +117,176 @@ function ifs_terp_create_system_tables() {
     $charset_collate = $wpdb->get_charset_collate();
     require_once ABSPATH . 'wp-admin/includes/upgrade.php';
 
-    // 1. Core Customers Directory
-    $table_customers = $wpdb->prefix . 'iterp_customers';
-    $sql_customers = "CREATE TABLE $table_customers (
-        id bigint(20) NOT NULL AUTO_INCREMENT,
-        title varchar(20) DEFAULT 'Mr' NOT NULL,
-        full_name varchar(255) NOT NULL,
-        mobile varchar(50) NOT NULL,
-        email varchar(100) DEFAULT '' NOT NULL,
-        passport_no varchar(100) DEFAULT '' NOT NULL,
-        passport_expiry date DEFAULT '1970-01-01' NOT NULL,
-        date_of_birth date DEFAULT '1970-01-01' NOT NULL,
-        nationality varchar(100) DEFAULT 'Bangladeshi' NOT NULL,
-        gender varchar(20) DEFAULT 'Male' NOT NULL,
-        blood_group varchar(10) DEFAULT '' NOT NULL,
-        emergency_contact varchar(50) DEFAULT '' NOT NULL,
-        address text NOT NULL,
-        passport_copy_url text NOT NULL,
-        client_type varchar(50) DEFAULT 'Retail' NOT NULL,
-        created_at datetime DEFAULT '1970-01-01 00:00:00' NOT NULL,
-        PRIMARY KEY  (id),
-        KEY mobile_idx (mobile)
-    ) $charset_collate;";
-    dbDelta( $sql_customers );
+    // 1. Core Customers Directory (100% GDS, IATA, Visa & Umrah Synced)
+$table_customers = $wpdb->prefix . 'iterp_customers';
+$sql_customers = "CREATE TABLE $table_customers (
+    id bigint(20) NOT NULL AUTO_INCREMENT,
+    title varchar(20) DEFAULT 'MR' NOT NULL,
+    passport_given_name varchar(150) DEFAULT '' NOT NULL,
+    passport_surname varchar(150) DEFAULT '' NOT NULL,
+    full_name varchar(255) NOT NULL,
+    father_spouse_name varchar(255) DEFAULT '' NOT NULL,
+    mother_name varchar(255) DEFAULT '' NOT NULL,
+    gender varchar(20) DEFAULT 'Male' NOT NULL,
+    marital_status varchar(30) DEFAULT 'Married' NOT NULL,
+    passenger_type varchar(30) DEFAULT 'Adult' NOT NULL,
+    date_of_birth date DEFAULT '1970-01-01' NOT NULL,
+    birth_place varchar(100) DEFAULT '' NOT NULL,
+    blood_group varchar(10) DEFAULT '' NOT NULL,
+    nationality varchar(100) DEFAULT 'Bangladeshi' NOT NULL,
+    nid_no varchar(100) DEFAULT '' NOT NULL,
+    profession varchar(150) DEFAULT '' NOT NULL,
+    mobile varchar(50) NOT NULL,
+    whatsapp_no varchar(50) DEFAULT '' NOT NULL,
+    email varchar(100) DEFAULT '' NOT NULL,
+    emergency_contact varchar(100) DEFAULT '' NOT NULL,
+    passport_no varchar(100) DEFAULT '' NOT NULL,
+    prev_passport_no varchar(100) DEFAULT '' NOT NULL,
+    passport_type varchar(50) DEFAULT 'Regular' NOT NULL,
+    passport_issue_date date DEFAULT '1970-01-01' NOT NULL,
+    passport_expiry date DEFAULT '1970-01-01' NOT NULL,
+    passport_issue_place varchar(150) DEFAULT '' NOT NULL,
+    frequent_flyer_no varchar(100) DEFAULT '' NOT NULL,
+    meal_preference varchar(50) DEFAULT 'MOML' NOT NULL,
+    wheelchair_ssr varchar(50) DEFAULT 'NONE' NOT NULL,
+    client_type varchar(50) DEFAULT 'Retail' NOT NULL,
+    city varchar(100) DEFAULT '' NOT NULL,
+    address text NOT NULL,
+    photo_url text NOT NULL,
+    passport_copy_url text NOT NULL,
+    nid_copy_url text NOT NULL,
+    created_at datetime DEFAULT '1970-01-01 00:00:00' NOT NULL,
+    PRIMARY KEY  (id),
+    KEY mobile_idx (mobile),
+    KEY passport_idx (passport_no)
+) $charset_collate;";
+dbDelta( $sql_customers );
 
-    // 2. Air Ticketing Ledger
-    $table_tickets = $wpdb->prefix . 'iterp_tickets';
-    $sql_tickets = "CREATE TABLE $table_tickets (
-        id bigint(20) NOT NULL AUTO_INCREMENT,
-        customer_id bigint(20) NOT NULL,
-        agent_id bigint(20) DEFAULT 0 NOT NULL,
-        supplier_id bigint(20) DEFAULT 0 NOT NULL,
-        pnr varchar(20) NOT NULL,
-        ticket_no varchar(50) NOT NULL,
-        airline varchar(100) NOT NULL,
-        flight_no varchar(50) DEFAULT '' NOT NULL,
-        sector text NOT NULL,
-        cabin_class varchar(50) DEFAULT 'Economy' NOT NULL,
-        flight_type varchar(50) DEFAULT 'One Way' NOT NULL,
-        travel_date date DEFAULT '1970-01-01' NOT NULL,
-        flight_time varchar(20) DEFAULT '' NOT NULL,
-        return_date date DEFAULT '1970-01-01' NOT NULL,
-        baggage varchar(50) DEFAULT '20 KG' NOT NULL,
-        gds_pcc varchar(50) DEFAULT 'Sabre' NOT NULL,
-        base_fare decimal(12,2) DEFAULT '0.00' NOT NULL,
-        tax_amount decimal(12,2) DEFAULT '0.00' NOT NULL,
-        buy_price decimal(12,2) DEFAULT '0.00' NOT NULL,
-        sell_price decimal(12,2) DEFAULT '0.00' NOT NULL,
-        profit decimal(12,2) DEFAULT '0.00' NOT NULL,
-        status varchar(50) DEFAULT 'Issued' NOT NULL,
-        remarks text,
-        issued_by bigint(20) NOT NULL,
-        created_at datetime DEFAULT '1970-01-01 00:00:00' NOT NULL,
-        PRIMARY KEY  (id),
-        UNIQUE KEY pnr (pnr),
-        UNIQUE KEY ticket_no (ticket_no)
-    ) $charset_collate;";
-    dbDelta( $sql_tickets );
+    // 2. Air Ticketing Ledger (100% GDS, IATA & BSP Synced)
+$table_tickets = $wpdb->prefix . 'iterp_tickets';
+$sql_tickets = "CREATE TABLE $table_tickets (
+    id bigint(20) NOT NULL AUTO_INCREMENT,
+    customer_id bigint(20) NOT NULL,
+    passenger_name varchar(255) DEFAULT '' NOT NULL,
+    passport_no varchar(100) DEFAULT '' NOT NULL,
+    agent_id bigint(20) DEFAULT 0 NOT NULL,
+    supplier_id bigint(20) DEFAULT 0 NOT NULL,
+    pnr varchar(20) NOT NULL,
+    airline_pnr varchar(20) DEFAULT '' NOT NULL,
+    ticket_no varchar(50) NOT NULL,
+    airline varchar(100) NOT NULL,
+    flight_no varchar(50) DEFAULT '' NOT NULL,
+    sector text NOT NULL,
+    via_transit varchar(100) DEFAULT 'Direct' NOT NULL,
+    cabin_class varchar(50) DEFAULT 'Economy' NOT NULL,
+    fare_basis varchar(50) DEFAULT '' NOT NULL,
+    flight_type varchar(50) DEFAULT 'One Way' NOT NULL,
+    travel_date date DEFAULT '1970-01-01' NOT NULL,
+    flight_time varchar(20) DEFAULT '' NOT NULL,
+    return_date date DEFAULT '1970-01-01' NOT NULL,
+    return_flight_time varchar(20) DEFAULT '' NOT NULL,
+    baggage varchar(50) DEFAULT '20 KG' NOT NULL,
+    gds_pcc varchar(50) DEFAULT 'Sabre' NOT NULL,
+    base_fare decimal(12,2) DEFAULT '0.00' NOT NULL,
+    tax_amount decimal(12,2) DEFAULT '0.00' NOT NULL,
+    commission_amount decimal(12,2) DEFAULT '0.00' NOT NULL,
+    ait_amount decimal(12,2) DEFAULT '0.00' NOT NULL,
+    discount_amount decimal(12,2) DEFAULT '0.00' NOT NULL,
+    buy_price decimal(12,2) DEFAULT '0.00' NOT NULL,
+    sell_price decimal(12,2) DEFAULT '0.00' NOT NULL,
+    profit decimal(12,2) DEFAULT '0.00' NOT NULL,
+    status varchar(50) DEFAULT 'Issued' NOT NULL,
+    payment_status varchar(30) DEFAULT 'Paid' NOT NULL,
+    payment_method varchar(50) DEFAULT 'Bank Transfer' NOT NULL,
+    remarks text,
+    ticket_copy_url text NOT NULL,
+    issued_by bigint(20) NOT NULL,
+    created_at datetime DEFAULT '1970-01-01 00:00:00' NOT NULL,
+    PRIMARY KEY  (id),
+    UNIQUE KEY pnr (pnr),
+    UNIQUE KEY ticket_no (ticket_no),
+    KEY customer_idx (customer_id),
+    KEY agent_idx (agent_id),
+    KEY travel_date_idx (travel_date)
+) $charset_collate;";
+dbDelta( $sql_tickets );
 
     // 3. Ticket Refund, Reissue & Void Ledger
-    $table_refunds = $wpdb->prefix . 'iterp_refund_reissue';
-    $sql_refunds = "CREATE TABLE $table_refunds (
-        id bigint(20) NOT NULL AUTO_INCREMENT,
-        type varchar(30) NOT NULL,
-        ticket_id bigint(20) NOT NULL,
-        pnr varchar(50) NOT NULL,
-        ticket_no varchar(50) NOT NULL,
-        airline_penalty decimal(12,2) DEFAULT '0.00' NOT NULL,
-        agency_service_charge decimal(12,2) DEFAULT '0.00' NOT NULL,
-        refund_amount decimal(12,2) DEFAULT '0.00' NOT NULL,
-        status varchar(50) DEFAULT 'Processed' NOT NULL,
-        remarks text NOT NULL,
-        processed_by bigint(20) NOT NULL,
-        created_at datetime DEFAULT '1970-01-01 00:00:00' NOT NULL,
-        PRIMARY KEY  (id)
-    ) $charset_collate;";
-    dbDelta( $sql_refunds );
+$table_refunds = $wpdb->prefix . 'iterp_refund_reissue';
+$sql_refunds = "CREATE TABLE $table_refunds (
+    id bigint(20) NOT NULL AUTO_INCREMENT,
+    type varchar(30) NOT NULL,
+    ticket_id bigint(20) NOT NULL,
+    customer_id bigint(20) DEFAULT 0 NOT NULL,
+    agent_id bigint(20) DEFAULT 0 NOT NULL,
+    supplier_id bigint(20) DEFAULT 0 NOT NULL,
+    pnr varchar(50) NOT NULL,
+    new_pnr varchar(50) DEFAULT '' NOT NULL,
+    ticket_no varchar(50) NOT NULL,
+    new_ticket_no varchar(50) DEFAULT '' NOT NULL,
+    original_fare decimal(12,2) DEFAULT '0.00' NOT NULL,
+    airline_penalty decimal(12,2) DEFAULT '0.00' NOT NULL,
+    agency_service_charge decimal(12,2) DEFAULT '0.00' NOT NULL,
+    fare_difference decimal(12,2) DEFAULT '0.00' NOT NULL,
+    refund_amount decimal(12,2) DEFAULT '0.00' NOT NULL,
+    settlement_method varchar(50) DEFAULT 'Bank Transfer' NOT NULL,
+    status varchar(50) DEFAULT 'Processed' NOT NULL,
+    remarks text NOT NULL,
+    processed_by bigint(20) NOT NULL,
+    created_at datetime DEFAULT '1970-01-01 00:00:00' NOT NULL,
+    PRIMARY KEY  (id),
+    KEY ticket_idx (ticket_id),
+    KEY customer_idx (customer_id),
+    KEY agent_idx (agent_id),
+    KEY pnr_idx (pnr)
+) $charset_collate;";
+dbDelta( $sql_refunds );
 
-    // 4. Visa Processing Tracker
-    $table_visas = $wpdb->prefix . 'iterp_visa_applications';
-    $sql_visas = "CREATE TABLE $table_visas (
-        id bigint(20) NOT NULL AUTO_INCREMENT,
-        customer_id bigint(20) NOT NULL,
-        agent_id bigint(20) DEFAULT 0 NOT NULL,
-        supplier_id bigint(20) DEFAULT 0 NOT NULL,
-        country varchar(100) NOT NULL,
-        visa_type varchar(100) NOT NULL,
-        entry_type varchar(50) DEFAULT 'Single Entry' NOT NULL,
-        tracking_no varchar(100) DEFAULT '' NOT NULL,
-        submission_date date DEFAULT '1970-01-01' NOT NULL,
-        expected_delivery date DEFAULT '1970-01-01' NOT NULL,
-        validity_days int(11) DEFAULT 30 NOT NULL,
-        buy_price decimal(12,2) DEFAULT '0.00' NOT NULL,
-        sell_price decimal(12,2) DEFAULT '0.00' NOT NULL,
-        profit decimal(12,2) DEFAULT '0.00' NOT NULL,
-        status varchar(50) DEFAULT 'Processing' NOT NULL,
-        documents_collected text NOT NULL,
-        remarks text,
-        created_by bigint(20) NOT NULL,
-        created_at datetime DEFAULT '1970-01-01 00:00:00' NOT NULL,
-        PRIMARY KEY  (id)
-    ) $charset_collate;";
-    dbDelta( $sql_visas );
+    // 4. Visa Processing Tracker (100% Synced with Visa Modules)
+$table_visas = $wpdb->prefix . 'iterp_visa_applications';
+$sql_visas = "CREATE TABLE $table_visas (
+    id bigint(20) NOT NULL AUTO_INCREMENT,
+    customer_id bigint(20) NOT NULL,
+    passenger_name varchar(255) DEFAULT '' NOT NULL,
+    passport_no varchar(100) DEFAULT '' NOT NULL,
+    agent_id bigint(20) DEFAULT 0 NOT NULL,
+    supplier_id bigint(20) DEFAULT 0 NOT NULL,
+    country varchar(100) NOT NULL,
+    visa_type varchar(100) NOT NULL,
+    entry_type varchar(50) DEFAULT 'Single Entry' NOT NULL,
+    tracking_no varchar(100) DEFAULT '' NOT NULL,
+    embassy_app_no varchar(100) DEFAULT '' NOT NULL,
+    processing_center varchar(150) DEFAULT 'VFS Global Dhaka' NOT NULL,
+    submission_date date DEFAULT '1970-01-01' NOT NULL,
+    appointment_date date DEFAULT '1970-01-01' NOT NULL,
+    expected_delivery date DEFAULT '1970-01-01' NOT NULL,
+    issue_date date DEFAULT '1970-01-01' NOT NULL,
+    expiry_date date DEFAULT '1970-01-01' NOT NULL,
+    validity_days int(11) DEFAULT 30 NOT NULL,
+    stay_duration varchar(50) DEFAULT '30 Days' NOT NULL,
+    embassy_fee decimal(12,2) DEFAULT '0.00' NOT NULL,
+    service_fee decimal(12,2) DEFAULT '0.00' NOT NULL,
+    buy_price decimal(12,2) DEFAULT '0.00' NOT NULL,
+    sell_price decimal(12,2) DEFAULT '0.00' NOT NULL,
+    profit decimal(12,2) DEFAULT '0.00' NOT NULL,
+    status varchar(50) DEFAULT 'Processing' NOT NULL,
+    payment_status varchar(30) DEFAULT 'Unpaid' NOT NULL,
+    payment_method varchar(50) DEFAULT 'Bank Transfer' NOT NULL,
+    documents_collected text NOT NULL,
+    passport_scan_url text NOT NULL,
+    photo_url text NOT NULL,
+    visa_doc_url text NOT NULL,
+    supporting_doc_url text NOT NULL,
+    remarks text,
+    created_by bigint(20) NOT NULL,
+    created_at datetime DEFAULT '1970-01-01 00:00:00' NOT NULL,
+    PRIMARY KEY  (id),
+    KEY customer_idx (customer_id),
+    KEY agent_idx (agent_id),
+    KEY tracking_idx (tracking_no),
+    KEY country_idx (country)
+) $charset_collate;";
+dbDelta( $sql_visas );
 
     // 5. Visa Requirements Directory
     $table_visa_reqs = $wpdb->prefix . 'iterp_visa_requirements';
@@ -623,7 +691,11 @@ function ifs_terp_main_router_page() {
     $current_user_id = get_current_user_id();
     $current_user    = wp_get_current_user();
     
-    $display_name  = ! empty( $current_user->display_name ) ? $current_user->display_name : $current_user->user_login;
+    // First & Last Name logic with fallback
+    $fname = get_user_meta( $current_user_id, 'first_name', true );
+    $lname = get_user_meta( $current_user_id, 'last_name', true );
+    $full_name = trim( $fname . ' ' . $lname );
+    $display_name  = ! empty( $full_name ) ? $full_name : ( ! empty( $current_user->display_name ) ? $current_user->display_name : $current_user->user_login );
     $designation   = ! empty( $current_user->roles ) ? ucfirst( reset( $current_user->roles ) ) : 'Travel Agent';
     $custom_avatar = '';
     $logout_url    = wp_logout_url( admin_url( 'admin.php?page=ifs_travel_erp' ) );
@@ -944,9 +1016,6 @@ add_action( 'admin_head', function() {
                 justify-content: center;
                 padding: 16px 10px;
             }
-            // .ifs-terp-sidebar-container.collapsed .ifs-sidebar-toggle-btn {
-            //     display: none;
-            // }
             .ifs-terp-sidebar-container.collapsed .ifs-terp-left-tabs li {
                 margin: 4px 8px;
             }
