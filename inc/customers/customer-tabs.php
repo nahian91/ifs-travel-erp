@@ -26,29 +26,8 @@ function ifs_terp_customer_render_tabs( $active_tab = 'list' ) {
                     <span class="dashicons dashicons-admin-users"></span>
                 </div>
                 <div class="ifs-pro-title-meta">
-                    <div class="ifs-pro-badge-group">
-                        <span class="ifs-status-dot"></span>
-                        <span class="ifs-meta-tag">CRM Directory</span>
-                        <span class="ifs-meta-tag-blue">B2C Operations</span>
-                    </div>
                     <h2 class="ifs-pro-heading">Customer Directory & Profiles</h2>
                     <p class="ifs-pro-caption">Manage passenger portfolios, passport expirations, and travel bookings</p>
-                </div>
-            </div>
-            
-            <!-- Quick Stat Badges Strip -->
-            <div class="ifs-pro-stats-strip">
-                <div class="ifs-stat-pill">
-                    <span class="ifs-stat-lbl">Total Profiles</span>
-                    <span class="ifs-stat-num color-dark"><?php echo number_format( $total_customers ); ?></span>
-                </div>
-                <div class="ifs-stat-pill">
-                    <span class="ifs-stat-lbl">Retail Travelers</span>
-                    <span class="ifs-stat-num color-blue"><?php echo number_format( $retail_count ); ?></span>
-                </div>
-                <div class="ifs-stat-pill">
-                    <span class="ifs-stat-lbl">Corporate</span>
-                    <span class="ifs-stat-num color-purple"><?php echo number_format( $corporate_count ); ?></span>
                 </div>
             </div>
         </div>

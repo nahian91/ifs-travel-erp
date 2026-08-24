@@ -12,10 +12,10 @@ function ifs_terp_refund_render_tabs( $active_tab = 'list' ) {
     $base_url = admin_url( 'admin.php?page=ifs_travel_erp&tab=refund_reissue' );
 
     $table_refunds      = $wpdb->prefix . 'iterp_refund_reissue';
-    $total_records      = (int) $wpdb->get_var( "SELECT COUNT(id) FROM $table_refunds" );
-    $total_refunded     = (float) $wpdb->get_var( "SELECT SUM(refund_amount) FROM $table_refunds WHERE type IN ('Refund', 'Void')" );
-    $total_penalty      = (float) $wpdb->get_var( "SELECT SUM(airline_penalty) FROM $table_refunds" );
-    $total_reissue_fees = (float) $wpdb->get_var( "SELECT SUM(agency_service_charge) FROM $table_refunds" );
+    $total_records      = (int) $wpdb->get_var( "SELECT COUNT(id) FROM {$table_refunds}" );
+    $total_refunded     = (float) $wpdb->get_var( "SELECT SUM(refund_amount) FROM {$table_refunds} WHERE type IN ('Refund', 'Void')" );
+    $total_penalty      = (float) $wpdb->get_var( "SELECT SUM(airline_penalty) FROM {$table_refunds}" );
+    $total_reissue_fees = (float) $wpdb->get_var( "SELECT SUM(agency_service_charge) FROM {$table_refunds}" );
     ?>
     <div class="ifs-pro-tab-wrapper">
         <div class="ifs-pro-header-card">
@@ -24,32 +24,27 @@ function ifs_terp_refund_render_tabs( $active_tab = 'list' ) {
                     <span class="dashicons dashicons-image-rotate"></span>
                 </div>
                 <div class="ifs-pro-title-meta">
-                    <div class="ifs-pro-badge-group">
-                        <span class="ifs-status-dot"></span>
-                        <span class="ifs-meta-tag">Post-Ticketing Desk</span>
-                        <span class="ifs-meta-tag-rose">Cancellations &amp; Adjustments</span>
-                    </div>
-                    <h2 class="ifs-pro-heading">Ticket Refund, Reissue &amp; Void Desk</h2>
-                    <p class="ifs-pro-caption">Manage passenger cancellations, airline penalties, service fees, and double-entry ledger adjustments</p>
+                    <h2 class="ifs-pro-heading"><?php esc_html_e( 'Ticket Refund, Reissue & Void Desk', 'ifs-travel-erp' ); ?></h2>
+                    <p class="ifs-pro-caption"><?php esc_html_e( 'Manage passenger cancellations, airline penalties, service fees, and double-entry ledger adjustments', 'ifs-travel-erp' ); ?></p>
                 </div>
             </div>
             
             <div class="ifs-pro-stats-strip">
                 <div class="ifs-stat-pill">
-                    <span class="ifs-stat-lbl">Processed Files</span>
-                    <span class="ifs-stat-num color-dark"><?php echo number_format( $total_records ); ?></span>
+                    <span class="ifs-stat-lbl"><?php esc_html_e( 'Processed Files', 'ifs-travel-erp' ); ?></span>
+                    <span class="ifs-stat-num color-dark"><?php echo esc_html( number_format_i18n( $total_records ) ); ?></span>
                 </div>
                 <div class="ifs-stat-pill">
-                    <span class="ifs-stat-lbl">Refunds Paid</span>
-                    <span class="ifs-stat-num color-rose">৳<?php echo number_format( $total_refunded, 2 ); ?></span>
+                    <span class="ifs-stat-lbl"><?php esc_html_e( 'Refunds Paid', 'ifs-travel-erp' ); ?></span>
+                    <span class="ifs-stat-num color-rose">৳<?php echo esc_html( number_format( $total_refunded, 2 ) ); ?></span>
                 </div>
                 <div class="ifs-stat-pill">
-                    <span class="ifs-stat-lbl">Airline Penalties</span>
-                    <span class="ifs-stat-num color-amber">৳<?php echo number_format( $total_penalty, 2 ); ?></span>
+                    <span class="ifs-stat-lbl"><?php esc_html_e( 'Airline Penalties', 'ifs-travel-erp' ); ?></span>
+                    <span class="ifs-stat-num color-amber">৳<?php echo esc_html( number_format( $total_penalty, 2 ) ); ?></span>
                 </div>
                 <div class="ifs-stat-pill">
-                    <span class="ifs-stat-lbl">Agency Fees Earned</span>
-                    <span class="ifs-stat-num color-emerald">৳<?php echo number_format( $total_reissue_fees, 2 ); ?></span>
+                    <span class="ifs-stat-lbl"><?php esc_html_e( 'Agency Fees Earned', 'ifs-travel-erp' ); ?></span>
+                    <span class="ifs-stat-num color-emerald">৳<?php echo esc_html( number_format( $total_reissue_fees, 2 ) ); ?></span>
                 </div>
             </div>
         </div>
@@ -57,16 +52,16 @@ function ifs_terp_refund_render_tabs( $active_tab = 'list' ) {
         <div class="ifs-pro-nav-container">
             <nav class="ifs-pro-nav-bar">
                 <a href="<?php echo esc_url( $base_url . '&sub=list' ); ?>" 
-                   class="ifs-pro-nav-btn <?php echo ( $active_tab === 'list' ) ? 'active-tab' : ''; ?>">
+                   class="ifs-pro-nav-btn <?php echo ( 'list' === $active_tab ) ? 'active-tab' : ''; ?>">
                     <span class="dashicons dashicons-list-view"></span>
-                    <span class="ifs-btn-label">All Processed Records</span>
-                    <span class="ifs-pro-counter"><?php echo $total_records; ?></span>
+                    <span class="ifs-btn-label"><?php esc_html_e( 'All Processed Records', 'ifs-travel-erp' ); ?></span>
+                    <span class="ifs-pro-counter"><?php echo esc_html( number_format_i18n( $total_records ) ); ?></span>
                 </a>
 
                 <a href="<?php echo esc_url( $base_url . '&sub=process' ); ?>" 
-                   class="ifs-pro-nav-btn <?php echo ( $active_tab === 'process' ) ? 'active-tab' : ''; ?>">
+                   class="ifs-pro-nav-btn <?php echo ( 'process' === $active_tab ) ? 'active-tab' : ''; ?>">
                     <span class="dashicons dashicons-plus-alt2"></span>
-                    <span class="ifs-btn-label">Process Cancellation / Reissue</span>
+                    <span class="ifs-btn-label"><?php esc_html_e( 'Process Cancellation / Reissue', 'ifs-travel-erp' ); ?></span>
                 </a>
             </nav>
         </div>
@@ -87,60 +82,65 @@ function ifs_terp_refund_reissue_tab() {
     $table_agents        = $wpdb->prefix . 'iterp_agents';
     $base_url            = admin_url( 'admin.php?page=ifs_travel_erp&tab=refund_reissue' );
 
-    $sub_action = isset( $_GET['sub'] ) ? sanitize_text_field( $_GET['sub'] ) : 'list';
+    $sub_action = isset( $_GET['sub'] ) ? sanitize_key( wp_unslash( $_GET['sub'] ) ) : 'list';
     $message    = '';
 
     /* =========================================================================
        1. DELETE ACTION HANDLER
        ========================================================================= */
-    if ( $sub_action === 'delete' && isset( $_GET['id'] ) ) {
-        $del_id = intval( $_GET['id'] );
+    if ( 'delete' === $sub_action && isset( $_GET['id'] ) ) {
+        $del_id = absint( $_GET['id'] );
         check_admin_referer( 'delete_refund_' . $del_id );
 
-        $ref_info = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM $table_refunds WHERE id = %d", $del_id ) );
+        $ref_info = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$table_refunds} WHERE id = %d", $del_id ) );
         if ( $ref_info ) {
-            // Restore linked ticket status back to Issued
             if ( ! empty( $ref_info->ticket_id ) ) {
-                $wpdb->update( $table_tickets, array( 'status' => 'Issued' ), array( 'id' => $ref_info->ticket_id ) );
+                $wpdb->update( $table_tickets, array( 'status' => 'Issued' ), array( 'id' => $ref_info->ticket_id ), array( '%s' ), array( '%d' ) );
             }
             $wpdb->delete( $table_refunds, array( 'id' => $del_id ), array( '%d' ) );
 
             if ( function_exists( 'ifs_terp_log_activity' ) ) {
-                ifs_terp_log_activity( "Deleted Post-Ticketing Record #REF-$del_id (PNR: {$ref_info->pnr} | Type: {$ref_info->type})" );
+                ifs_terp_log_activity( "Deleted Post-Ticketing Record #REF-{$del_id} (PNR: {$ref_info->pnr} | Type: {$ref_info->type})" );
             }
         }
 
-        wp_safe_redirect( add_query_arg( array( 'page' => 'ifs_travel_erp', 'tab' => 'refund_reissue', 'msg' => 'deleted' ), admin_url( 'admin.php' ) ) );
-        exit;
+        $redirect_url = add_query_arg( array( 'page' => 'ifs_travel_erp', 'tab' => 'refund_reissue', 'msg' => 'deleted' ), admin_url( 'admin.php' ) );
+        if ( ! headers_sent() ) {
+            wp_safe_redirect( $redirect_url );
+            exit;
+        } else {
+            echo '<script type="text/javascript">window.location.replace("' . esc_url_raw( $redirect_url ) . '");</script>';
+            exit;
+        }
     }
 
     /* =========================================================================
        2. SAVE / UPDATE ACTION HANDLER (PROCESS & EDIT)
        ========================================================================= */
-    if ( $_SERVER['REQUEST_METHOD'] === 'POST' && isset( $_POST['ifs_refund_submit'] ) ) {
+    if ( 'POST' === $_SERVER['REQUEST_METHOD'] && isset( $_POST['ifs_refund_submit'] ) ) {
         check_admin_referer( 'ifs_refund_action', 'ifs_refund_nonce' );
 
-        $edit_id            = intval( $_POST['edit_id'] ?? 0 );
-        $is_update          = ( $edit_id > 0 );
-        $ticket_id          = intval( $_POST['ticket_id'] ?? 0 );
-        $customer_id        = intval( $_POST['customer_id'] ?? 0 );
-        $agent_id           = intval( $_POST['agent_id'] ?? 0 );
-        $supplier_id        = intval( $_POST['supplier_id'] ?? 0 );
-        $pnr                = strtoupper( sanitize_text_field( $_POST['pnr'] ?? '' ) );
-        $ticket_no          = sanitize_text_field( $_POST['ticket_no'] ?? '' );
-        $new_pnr            = strtoupper( sanitize_text_field( $_POST['new_pnr'] ?? '' ) );
-        $new_ticket_no      = sanitize_text_field( $_POST['new_ticket_no'] ?? '' );
-        $type               = sanitize_text_field( $_POST['process_type'] ?? 'Refund' );
-        $original_fare      = floatval( $_POST['original_fare'] ?? 0 );
-        $penalty            = floatval( $_POST['airline_penalty'] ?? 0 );
-        $service_charge     = floatval( $_POST['service_charge'] ?? 0 );
-        $fare_difference    = floatval( $_POST['fare_difference'] ?? 0 );
-        $refund_total       = floatval( $_POST['refund_amount'] ?? 0 );
-        $settlement_method  = sanitize_text_field( $_POST['settlement_method'] ?? 'Bank Transfer' );
-        $remarks            = sanitize_textarea_field( $_POST['remarks'] ?? '' );
+        $edit_id           = isset( $_POST['edit_id'] ) ? absint( $_POST['edit_id'] ) : 0;
+        $is_update         = ( $edit_id > 0 );
+        $ticket_id         = isset( $_POST['ticket_id'] ) ? absint( $_POST['ticket_id'] ) : 0;
+        $customer_id       = isset( $_POST['customer_id'] ) ? absint( $_POST['customer_id'] ) : 0;
+        $agent_id          = isset( $_POST['agent_id'] ) ? absint( $_POST['agent_id'] ) : 0;
+        $supplier_id       = isset( $_POST['supplier_id'] ) ? absint( $_POST['supplier_id'] ) : 0;
+        $pnr               = isset( $_POST['pnr'] ) ? strtoupper( sanitize_text_field( wp_unslash( $_POST['pnr'] ) ) ) : '';
+        $ticket_no         = isset( $_POST['ticket_no'] ) ? sanitize_text_field( wp_unslash( $_POST['ticket_no'] ) ) : '';
+        $new_pnr           = isset( $_POST['new_pnr'] ) ? strtoupper( sanitize_text_field( wp_unslash( $_POST['new_pnr'] ) ) ) : '';
+        $new_ticket_no     = isset( $_POST['new_ticket_no'] ) ? sanitize_text_field( wp_unslash( $_POST['new_ticket_no'] ) ) : '';
+        $type              = isset( $_POST['process_type'] ) ? sanitize_text_field( wp_unslash( $_POST['process_type'] ) ) : 'Refund';
+        $original_fare     = isset( $_POST['original_fare'] ) ? floatval( wp_unslash( $_POST['original_fare'] ) ) : 0.0;
+        $penalty           = isset( $_POST['airline_penalty'] ) ? floatval( wp_unslash( $_POST['airline_penalty'] ) ) : 0.0;
+        $service_charge    = isset( $_POST['service_charge'] ) ? floatval( wp_unslash( $_POST['service_charge'] ) ) : 0.0;
+        $fare_difference   = isset( $_POST['fare_difference'] ) ? floatval( wp_unslash( $_POST['fare_difference'] ) ) : 0.0;
+        $refund_total      = isset( $_POST['refund_amount'] ) ? floatval( wp_unslash( $_POST['refund_amount'] ) ) : 0.0;
+        $settlement_method = isset( $_POST['settlement_method'] ) ? sanitize_text_field( wp_unslash( $_POST['settlement_method'] ) ) : 'Bank Transfer';
+        $remarks           = isset( $_POST['remarks'] ) ? sanitize_textarea_field( wp_unslash( $_POST['remarks'] ) ) : '';
 
         if ( $ticket_id > 0 && ! $is_update ) {
-            $tkt_obj = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM $table_tickets WHERE id = %d", $ticket_id ) );
+            $tkt_obj = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$table_tickets} WHERE id = %d", $ticket_id ) );
             if ( $tkt_obj ) {
                 $customer_id   = $tkt_obj->customer_id;
                 $agent_id      = $tkt_obj->agent_id;
@@ -172,22 +172,24 @@ function ifs_terp_refund_reissue_tab() {
             'processed_by'          => get_current_user_id()
         );
 
+        $formats = array( '%s', '%d', '%d', '%d', '%d', '%s', '%s', '%s', '%s', '%f', '%f', '%f', '%f', '%f', '%s', '%s', '%s', '%d' );
+
         if ( $is_update ) {
-            $wpdb->update( $table_refunds, $data_array, array( 'id' => $edit_id ) );
+            $wpdb->update( $table_refunds, $data_array, array( 'id' => $edit_id ), $formats, array( '%d' ) );
             $refund_id = $edit_id;
-            $message   = '<div class="ifs-toast success"><span class="dashicons dashicons-yes-alt"></span> Record #REF-' . str_pad( (string) $edit_id, 5, '0', STR_PAD_LEFT ) . ' updated successfully.</div>';
+            $message   = '<div class="ifs-toast success"><span class="dashicons dashicons-yes-alt"></span> ' . sprintf( esc_html__( 'Record #REF-%05d updated successfully.', 'ifs-travel-erp' ), $edit_id ) . '</div>';
         } else {
             $data_array['created_at'] = current_time( 'mysql' );
-            $wpdb->insert( $table_refunds, $data_array );
+            $formats[]                = '%s';
+            $wpdb->insert( $table_refunds, $data_array, $formats );
             $refund_id = $wpdb->insert_id;
 
-            // Sync ticket status
             if ( $ticket_id > 0 ) {
-                $wpdb->update( $table_tickets, array( 'status' => $type ), array( 'id' => $ticket_id ) );
+                $wpdb->update( $table_tickets, array( 'status' => $type ), array( 'id' => $ticket_id ), array( '%s' ), array( '%d' ) );
             }
 
-            // General Ledger Auto-Posting
-            if ( $type === 'Refund' || $type === 'Void' ) {
+            // General Ledger Postings
+            if ( 'Refund' === $type || 'Void' === $type ) {
                 if ( $refund_total > 0 ) {
                     $wpdb->insert(
                         $table_ledger,
@@ -196,11 +198,12 @@ function ifs_terp_refund_reissue_tab() {
                             'category'         => 'Ticket Refund Payout',
                             'amount'           => $refund_total,
                             'payment_method'   => $settlement_method,
-                            'reference_no'     => "PNR: $pnr (#REF-$refund_id)",
-                            'description'      => "Ticket $type for PNR $pnr (Penalty: ৳$penalty | Srv Fee: ৳$service_charge)",
+                            'reference_no'     => "PNR: {$pnr} (#REF-{$refund_id})",
+                            'description'      => "Ticket {$type} for PNR {$pnr} (Penalty: ৳{$penalty} | Srv Fee: ৳{$service_charge})",
                             'transaction_date' => current_time( 'mysql' ),
                             'logged_by'        => get_current_user_id()
-                        )
+                        ),
+                        array( '%s', '%s', '%f', '%s', '%s', '%s', '%s', '%d' )
                     );
                 }
                 if ( $service_charge > 0 ) {
@@ -211,14 +214,15 @@ function ifs_terp_refund_reissue_tab() {
                             'category'         => 'Refund Service Fee',
                             'amount'           => $service_charge,
                             'payment_method'   => $settlement_method,
-                            'reference_no'     => "PNR: $pnr (#REF-$refund_id)",
-                            'description'      => "Agency fee retained for processing $type on PNR $pnr",
+                            'reference_no'     => "PNR: {$pnr} (#REF-{$refund_id})",
+                            'description'      => "Agency fee retained for processing {$type} on PNR {$pnr}",
                             'transaction_date' => current_time( 'mysql' ),
                             'logged_by'        => get_current_user_id()
-                        )
+                        ),
+                        array( '%s', '%s', '%f', '%s', '%s', '%s', '%s', '%d' )
                     );
                 }
-            } elseif ( $type === 'Reissue' ) {
+            } elseif ( 'Reissue' === $type ) {
                 if ( $refund_total > 0 ) {
                     $wpdb->insert(
                         $table_ledger,
@@ -227,102 +231,105 @@ function ifs_terp_refund_reissue_tab() {
                             'category'         => 'Ticket Reissue Collection',
                             'amount'           => $refund_total,
                             'payment_method'   => $settlement_method,
-                            'reference_no'     => "PNR: $pnr (#REF-$refund_id)",
-                            'description'      => "Reissue fee & penalty collected on PNR $pnr (New TKT: $new_ticket_no)",
+                            'reference_no'     => "PNR: {$pnr} (#REF-{$refund_id})",
+                            'description'      => "Reissue fee & penalty collected on PNR {$pnr} (New TKT: {$new_ticket_no})",
                             'transaction_date' => current_time( 'mysql' ),
                             'logged_by'        => get_current_user_id()
-                        )
+                        ),
+                        array( '%s', '%s', '%f', '%s', '%s', '%s', '%s', '%d' )
                     );
                 }
             }
 
             // Sub-Agent Balance Adjustment
             if ( $agent_id > 0 ) {
-                $cur_bal = (float) $wpdb->get_var( $wpdb->prepare( "SELECT current_balance FROM $table_agents WHERE id = %d", $agent_id ) );
-                if ( $type === 'Refund' || $type === 'Void' ) {
+                $cur_bal = (float) $wpdb->get_var( $wpdb->prepare( "SELECT current_balance FROM {$table_agents} WHERE id = %d", $agent_id ) );
+                if ( 'Refund' === $type || 'Void' === $type ) {
                     $new_bal = $cur_bal + $refund_total;
-                    $wpdb->update( $table_agents, array( 'current_balance' => $new_bal ), array( 'id' => $agent_id ) );
+                    $wpdb->update( $table_agents, array( 'current_balance' => $new_bal ), array( 'id' => $agent_id ), array( '%f' ), array( '%d' ) );
                     $wpdb->insert(
                         $table_agent_ledgers,
                         array(
                             'agent_id'       => $agent_id,
-                            'reference_type' => "Ticket $type",
+                            'reference_type' => "Ticket {$type}",
                             'reference_id'   => $refund_id,
                             'debit'          => 0,
                             'credit'         => $refund_total,
                             'balance_after'  => $new_bal,
-                            'note'           => "Credit for $type on PNR: $pnr (#REF-$refund_id)",
+                            'note'           => "Credit for {$type} on PNR: {$pnr} (#REF-{$refund_id})",
                             'created_at'     => current_time( 'mysql' )
-                        )
+                        ),
+                        array( '%d', '%s', '%d', '%f', '%f', '%f', '%s', '%s' )
                     );
-                } elseif ( $type === 'Reissue' ) {
+                } elseif ( 'Reissue' === $type ) {
                     $new_bal = $cur_bal - $refund_total;
-                    $wpdb->update( $table_agents, array( 'current_balance' => $new_bal ), array( 'id' => $agent_id ) );
+                    $wpdb->update( $table_agents, array( 'current_balance' => $new_bal ), array( 'id' => $agent_id ), array( '%f' ), array( '%d' ) );
                     $wpdb->insert(
                         $table_agent_ledgers,
                         array(
                             'agent_id'       => $agent_id,
-                            'reference_type' => "Ticket Reissue",
+                            'reference_type' => 'Ticket Reissue',
                             'reference_id'   => $refund_id,
                             'debit'          => $refund_total,
                             'credit'         => 0,
                             'balance_after'  => $new_bal,
-                            'note'           => "Debit for Reissue charges on PNR: $pnr (#REF-$refund_id)",
+                            'note'           => "Debit for Reissue charges on PNR: {$pnr} (#REF-{$refund_id})",
                             'created_at'     => current_time( 'mysql' )
-                        )
+                        ),
+                        array( '%d', '%s', '%d', '%f', '%f', '%f', '%s', '%s' )
                     );
                 }
             }
 
-            $message = '<div class="ifs-toast success"><span class="dashicons dashicons-yes-alt"></span> Ticket ' . esc_html( $type ) . ' operation executed and ledger adjusted successfully.</div>';
+            $message = '<div class="ifs-toast success"><span class="dashicons dashicons-yes-alt"></span> ' . sprintf( esc_html__( 'Ticket %s operation executed and ledger adjusted successfully.', 'ifs-travel-erp' ), esc_html( $type ) ) . '</div>';
         }
 
         if ( function_exists( 'ifs_terp_log_activity' ) ) {
-            ifs_terp_log_activity( "Executed/Updated $type for PNR: $pnr | Net Adjustment: ৳$refund_total" );
+            ifs_terp_log_activity( "Executed/Updated {$type} for PNR: {$pnr} | Net Adjustment: ৳{$refund_total}" );
         }
     }
 
-    if ( isset( $_GET['msg'] ) && $_GET['msg'] === 'deleted' ) {
-        $message = '<div class="ifs-toast success"><span class="dashicons dashicons-yes-alt"></span> Record removed successfully and ticket status restored.</div>';
+    if ( isset( $_GET['msg'] ) && 'deleted' === $_GET['msg'] ) {
+        $message = '<div class="ifs-toast success"><span class="dashicons dashicons-yes-alt"></span> ' . esc_html__( 'Record removed successfully and ticket status restored.', 'ifs-travel-erp' ) . '</div>';
     }
 
     echo '<div class="ifs-refund-workspace">';
     ifs_terp_refund_render_tabs( in_array( $sub_action, array( 'process', 'edit' ), true ) ? 'process' : 'list' );
-    echo $message;
+    echo $message; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 
     /* =========================================================================
        3. VIEW SINGLE VOUCHER DETAILS (sub=view)
        ========================================================================= */
-    if ( $sub_action === 'view' && isset( $_GET['id'] ) ) {
-        $view_id = intval( $_GET['id'] );
+    if ( 'view' === $sub_action && isset( $_GET['id'] ) ) {
+        $view_id = absint( $_GET['id'] );
         $record  = $wpdb->get_row( $wpdb->prepare( "
             SELECT r.*, c.full_name AS customer_name, c.mobile AS customer_mobile, a.agency_name, t.airline, t.sector, t.travel_date
-            FROM $table_refunds r
-            LEFT JOIN $table_customers c ON r.customer_id = c.id
-            LEFT JOIN $table_agents a ON r.agent_id = a.id
-            LEFT JOIN $table_tickets t ON r.ticket_id = t.id
+            FROM {$table_refunds} r
+            LEFT JOIN {$table_customers} c ON r.customer_id = c.id
+            LEFT JOIN {$table_agents} a ON r.agent_id = a.id
+            LEFT JOIN {$table_tickets} t ON r.ticket_id = t.id
             WHERE r.id = %d
         ", $view_id ) );
 
         if ( ! $record ) {
-            echo '<div class="ifs-toast danger"><span class="dashicons dashicons-dismiss"></span> Record not found.</div>';
+            echo '<div class="ifs-toast danger"><span class="dashicons dashicons-dismiss"></span> ' . esc_html__( 'Record not found.', 'ifs-travel-erp' ) . '</div>';
             echo '</div>';
             return;
         }
 
-        $badge_class = ( $record->type === 'Reissue' ) ? 'badge-reissue' : ( ( $record->type === 'Void' ) ? 'badge-void' : 'badge-refund' );
+        $badge_class = ( 'Reissue' === $record->type ) ? 'badge-reissue' : ( ( 'Void' === $record->type ) ? 'badge-void' : 'badge-refund' );
         ?>
         <div class="ifs-single-view-container">
             <div class="ifs-view-top-bar">
                 <div class="view-title-group">
-                    <span class="ifs-id-badge">#REF-<?php echo str_pad( (string) $record->id, 5, '0', STR_PAD_LEFT ); ?></span>
+                    <span class="ifs-id-badge">#REF-<?php echo esc_html( str_pad( (string) $record->id, 5, '0', STR_PAD_LEFT ) ); ?></span>
                     <span class="ifs-operation-badge <?php echo esc_attr( $badge_class ); ?>"><?php echo esc_html( $record->type ); ?></span>
-                    <h3 style="margin: 0; font-size: 18px; font-weight: 800; color: #0f172a;">Post-Ticketing Settlement Voucher</h3>
+                    <h3 style="margin: 0; font-size: 18px; font-weight: 800; color: #0f172a;"><?php esc_html_e( 'Post-Ticketing Settlement Voucher', 'ifs-travel-erp' ); ?></h3>
                 </div>
                 <div style="display: flex; gap: 8px;">
-                    <button type="button" onclick="window.print();" class="ifs-btn-back"><span class="dashicons dashicons-printer"></span> Print Voucher</button>
-                    <a href="<?php echo esc_url( $base_url . '&sub=edit&id=' . $record->id ); ?>" class="ifs-action-pill edit" style="padding: 7px 14px; font-size: 13px;"><span class="dashicons dashicons-edit"></span> Edit Record</a>
-                    <a href="<?php echo esc_url( $base_url . '&sub=list' ); ?>" class="ifs-btn-back"><span class="dashicons dashicons-arrow-left-alt"></span> Back to List</a>
+                    <button type="button" onclick="window.print();" class="ifs-btn-back"><span class="dashicons dashicons-printer"></span> <?php esc_html_e( 'Print Voucher', 'ifs-travel-erp' ); ?></button>
+                    <a href="<?php echo esc_url( $base_url . '&sub=edit&id=' . $record->id ); ?>" class="ifs-action-pill edit" style="padding: 7px 14px; font-size: 13px;"><span class="dashicons dashicons-edit"></span> <?php esc_html_e( 'Edit Record', 'ifs-travel-erp' ); ?></a>
+                    <a href="<?php echo esc_url( $base_url . '&sub=list' ); ?>" class="ifs-btn-back"><span class="dashicons dashicons-arrow-left-alt"></span> <?php esc_html_e( 'Back to List', 'ifs-travel-erp' ); ?></a>
                 </div>
             </div>
 
@@ -331,38 +338,38 @@ function ifs_terp_refund_reissue_tab() {
                 <div class="ifs-settlement-card">
                     <div class="settle-top-strip">
                         <span class="settle-brand">IFS POST-TICKETING VOUCHER</span>
-                        <span class="settle-type"><?php echo strtoupper( esc_html( $record->type ) ); ?></span>
+                        <span class="settle-type"><?php echo esc_html( strtoupper( $record->type ) ); ?></span>
                     </div>
 
                     <div class="settle-hero-box">
-                        <span class="settle-lbl"><?php echo ( $record->type === 'Reissue' ) ? 'TOTAL REISSUE CHARGE COLLECTED' : 'NET REFUND PAID TO CLIENT'; ?></span>
-                        <h3 class="settle-amount">৳<?php echo number_format( (float) $record->refund_amount, 2 ); ?></h3>
+                        <span class="settle-lbl"><?php echo ( 'Reissue' === $record->type ) ? esc_html__( 'TOTAL REISSUE CHARGE COLLECTED', 'ifs-travel-erp' ) : esc_html__( 'NET REFUND PAID TO CLIENT', 'ifs-travel-erp' ); ?></span>
+                        <h3 class="settle-amount">৳<?php echo esc_html( number_format( (float) $record->refund_amount, 2 ) ); ?></h3>
                         <span class="settle-pnr font-mono">PNR: <?php echo esc_html( $record->pnr ); ?></span>
                     </div>
 
                     <div class="settle-breakdown-list">
                         <div class="breakdown-row">
-                            <span>Original Ticket Fare:</span>
-                            <strong class="font-mono">৳<?php echo number_format( (float) $record->original_fare, 2 ); ?></strong>
+                            <span><?php esc_html_e( 'Original Ticket Fare:', 'ifs-travel-erp' ); ?></span>
+                            <strong class="font-mono">৳<?php echo esc_html( number_format( (float) $record->original_fare, 2 ) ); ?></strong>
                         </div>
                         <div class="breakdown-row">
-                            <span>Airline Penalty:</span>
-                            <strong class="font-mono color-rose">-৳<?php echo number_format( (float) $record->airline_penalty, 2 ); ?></strong>
+                            <span><?php esc_html_e( 'Airline Penalty:', 'ifs-travel-erp' ); ?></span>
+                            <strong class="font-mono color-rose">-৳<?php echo esc_html( number_format( (float) $record->airline_penalty, 2 ) ); ?></strong>
                         </div>
                         <div class="breakdown-row">
-                            <span>Agency Service Fee:</span>
-                            <strong class="font-mono color-emerald">-৳<?php echo number_format( (float) $record->agency_service_charge, 2 ); ?></strong>
+                            <span><?php esc_html_e( 'Agency Service Fee:', 'ifs-travel-erp' ); ?></span>
+                            <strong class="font-mono color-emerald">-৳<?php echo esc_html( number_format( (float) $record->agency_service_charge, 2 ) ); ?></strong>
                         </div>
-                        <?php if ( $record->type === 'Reissue' && $record->fare_difference > 0 ) : ?>
+                        <?php if ( 'Reissue' === $record->type && $record->fare_difference > 0 ) : ?>
                             <div class="breakdown-row">
-                                <span>Fare Difference:</span>
-                                <strong class="font-mono color-blue">+৳<?php echo number_format( (float) $record->fare_difference, 2 ); ?></strong>
+                                <span><?php esc_html_e( 'Fare Difference:', 'ifs-travel-erp' ); ?></span>
+                                <strong class="font-mono color-blue">+৳<?php echo esc_html( number_format( (float) $record->fare_difference, 2 ) ); ?></strong>
                             </div>
                         <?php endif; ?>
                     </div>
 
                     <div class="settle-footer-strip">
-                        <span class="dashicons dashicons-shield"></span> Settled via: <?php echo esc_html( $record->settlement_method ); ?>
+                        <span class="dashicons dashicons-shield"></span> <?php printf( esc_html__( 'Settled via: %s', 'ifs-travel-erp' ), esc_html( $record->settlement_method ) ); ?>
                     </div>
                 </div>
 
@@ -370,38 +377,38 @@ function ifs_terp_refund_reissue_tab() {
                 <div class="ifs-panel-card" style="margin-bottom: 0;">
                     <div class="ifs-card-header">
                         <div>
-                            <h3 class="ifs-card-title">Flight Manifest &amp; Transaction Details</h3>
-                            <p class="ifs-card-desc">Recorded timestamp: <?php echo date( 'l, d F Y, h:i A', strtotime( $record->created_at ) ); ?></p>
+                            <h3 class="ifs-card-title"><?php esc_html_e( 'Flight Manifest & Transaction Details', 'ifs-travel-erp' ); ?></h3>
+                            <p class="ifs-card-desc"><?php printf( esc_html__( 'Recorded timestamp: %s', 'ifs-travel-erp' ), esc_html( gmdate( 'l, d F Y, h:i A', strtotime( $record->created_at ) ) ) ); ?></p>
                         </div>
                     </div>
                     <div class="ifs-grid-3">
                         <div class="spec-item">
-                            <span class="spec-title">Passenger Name</span>
-                            <strong class="spec-data"><?php echo esc_html( $record->customer_name ?: 'Direct Passenger' ); ?></strong>
+                            <span class="spec-title"><?php esc_html_e( 'Passenger Name', 'ifs-travel-erp' ); ?></span>
+                            <strong class="spec-data"><?php echo esc_html( $record->customer_name ?: __( 'Direct Passenger', 'ifs-travel-erp' ) ); ?></strong>
                         </div>
                         <div class="spec-item">
-                            <span class="spec-title">Channel / Agent</span>
-                            <strong class="spec-data"><?php echo esc_html( $record->agency_name ?: 'Direct Retail Client' ); ?></strong>
+                            <span class="spec-title"><?php esc_html_e( 'Channel / Agent', 'ifs-travel-erp' ); ?></span>
+                            <strong class="spec-data"><?php echo esc_html( $record->agency_name ?: __( 'Direct Retail Client', 'ifs-travel-erp' ) ); ?></strong>
                         </div>
                         <div class="spec-item">
-                            <span class="spec-title">Original E-Ticket</span>
+                            <span class="spec-title"><?php esc_html_e( 'Original E-Ticket', 'ifs-travel-erp' ); ?></span>
                             <strong class="spec-data font-mono"><?php echo esc_html( $record->ticket_no ?: 'N/A' ); ?></strong>
                         </div>
                         <?php if ( ! empty( $record->new_ticket_no ) ) : ?>
                             <div class="spec-item">
-                                <span class="spec-title">New Reissued Ticket</span>
+                                <span class="spec-title"><?php esc_html_e( 'New Reissued Ticket', 'ifs-travel-erp' ); ?></span>
                                 <strong class="spec-data font-mono color-blue"><?php echo esc_html( $record->new_ticket_no ); ?></strong>
                             </div>
                         <?php endif; ?>
                         <?php if ( ! empty( $record->new_pnr ) ) : ?>
                             <div class="spec-item">
-                                <span class="spec-title">New Reissued PNR</span>
+                                <span class="spec-title"><?php esc_html_e( 'New Reissued PNR', 'ifs-travel-erp' ); ?></span>
                                 <strong class="spec-data font-mono color-blue"><?php echo esc_html( $record->new_pnr ); ?></strong>
                             </div>
                         <?php endif; ?>
                         <div class="spec-item col-span-3">
-                            <span class="spec-title">Operational Remarks</span>
-                            <p style="margin: 4px 0 0 0; font-size: 13px; color: #334155;"><?php echo nl2br( esc_html( $record->remarks ?: 'No notes provided.' ) ); ?></p>
+                            <span class="spec-title"><?php esc_html_e( 'Operational Remarks', 'ifs-travel-erp' ); ?></span>
+                            <p style="margin: 4px 0 0 0; font-size: 13px; color: #334155;"><?php echo nl2br( esc_html( $record->remarks ?: __( 'No notes provided.', 'ifs-travel-erp' ) ) ); ?></p>
                         </div>
                     </div>
                 </div>
@@ -413,43 +420,43 @@ function ifs_terp_refund_reissue_tab() {
     /* =========================================================================
        4. PROCESS / CREATE / EDIT FORM (sub=process OR sub=edit)
        ========================================================================= */
-    elseif ( $sub_action === 'process' || $sub_action === 'edit' ) {
-        $edit_id  = isset( $_GET['id'] ) ? intval( $_GET['id'] ) : 0;
+    elseif ( 'process' === $sub_action || 'edit' === $sub_action ) {
+        $edit_id  = isset( $_GET['id'] ) ? absint( $_GET['id'] ) : 0;
         $is_edit  = ( $edit_id > 0 );
         $edit_row = false;
 
         if ( $is_edit ) {
-            $edit_row = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM $table_refunds WHERE id = %d", $edit_id ) );
+            $edit_row = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$table_refunds} WHERE id = %d", $edit_id ) );
         }
 
         $active_tickets = $wpdb->get_results( "
             SELECT t.id, t.customer_id, t.agent_id, t.supplier_id, t.pnr, t.ticket_no, t.airline, t.sector, t.sell_price, c.full_name 
-            FROM $table_tickets t
-            LEFT JOIN $table_customers c ON t.customer_id = c.id
-            WHERE t.status = 'Issued' OR t.id = " . ( $edit_row ? intval( $edit_row->ticket_id ) : 0 ) . "
+            FROM {$table_tickets} t
+            LEFT JOIN {$table_customers} c ON t.customer_id = c.id
+            WHERE t.status = 'Issued' OR t.id = " . ( $edit_row ? absint( $edit_row->ticket_id ) : 0 ) . "
             ORDER BY t.id DESC LIMIT 100
         " );
 
-        $val_type       = $is_edit ? esc_attr( $edit_row->type ) : 'Refund';
-        $val_tkt_id     = $is_edit ? intval( $edit_row->ticket_id ) : 0;
-        $val_pnr        = $is_edit ? esc_attr( $edit_row->pnr ) : '';
-        $val_tkt_no     = $is_edit ? esc_attr( $edit_row->ticket_no ) : '';
-        $val_new_pnr    = $is_edit ? esc_attr( $edit_row->new_pnr ) : '';
-        $val_new_tkt    = $is_edit ? esc_attr( $edit_row->new_ticket_no ) : '';
-        $val_fare       = $is_edit ? floatval( $edit_row->original_fare ) : '';
-        $val_penalty    = $is_edit ? floatval( $edit_row->airline_penalty ) : '';
-        $val_fee        = $is_edit ? floatval( $edit_row->agency_service_charge ) : '';
-        $val_diff       = $is_edit ? floatval( $edit_row->fare_difference ) : '';
-        $val_refund     = $is_edit ? floatval( $edit_row->refund_amount ) : '';
-        $val_method     = $is_edit ? esc_attr( $edit_row->settlement_method ) : 'Bank Transfer';
-        $val_remarks    = $is_edit ? esc_textarea( $edit_row->remarks ) : '';
-        $val_customer   = $is_edit ? intval( $edit_row->customer_id ) : 0;
-        $val_agent      = $is_edit ? intval( $edit_row->agent_id ) : 0;
-        $val_supplier   = $is_edit ? intval( $edit_row->supplier_id ) : 0;
+        $val_type     = $is_edit ? esc_attr( $edit_row->type ) : 'Refund';
+        $val_tkt_id   = $is_edit ? absint( $edit_row->ticket_id ) : 0;
+        $val_pnr      = $is_edit ? esc_attr( $edit_row->pnr ) : '';
+        $val_tkt_no   = $is_edit ? esc_attr( $edit_row->ticket_no ) : '';
+        $val_new_pnr  = $is_edit ? esc_attr( $edit_row->new_pnr ) : '';
+        $val_new_tkt  = $is_edit ? esc_attr( $edit_row->new_ticket_no ) : '';
+        $val_fare     = $is_edit ? floatval( $edit_row->original_fare ) : '';
+        $val_penalty  = $is_edit ? floatval( $edit_row->airline_penalty ) : '';
+        $val_fee      = $is_edit ? floatval( $edit_row->agency_service_charge ) : '';
+        $val_diff     = $is_edit ? floatval( $edit_row->fare_difference ) : '';
+        $val_refund   = $is_edit ? floatval( $edit_row->refund_amount ) : '';
+        $val_method   = $is_edit ? esc_attr( $edit_row->settlement_method ) : 'Bank Transfer';
+        $val_remarks  = $is_edit ? esc_textarea( $edit_row->remarks ) : '';
+        $val_customer = $is_edit ? absint( $edit_row->customer_id ) : 0;
+        $val_agent    = $is_edit ? absint( $edit_row->agent_id ) : 0;
+        $val_supplier = $is_edit ? absint( $edit_row->supplier_id ) : 0;
         ?>
         <form method="post" action="" class="ifs-split-refund-editor">
             <?php wp_nonce_field( 'ifs_refund_action', 'ifs_refund_nonce' ); ?>
-            <input type="hidden" name="edit_id" value="<?php echo $edit_id; ?>">
+            <input type="hidden" name="edit_id" value="<?php echo esc_attr( $edit_id ); ?>">
 
             <div class="ifs-refund-form-body">
                 
@@ -458,20 +465,20 @@ function ifs_terp_refund_reissue_tab() {
                     <div class="ifs-card-header">
                         <div class="ifs-step-num">01</div>
                         <div>
-                            <h3 class="ifs-card-title"><?php echo $is_edit ? 'Edit Record Details' : 'Select E-Ticket & Operation Mode'; ?></h3>
-                            <p class="ifs-card-desc">Choose from issued tickets or input manual GDS reference numbers</p>
+                            <h3 class="ifs-card-title"><?php echo $is_edit ? esc_html__( 'Edit Record Details', 'ifs-travel-erp' ) : esc_html__( 'Select E-Ticket & Operation Mode', 'ifs-travel-erp' ); ?></h3>
+                            <p class="ifs-card-desc"><?php esc_html_e( 'Choose from issued tickets or input manual GDS reference numbers', 'ifs-travel-erp' ); ?></p>
                         </div>
                     </div>
 
                     <div class="ifs-grid-3">
                         <div class="ifs-field-block col-span-3">
-                            <label class="ifs-field-label" for="inp_ticket_id">Select From Issued Tickets (Auto-Fill Manifest)</label>
+                            <label class="ifs-field-label" for="inp_ticket_id"><?php esc_html_e( 'Select From Issued Tickets (Auto-Fill Manifest)', 'ifs-travel-erp' ); ?></label>
                             <div class="ifs-field-wrap">
                                 <span class="dashicons dashicons-tickets-alt field-icon"></span>
                                 <select name="ticket_id" id="inp_ticket_id" class="ifs-input-field">
-                                    <option value="0">-- Enter Manually or Select Issued Ticket --</option>
+                                    <option value="0"><?php esc_html_e( '-- Enter Manually or Select Issued Ticket --', 'ifs-travel-erp' ); ?></option>
                                     <?php foreach ( $active_tickets as $t ) : ?>
-                                        <option value="<?php echo $t->id; ?>" 
+                                        <option value="<?php echo esc_attr( $t->id ); ?>" 
                                                 data-pnr="<?php echo esc_attr( $t->pnr ); ?>"
                                                 data-tkt="<?php echo esc_attr( $t->ticket_no ); ?>"
                                                 data-fare="<?php echo esc_attr( $t->sell_price ); ?>"
@@ -479,18 +486,18 @@ function ifs_terp_refund_reissue_tab() {
                                                 data-agent="<?php echo esc_attr( $t->agent_id ); ?>"
                                                 data-supplier="<?php echo esc_attr( $t->supplier_id ); ?>"
                                                 <?php selected( $val_tkt_id, $t->id ); ?>>
-                                            PNR: <?php echo esc_html( $t->pnr ); ?> &mdash; <?php echo esc_html( $t->full_name ); ?> (<?php echo esc_html( $t->airline ); ?>: <?php echo esc_html( $t->sector ); ?> | Fare: ৳<?php echo number_format( (float) $t->sell_price, 2 ); ?>)
+                                            PNR: <?php echo esc_html( $t->pnr ); ?> &mdash; <?php echo esc_html( $t->full_name ); ?> (<?php echo esc_html( $t->airline ); ?>: <?php echo esc_html( $t->sector ); ?> | Fare: ৳<?php echo esc_html( number_format( (float) $t->sell_price, 2 ) ); ?>)
                                         </option>
                                     <?php endforeach; ?>
                                 </select>
                             </div>
-                            <input type="hidden" name="customer_id" id="inp_customer_id" value="<?php echo $val_customer; ?>">
-                            <input type="hidden" name="agent_id" id="inp_agent_id" value="<?php echo $val_agent; ?>">
-                            <input type="hidden" name="supplier_id" id="inp_supplier_id" value="<?php echo $val_supplier; ?>">
+                            <input type="hidden" name="customer_id" id="inp_customer_id" value="<?php echo esc_attr( $val_customer ); ?>">
+                            <input type="hidden" name="agent_id" id="inp_agent_id" value="<?php echo esc_attr( $val_agent ); ?>">
+                            <input type="hidden" name="supplier_id" id="inp_supplier_id" value="<?php echo esc_attr( $val_supplier ); ?>">
                         </div>
 
                         <div class="ifs-field-block">
-                            <label class="ifs-field-label" for="inp_process_type">Operation Type <span class="req">*</span></label>
+                            <label class="ifs-field-label" for="inp_process_type"><?php esc_html_e( 'Operation Type', 'ifs-travel-erp' ); ?> <span class="req">*</span></label>
                             <div class="ifs-field-wrap">
                                 <span class="dashicons dashicons-image-rotate field-icon"></span>
                                 <select name="process_type" id="inp_process_type" class="ifs-input-field">
@@ -502,39 +509,39 @@ function ifs_terp_refund_reissue_tab() {
                         </div>
 
                         <div class="ifs-field-block">
-                            <label class="ifs-field-label" for="inp_pnr">GDS PNR Ref <span class="req">*</span></label>
+                            <label class="ifs-field-label" for="inp_pnr"><?php esc_html_e( 'GDS PNR Ref', 'ifs-travel-erp' ); ?> <span class="req">*</span></label>
                             <div class="ifs-field-wrap">
                                 <span class="dashicons dashicons-randomize field-icon"></span>
                                 <input type="text" name="pnr" id="inp_pnr" required 
-                                       value="<?php echo $val_pnr; ?>"
+                                       value="<?php echo esc_attr( $val_pnr ); ?>"
                                        placeholder="e.g. 7X9K21" class="ifs-input-field uppercase font-mono">
                             </div>
                         </div>
 
                         <div class="ifs-field-block">
-                            <label class="ifs-field-label" for="inp_ticket_no">Original Ticket Number</label>
+                            <label class="ifs-field-label" for="inp_ticket_no"><?php esc_html_e( 'Original Ticket Number', 'ifs-travel-erp' ); ?></label>
                             <div class="ifs-field-wrap">
                                 <span class="dashicons dashicons-nametag field-icon"></span>
                                 <input type="text" name="ticket_no" id="inp_ticket_no" 
-                                       value="<?php echo $val_tkt_no; ?>"
+                                       value="<?php echo esc_attr( $val_tkt_no ); ?>"
                                        placeholder="077-1234567890" class="ifs-input-field font-mono">
                             </div>
                         </div>
 
                         <!-- Reissue Specific Fields -->
-                        <div class="ifs-field-block" id="wrap_new_pnr" style="<?php echo ( $val_type !== 'Reissue' ) ? 'display:none;' : ''; ?>">
-                            <label class="ifs-field-label" for="inp_new_pnr">New Reissue PNR</label>
+                        <div class="ifs-field-block" id="wrap_new_pnr" style="<?php echo ( 'Reissue' !== $val_type ) ? 'display:none;' : ''; ?>">
+                            <label class="ifs-field-label" for="inp_new_pnr"><?php esc_html_e( 'New Reissue PNR', 'ifs-travel-erp' ); ?></label>
                             <div class="ifs-field-wrap">
                                 <span class="dashicons dashicons-randomize field-icon"></span>
-                                <input type="text" name="new_pnr" id="inp_new_pnr" value="<?php echo $val_new_pnr; ?>" placeholder="Leave blank if unchanged" class="ifs-input-field uppercase font-mono">
+                                <input type="text" name="new_pnr" id="inp_new_pnr" value="<?php echo esc_attr( $val_new_pnr ); ?>" placeholder="Leave blank if unchanged" class="ifs-input-field uppercase font-mono">
                             </div>
                         </div>
 
-                        <div class="ifs-field-block col-span-2" id="wrap_new_ticket" style="<?php echo ( $val_type !== 'Reissue' ) ? 'display:none;' : ''; ?>">
-                            <label class="ifs-field-label" for="inp_new_tkt">New Reissue E-Ticket No</label>
+                        <div class="ifs-field-block col-span-2" id="wrap_new_ticket" style="<?php echo ( 'Reissue' !== $val_type ) ? 'display:none;' : ''; ?>">
+                            <label class="ifs-field-label" for="inp_new_tkt"><?php esc_html_e( 'New Reissue E-Ticket No', 'ifs-travel-erp' ); ?></label>
                             <div class="ifs-field-wrap">
                                 <span class="dashicons dashicons-tickets-alt field-icon"></span>
-                                <input type="text" name="new_ticket_no" id="inp_new_tkt" value="<?php echo $val_new_tkt; ?>" placeholder="New 13-digit ticket number" class="ifs-input-field font-mono">
+                                <input type="text" name="new_ticket_no" id="inp_new_tkt" value="<?php echo esc_attr( $val_new_tkt ); ?>" placeholder="New 13-digit ticket number" class="ifs-input-field font-mono">
                             </div>
                         </div>
                     </div>
@@ -545,50 +552,50 @@ function ifs_terp_refund_reissue_tab() {
                     <div class="ifs-card-header">
                         <div class="ifs-step-num">02</div>
                         <div>
-                            <h3 class="ifs-card-title">Commercial Penalty &amp; Settlement Breakdown</h3>
-                            <p class="ifs-card-desc">Calculate airline deductions, agency fee adjustments, and net balance</p>
+                            <h3 class="ifs-card-title"><?php esc_html_e( 'Commercial Penalty & Settlement Breakdown', 'ifs-travel-erp' ); ?></h3>
+                            <p class="ifs-card-desc"><?php esc_html_e( 'Calculate airline deductions, agency fee adjustments, and net balance', 'ifs-travel-erp' ); ?></p>
                         </div>
                     </div>
 
                     <div class="ifs-grid-3">
                         <div class="ifs-field-block">
-                            <label class="ifs-field-label" for="inp_original_fare">Original Ticket Price (৳) <span class="req">*</span></label>
+                            <label class="ifs-field-label" for="inp_original_fare"><?php esc_html_e( 'Original Ticket Price (৳)', 'ifs-travel-erp' ); ?> <span class="req">*</span></label>
                             <div class="ifs-field-wrap">
                                 <span class="dashicons dashicons-money-alt field-icon"></span>
                                 <input type="number" step="0.01" name="original_fare" id="inp_original_fare" required 
-                                       value="<?php echo $val_fare; ?>" placeholder="0.00" class="ifs-input-field font-mono">
+                                       value="<?php echo esc_attr( $val_fare ); ?>" placeholder="0.00" class="ifs-input-field font-mono">
                             </div>
                         </div>
 
                         <div class="ifs-field-block">
-                            <label class="ifs-field-label" for="inp_penalty">Airline Penalty Charge (৳)</label>
+                            <label class="ifs-field-label" for="inp_penalty"><?php esc_html_e( 'Airline Penalty Charge (৳)', 'ifs-travel-erp' ); ?></label>
                             <div class="ifs-field-wrap">
                                 <span class="dashicons dashicons-dismiss field-icon"></span>
                                 <input type="number" step="0.01" name="airline_penalty" id="inp_penalty" 
-                                       value="<?php echo $val_penalty; ?>" placeholder="0.00" class="ifs-input-field font-mono color-rose font-bold">
+                                       value="<?php echo esc_attr( $val_penalty ); ?>" placeholder="0.00" class="ifs-input-field font-mono color-rose font-bold">
                             </div>
                         </div>
 
                         <div class="ifs-field-block">
-                            <label class="ifs-field-label" for="inp_service_fee">Agency Service Fee (৳)</label>
+                            <label class="ifs-field-label" for="inp_service_fee"><?php esc_html_e( 'Agency Service Fee (৳)', 'ifs-travel-erp' ); ?></label>
                             <div class="ifs-field-wrap">
                                 <span class="dashicons dashicons-admin-generic field-icon"></span>
                                 <input type="number" step="0.01" name="service_charge" id="inp_service_fee" 
-                                       value="<?php echo $val_fee; ?>" placeholder="0.00" class="ifs-input-field font-mono color-emerald font-bold">
+                                       value="<?php echo esc_attr( $val_fee ); ?>" placeholder="0.00" class="ifs-input-field font-mono color-emerald font-bold">
                             </div>
                         </div>
 
-                        <div class="ifs-field-block" id="wrap_fare_diff" style="<?php echo ( $val_type !== 'Reissue' ) ? 'display:none;' : ''; ?>">
-                            <label class="ifs-field-label" for="inp_fare_diff">New Fare Difference (৳)</label>
+                        <div class="ifs-field-block" id="wrap_fare_diff" style="<?php echo ( 'Reissue' !== $val_type ) ? 'display:none;' : ''; ?>">
+                            <label class="ifs-field-label" for="inp_fare_diff"><?php esc_html_e( 'New Fare Difference (৳)', 'ifs-travel-erp' ); ?></label>
                             <div class="ifs-field-wrap">
                                 <span class="dashicons dashicons-chart-line field-icon"></span>
                                 <input type="number" step="0.01" name="fare_difference" id="inp_fare_diff" 
-                                       value="<?php echo $val_diff; ?>" placeholder="0.00" class="ifs-input-field font-mono">
+                                       value="<?php echo esc_attr( $val_diff ); ?>" placeholder="0.00" class="ifs-input-field font-mono">
                             </div>
                         </div>
 
                         <div class="ifs-field-block">
-                            <label class="ifs-field-label" for="inp_settle_method">Settlement Method</label>
+                            <label class="ifs-field-label" for="inp_settle_method"><?php esc_html_e( 'Settlement Method', 'ifs-travel-erp' ); ?></label>
                             <div class="ifs-field-wrap">
                                 <span class="dashicons dashicons-vault field-icon"></span>
                                 <select name="settlement_method" id="inp_settle_method" class="ifs-input-field">
@@ -602,20 +609,20 @@ function ifs_terp_refund_reissue_tab() {
                         </div>
 
                         <div class="ifs-field-block col-span-2" id="wrap_settlement_box">
-                            <label class="ifs-field-label" id="lbl_refund_amount"><?php echo ( $val_type === 'Reissue' ) ? 'Total Reissue Charge to Collect (৳) *' : 'Net Refund to Client (৳) *'; ?></label>
+                            <label class="ifs-field-label" id="lbl_refund_amount"><?php echo ( 'Reissue' === $val_type ) ? esc_html__( 'Total Reissue Charge to Collect (৳) *', 'ifs-travel-erp' ) : esc_html__( 'Net Refund to Client (৳) *', 'ifs-travel-erp' ); ?></label>
                             <div class="ifs-field-wrap">
                                 <span class="dashicons dashicons-calculator field-icon"></span>
                                 <input type="number" step="0.01" name="refund_amount" id="inp_refund_amount" required 
-                                       value="<?php echo $val_refund; ?>" placeholder="0.00" class="ifs-input-field font-mono font-bold color-emerald">
+                                       value="<?php echo esc_attr( $val_refund ); ?>" placeholder="0.00" class="ifs-input-field font-mono font-bold color-emerald">
                             </div>
                         </div>
 
                         <div class="ifs-field-block col-span-3">
-                            <label class="ifs-field-label" for="inp_remarks">Cancellation / Reissue Reason &amp; Notes</label>
+                            <label class="ifs-field-label" for="inp_remarks"><?php esc_html_e( 'Cancellation / Reissue Reason & Notes', 'ifs-travel-erp' ); ?></label>
                             <div class="ifs-field-wrap">
                                 <span class="dashicons dashicons-edit field-icon"></span>
                                 <textarea name="remarks" id="inp_remarks" rows="2" class="ifs-input-field" 
-                                          placeholder="Passenger medical emergency, airline schedule change, date change details..."><?php echo $val_remarks; ?></textarea>
+                                          placeholder="Passenger medical emergency, airline schedule change, date change details..."><?php echo esc_textarea( $val_remarks ); ?></textarea>
                             </div>
                         </div>
                     </div>
@@ -623,10 +630,10 @@ function ifs_terp_refund_reissue_tab() {
 
                 <div class="ifs-action-strip">
                     <a href="<?php echo esc_url( $base_url . '&sub=list' ); ?>" class="ifs-btn-back">
-                        <span class="dashicons dashicons-arrow-left-alt"></span> Cancel
+                        <span class="dashicons dashicons-arrow-left-alt"></span> <?php esc_html_e( 'Cancel', 'ifs-travel-erp' ); ?>
                     </a>
                     <button type="submit" name="ifs_refund_submit" class="ifs-btn-primary">
-                        <span class="dashicons dashicons-saved"></span> <?php echo $is_edit ? 'Update Record' : 'Execute & Record Operation'; ?>
+                        <span class="dashicons dashicons-saved"></span> <?php echo $is_edit ? esc_html__( 'Update Record', 'ifs-travel-erp' ) : esc_html__( 'Execute & Record Operation', 'ifs-travel-erp' ); ?>
                     </button>
                 </div>
             </div>
@@ -635,51 +642,51 @@ function ifs_terp_refund_reissue_tab() {
             <div class="ifs-preview-sidebar">
                 <div class="ifs-preview-sticky">
                     <div class="ifs-card-preview-header">
-                        <span class="dashicons dashicons-calculator"></span> Live Settlement Voucher Preview
+                        <span class="dashicons dashicons-calculator"></span> <?php esc_html_e( 'Live Settlement Voucher Preview', 'ifs-travel-erp' ); ?>
                     </div>
 
                     <div class="ifs-settlement-card">
                         <div class="settle-top-strip">
                             <span class="settle-brand">IFS POST-TICKETING</span>
-                            <span class="settle-type" id="prev_type"><?php echo strtoupper( $val_type ); ?></span>
+                            <span class="settle-type" id="prev_type"><?php echo esc_html( strtoupper( $val_type ) ); ?></span>
                         </div>
 
                         <div class="settle-hero-box">
-                            <span class="settle-lbl" id="prev_amount_label"><?php echo ( $val_type === 'Reissue' ) ? 'TOTAL CHARGE TO COLLECT' : 'NET REFUNDABLE TO CLIENT'; ?></span>
-                            <h3 class="settle-amount" id="prev_amount_display">৳<?php echo number_format( (float) $val_refund, 2 ); ?></h3>
+                            <span class="settle-lbl" id="prev_amount_label"><?php echo ( 'Reissue' === $val_type ) ? esc_html__( 'TOTAL CHARGE TO COLLECT', 'ifs-travel-erp' ) : esc_html__( 'NET REFUNDABLE TO CLIENT', 'ifs-travel-erp' ); ?></span>
+                            <h3 class="settle-amount" id="prev_amount_display">৳<?php echo esc_html( number_format( (float) $val_refund, 2 ) ); ?></h3>
                             <span class="settle-pnr font-mono" id="prev_pnr_display">PNR: <?php echo esc_html( $val_pnr ?: '------' ); ?></span>
                         </div>
 
                         <div class="settle-breakdown-list">
                             <div class="breakdown-row">
-                                <span>Original Ticket Fare:</span>
-                                <strong id="prev_fare" class="font-mono">৳<?php echo number_format( (float) $val_fare, 2 ); ?></strong>
+                                <span><?php esc_html_e( 'Original Ticket Fare:', 'ifs-travel-erp' ); ?></span>
+                                <strong id="prev_fare" class="font-mono">৳<?php echo esc_html( number_format( (float) $val_fare, 2 ) ); ?></strong>
                             </div>
                             <div class="breakdown-row">
-                                <span>Airline Penalty:</span>
-                                <strong id="prev_penalty" class="font-mono color-rose">-৳<?php echo number_format( (float) $val_penalty, 2 ); ?></strong>
+                                <span><?php esc_html_e( 'Airline Penalty:', 'ifs-travel-erp' ); ?></span>
+                                <strong id="prev_penalty" class="font-mono color-rose">-৳<?php echo esc_html( number_format( (float) $val_penalty, 2 ) ); ?></strong>
                             </div>
                             <div class="breakdown-row">
-                                <span>Agency Service Fee:</span>
-                                <strong id="prev_fee" class="font-mono color-rose">-৳<?php echo number_format( (float) $val_fee, 2 ); ?></strong>
+                                <span><?php esc_html_e( 'Agency Service Fee:', 'ifs-travel-erp' ); ?></span>
+                                <strong id="prev_fee" class="font-mono color-rose">-৳<?php echo esc_html( number_format( (float) $val_fee, 2 ) ); ?></strong>
                             </div>
-                            <div class="breakdown-row" id="prev_row_diff" style="<?php echo ( $val_type !== 'Reissue' ) ? 'display:none;' : ''; ?>">
-                                <span>Fare Difference:</span>
-                                <strong id="prev_diff" class="font-mono color-blue">+৳<?php echo number_format( (float) $val_diff, 2 ); ?></strong>
+                            <div class="breakdown-row" id="prev_row_diff" style="<?php echo ( 'Reissue' !== $val_type ) ? 'display:none;' : ''; ?>">
+                                <span><?php esc_html_e( 'Fare Difference:', 'ifs-travel-erp' ); ?></span>
+                                <strong id="prev_diff" class="font-mono color-blue">+৳<?php echo esc_html( number_format( (float) $val_diff, 2 ) ); ?></strong>
                             </div>
                         </div>
 
                         <div class="settle-footer-strip">
-                            <span class="dashicons dashicons-shield"></span> Automatic General Ledger &amp; Agent Ledger Sync
+                            <span class="dashicons dashicons-shield"></span> <?php esc_html_e( 'Automatic General Ledger & Agent Ledger Sync', 'ifs-travel-erp' ); ?>
                         </div>
                     </div>
 
                     <div class="ifs-tip-box">
-                        <div class="tip-title"><span class="dashicons dashicons-info"></span> Cancellation Protocol Guide</div>
+                        <div class="tip-title"><span class="dashicons dashicons-info"></span> <?php esc_html_e( 'Cancellation Protocol Guide', 'ifs-travel-erp' ); ?></div>
                         <ul class="tip-list">
-                            <li><strong>Refund:</strong> Standard cancellation with penalty deducted from initial fare.</li>
-                            <li><strong>Reissue:</strong> Adjust date change penalty + airline fare difference.</li>
-                            <li><strong>Void:</strong> Same-day cancellation before 23:59 BSP cycle (Zero airline penalty).</li>
+                            <li><strong><?php esc_html_e( 'Refund:', 'ifs-travel-erp' ); ?></strong> <?php esc_html_e( 'Standard cancellation with penalty deducted from initial fare.', 'ifs-travel-erp' ); ?></li>
+                            <li><strong><?php esc_html_e( 'Reissue:', 'ifs-travel-erp' ); ?></strong> <?php esc_html_e( 'Adjust date change penalty + airline fare difference.', 'ifs-travel-erp' ); ?></li>
+                            <li><strong><?php esc_html_e( 'Void:', 'ifs-travel-erp' ); ?></strong> <?php esc_html_e( 'Same-day cancellation before 23:59 BSP cycle (Zero airline penalty).', 'ifs-travel-erp' ); ?></li>
                         </ul>
                     </div>
                 </div>
@@ -811,21 +818,21 @@ function ifs_terp_refund_reissue_tab() {
     else {
         $records = $wpdb->get_results( "
             SELECT r.*, c.full_name as customer_name, a.agency_name
-            FROM $table_refunds r
-            LEFT JOIN $table_customers c ON r.customer_id = c.id
-            LEFT JOIN $table_agents a ON r.agent_id = a.id
+            FROM {$table_refunds} r
+            LEFT JOIN {$table_customers} c ON r.customer_id = c.id
+            LEFT JOIN {$table_agents} a ON r.agent_id = a.id
             ORDER BY r.id DESC
         " );
         ?>
         <div class="ifs-table-card">
             <div class="ifs-table-top-bar">
                 <div class="ifs-table-title-group">
-                    <h3 class="ifs-table-heading"><span class="dashicons dashicons-backup"></span> Post-Ticketing Action Records</h3>
-                    <p class="ifs-table-caption">Audit trail of ticket cancellations, date change penalties, and customer refunds</p>
+                    <h3 class="ifs-table-heading"><span class="dashicons dashicons-backup"></span> <?php esc_html_e( 'Post-Ticketing Action Records', 'ifs-travel-erp' ); ?></h3>
+                    <p class="ifs-table-caption"><?php esc_html_e( 'Audit trail of ticket cancellations, date change penalties, and customer refunds', 'ifs-travel-erp' ); ?></p>
                 </div>
                 <div class="ifs-table-btn-group">
                     <a href="<?php echo esc_url( $base_url . '&sub=process' ); ?>" class="ifs-btn-primary">
-                        <span class="dashicons dashicons-plus-alt2"></span> Process Cancellation / Reissue
+                        <span class="dashicons dashicons-plus-alt2"></span> <?php esc_html_e( 'Process Cancellation / Reissue', 'ifs-travel-erp' ); ?>
                     </a>
                 </div>
             </div>
@@ -834,54 +841,44 @@ function ifs_terp_refund_reissue_tab() {
                 <table class="ifs-pro-datatable" id="ifsRefundTable">
                     <thead>
                         <tr>
-                            <th style="width: 80px;">Action ID</th>
-                            <th>Date &amp; Time</th>
-                            <th>Operation</th>
-                            <th>Passenger &amp; Channel</th>
-                            <th>PNR Ref</th>
-                            <th>Ticket No</th>
-                            <th style="text-align: right;">Penalty (৳)</th>
-                            <th style="text-align: right;">Service Fee (৳)</th>
-                            <th style="text-align: right;">Net Adjustment (৳)</th>
-                            <th>Settlement Method</th>
-                            <th style="text-align: right; width: 140px;">Actions</th>
+                            <th style="width: 100px;"><?php esc_html_e( 'Action ID', 'ifs-travel-erp' ); ?></th>
+                            <th><?php esc_html_e( 'Date & Time', 'ifs-travel-erp' ); ?></th>
+                            <th><?php esc_html_e( 'Operation', 'ifs-travel-erp' ); ?></th>
+                            <th><?php esc_html_e( 'Passenger & Channel', 'ifs-travel-erp' ); ?></th>
+                            <th><?php esc_html_e( 'PNR Ref', 'ifs-travel-erp' ); ?></th>
+                            <th><?php esc_html_e( 'Ticket No', 'ifs-travel-erp' ); ?></th>
+                            <th style="text-align: right; width: 140px;"><?php esc_html_e( 'Actions', 'ifs-travel-erp' ); ?></th>
                         </tr>
                     </thead>
                     <tbody>
                         <?php if ( $records ) : foreach ( $records as $rec ) : 
                             $badge_class = 'badge-refund';
-                            if ( $rec->type === 'Reissue' ) $badge_class = 'badge-reissue';
-                            elseif ( $rec->type === 'Void' ) $badge_class = 'badge-void';
-                            $channel_lbl = ! empty( $rec->agency_name ) ? '<span class="agent-submeta"><span class="dashicons dashicons-groups"></span> ' . esc_html( $rec->agency_name ) . '</span>' : '<span class="direct-submeta">Direct Client</span>';
+                            if ( 'Reissue' === $rec->type ) $badge_class = 'badge-reissue';
+                            elseif ( 'Void' === $rec->type ) $badge_class = 'badge-void';
+                            $channel_lbl = ! empty( $rec->agency_name ) ? '<span class="agent-submeta"><span class="dashicons dashicons-groups"></span> ' . esc_html( $rec->agency_name ) . '</span>' : '<span class="direct-submeta">' . esc_html__( 'Direct Client', 'ifs-travel-erp' ) . '</span>';
                         ?>
                             <tr>
-                                <td><span class="ifs-id-badge">#REF-<?php echo str_pad( (string) $rec->id, 5, '0', STR_PAD_LEFT ); ?></span></td>
-                                <td><?php echo date( 'd M Y, h:i A', strtotime( $rec->created_at ) ); ?></td>
+                                <td><span class="ifs-id-badge">#REF-<?php echo esc_html( str_pad( (string) $rec->id, 5, '0', STR_PAD_LEFT ) ); ?></span></td>
+                                <td><?php echo esc_html( gmdate( 'd M Y, h:i A', strtotime( $rec->created_at ) ) ); ?></td>
                                 <td><span class="ifs-operation-badge <?php echo esc_attr( $badge_class ); ?>"><?php echo esc_html( $rec->type ); ?></span></td>
                                 <td>
-                                    <div style="font-weight: 700; color: #0f172a;"><?php echo esc_html( $rec->customer_name ?: 'Direct Passenger' ); ?></div>
-                                    <div><?php echo $channel_lbl; ?></div>
+                                    <div style="font-weight: 700; color: #0f172a;"><?php echo esc_html( $rec->customer_name ?: __( 'Direct Passenger', 'ifs-travel-erp' ) ); ?></div>
+                                    <div><?php echo $channel_lbl; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></div>
                                 </td>
                                 <td><span class="ifs-pnr-pill font-mono"><?php echo esc_html( $rec->pnr ); ?></span></td>
                                 <td class="font-mono"><?php echo esc_html( $rec->ticket_no ?: '-' ); ?></td>
-                                <td style="text-align: right; color: #dc2626; font-family: ui-monospace, monospace; font-weight: 700;">৳<?php echo number_format( (float) $rec->airline_penalty, 2 ); ?></td>
-                                <td style="text-align: right; color: #059669; font-family: ui-monospace, monospace; font-weight: 700;">৳<?php echo number_format( (float) $rec->agency_service_charge, 2 ); ?></td>
-                                <td style="text-align: right; font-weight: 800; font-family: ui-monospace, monospace; font-size: 13.5px;" class="<?php echo ( $rec->type === 'Reissue' ) ? 'color-amber' : 'color-emerald'; ?>">
-                                    ৳<?php echo number_format( (float) $rec->refund_amount, 2 ); ?>
-                                </td>
-                                <td><span class="ifs-method-tag"><?php echo esc_html( $rec->settlement_method ?: 'Bank Transfer' ); ?></span></td>
                                 <td style="text-align: right;">
                                     <div class="ifs-action-pills">
-                                        <a href="<?php echo esc_url( $base_url . '&sub=view&id=' . $rec->id ); ?>" class="ifs-action-pill view" title="View Settlement Voucher">
-                                            <span class="dashicons dashicons-visibility"></span> View
+                                        <a href="<?php echo esc_url( $base_url . '&sub=view&id=' . $rec->id ); ?>" class="ifs-action-pill view" title="<?php esc_attr_e( 'View Settlement Voucher', 'ifs-travel-erp' ); ?>">
+                                            <span class="dashicons dashicons-visibility"></span> <?php esc_html_e( 'View', 'ifs-travel-erp' ); ?>
                                         </a>
-                                        <a href="<?php echo esc_url( $base_url . '&sub=edit&id=' . $rec->id ); ?>" class="ifs-action-pill edit" title="Edit Record">
-                                            <span class="dashicons dashicons-edit"></span> Edit
+                                        <a href="<?php echo esc_url( $base_url . '&sub=edit&id=' . $rec->id ); ?>" class="ifs-action-pill edit" title="<?php esc_attr_e( 'Edit Record', 'ifs-travel-erp' ); ?>">
+                                            <span class="dashicons dashicons-edit"></span> <?php esc_html_e( 'Edit', 'ifs-travel-erp' ); ?>
                                         </a>
-                                        <a href="<?php echo wp_nonce_url( $base_url . '&sub=delete&id=' . $rec->id, 'delete_refund_' . $rec->id ); ?>" 
+                                        <a href="<?php echo esc_url( wp_nonce_url( $base_url . '&sub=delete&id=' . $rec->id, 'delete_refund_' . $rec->id ) ); ?>" 
                                            class="ifs-action-pill delete" 
-                                           onclick="return confirm('Are you sure you want to permanently delete this audit record?');" 
-                                           title="Delete Record">
+                                           onclick="return confirm('<?php esc_attr_e( 'Are you sure you want to permanently delete this audit record?', 'ifs-travel-erp' ); ?>');" 
+                                           title="<?php esc_attr_e( 'Delete Record', 'ifs-travel-erp' ); ?>">
                                             <span class="dashicons dashicons-trash"></span>
                                         </a>
                                     </div>
@@ -889,11 +886,11 @@ function ifs_terp_refund_reissue_tab() {
                             </tr>
                         <?php endforeach; else : ?>
                             <tr>
-                                <td colspan="11" class="ifs-empty-table">
+                                <td colspan="7" class="ifs-empty-table">
                                     <div class="ifs-empty-state">
                                         <span class="dashicons dashicons-image-rotate"></span>
-                                        <h4>No Post-Ticketing Files Processed Yet</h4>
-                                        <p>Process your first ticket refund, date reissue, or void request.</p>
+                                        <h4><?php esc_html_e( 'No Post-Ticketing Files Processed Yet', 'ifs-travel-erp' ); ?></h4>
+                                        <p><?php esc_html_e( 'Process your first ticket refund, date reissue, or void request.', 'ifs-travel-erp' ); ?></p>
                                     </div>
                                 </td>
                             </tr>
@@ -925,61 +922,16 @@ function ifs_terp_refund_reissue_tab() {
     echo '</div>';
     ?>
     <style>
-        .ifs-refund-workspace {
-            max-width: 1420px;
-            margin: 0 auto;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            color: #0f172a;
-        }
-
-        /* ----------------------------------------------------
-           TOAST NOTIFICATIONS
-        ---------------------------------------------------- */
-        .ifs-toast {
-            padding: 14px 20px;
-            border-radius: 10px;
-            font-size: 13.5px;
-            font-weight: 600;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 22px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.03);
-        }
+        .ifs-refund-workspace { max-width: 1420px; margin: 0 auto; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; color: #0f172a; }
+        .ifs-toast { padding: 14px 20px; border-radius: 10px; font-size: 13.5px; font-weight: 600; display: flex; align-items: center; gap: 10px; margin-bottom: 22px; box-shadow: 0 4px 12px rgba(0,0,0,0.03); }
         .ifs-toast.success { background: #ecfdf5; border: 1px solid #a7f3d0; color: #065f46; }
         .ifs-toast.danger  { background: #fef2f2; border: 1px solid #fecaca; color: #991b1b; }
         .ifs-toast .dashicons { font-size: 18px; width: 18px; height: 18px; }
 
-        /* ----------------------------------------------------
-           HEADER CARDS & STATS
-        ---------------------------------------------------- */
         .ifs-pro-tab-wrapper { margin-bottom: 24px; }
-        .ifs-pro-header-card {
-            background: #ffffff;
-            border-radius: 16px;
-            border: 1px solid #e2e8f0;
-            padding: 24px 28px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 20px;
-            box-shadow: 0 4px 16px -2px rgba(15, 23, 42, 0.04);
-            margin-bottom: 18px;
-        }
+        .ifs-pro-header-card { background: #ffffff; border-radius: 16px; border: 1px solid #e2e8f0; padding: 24px 28px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px; box-shadow: 0 4px 16px -2px rgba(15, 23, 42, 0.04); margin-bottom: 18px; }
         .ifs-pro-identity { display: flex; align-items: center; gap: 18px; }
-        .ifs-pro-icon-glow {
-            width: 54px;
-            height: 54px;
-            border-radius: 14px;
-            background: linear-gradient(135deg, #e11d48 0%, #be123c 100%);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #ffffff;
-            box-shadow: 0 8px 18px -4px rgba(225, 29, 72, 0.35);
-            flex-shrink: 0;
-        }
+        .ifs-pro-icon-glow { width: 54px; height: 54px; border-radius: 14px; background: linear-gradient(135deg, #e11d48 0%, #be123c 100%); display: flex; align-items: center; justify-content: center; color: #ffffff; box-shadow: 0 8px 18px -4px rgba(225, 29, 72, 0.35); flex-shrink: 0; }
         .ifs-pro-icon-glow .dashicons { font-size: 28px; width: 28px; height: 28px; }
         .ifs-pro-badge-group { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; }
         .ifs-status-dot { width: 6px; height: 6px; border-radius: 50%; background: #e11d48; display: inline-block; }
@@ -1004,63 +956,19 @@ function ifs_terp_refund_reissue_tab() {
         .ifs-pro-counter { background: #e2e8f0; color: #475569; font-size: 11px; font-weight: 800; padding: 2px 8px; border-radius: 20px; }
         .ifs-pro-nav-btn.active-tab .ifs-pro-counter { background: #be123c; color: #ffffff; }
 
-        /* ----------------------------------------------------
-           SPLIT EDITOR & PANELS
-        ---------------------------------------------------- */
-        .ifs-split-refund-editor {
-            display: grid;
-            grid-template-columns: 1fr 400px;
-            gap: 28px;
-            align-items: flex-start;
-        }
-        @media (max-width: 1140px) {
-            .ifs-split-refund-editor { grid-template-columns: 1fr; }
-        }
+        .ifs-split-refund-editor { display: grid; grid-template-columns: 1fr 400px; gap: 28px; align-items: flex-start; }
+        @media (max-width: 1140px) { .ifs-split-refund-editor { grid-template-columns: 1fr; } }
 
-        .ifs-panel-card {
-            background: #ffffff;
-            border: 1px solid #e2e8f0;
-            border-radius: 14px;
-            padding: 26px;
-            margin-bottom: 22px;
-            box-shadow: 0 4px 16px -2px rgba(15, 23, 42, 0.03);
-        }
-        .ifs-card-header {
-            display: flex;
-            align-items: center;
-            gap: 14px;
-            margin-bottom: 22px;
-            padding-bottom: 14px;
-            border-bottom: 1px solid #f1f5f9;
-        }
-        .ifs-step-num {
-            width: 34px;
-            height: 34px;
-            border-radius: 9px;
-            background: linear-gradient(135deg, #e11d48 0%, #be123c 100%);
-            color: #ffffff;
-            font-weight: 800;
-            font-size: 13px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 4px 10px rgba(225, 29, 72, 0.2);
-            flex-shrink: 0;
-        }
+        .ifs-panel-card { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 14px; padding: 26px; margin-bottom: 22px; box-shadow: 0 4px 16px -2px rgba(15, 23, 42, 0.03); }
+        .ifs-card-header { display: flex; align-items: center; gap: 14px; margin-bottom: 22px; padding-bottom: 14px; border-bottom: 1px solid #f1f5f9; }
+        .ifs-step-num { width: 34px; height: 34px; border-radius: 9px; background: linear-gradient(135deg, #e11d48 0%, #be123c 100%); color: #ffffff; font-weight: 800; font-size: 13px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 10px rgba(225, 29, 72, 0.2); flex-shrink: 0; }
         .ifs-card-title { margin: 0; font-size: 15.5px; font-weight: 800; color: #0f172a; }
         .ifs-card-desc { margin: 2px 0 0 0; font-size: 12.5px; color: #64748b; }
 
-        .ifs-grid-3 {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 16px 18px;
-        }
+        .ifs-grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px 18px; }
         .col-span-2 { grid-column: span 2; }
         .col-span-3 { grid-column: span 3; }
-        @media (max-width: 768px) {
-            .ifs-grid-3 { grid-template-columns: 1fr; }
-            .col-span-2, .col-span-3 { grid-column: span 1; }
-        }
+        @media (max-width: 768px) { .ifs-grid-3 { grid-template-columns: 1fr; } .col-span-2, .col-span-3 { grid-column: span 1; } }
 
         .ifs-field-block { display: flex; flex-direction: column; gap: 5px; }
         .ifs-field-label { font-size: 11px; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.4px; }
@@ -1068,28 +976,9 @@ function ifs_terp_refund_reissue_tab() {
 
         .ifs-field-wrap { position: relative; display: flex; align-items: center; width: 100%; }
         .ifs-field-wrap .field-icon { position: absolute; left: 12px; color: #94a3b8; font-size: 17px; width: 17px; height: 17px; pointer-events: none; z-index: 2; }
-        .ifs-field-wrap .ifs-input-field {
-            width: 100%;
-            padding: 9px 12px 9px 38px !important;
-            border: 1px solid #cbd5e1;
-            border-radius: 8px;
-            font-size: 13.5px;
-            color: #0f172a;
-            background: #ffffff;
-            outline: none;
-            transition: all 0.2s ease;
-            position: relative;
-            z-index: 1;
-        }
+        .ifs-field-wrap .ifs-input-field { width: 100%; padding: 9px 12px 9px 38px !important; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 13.5px; color: #0f172a; background: #ffffff; outline: none; transition: all 0.2s ease; position: relative; z-index: 1; }
         textarea.ifs-input-field { padding: 10px 12px 10px 38px !important; font-family: inherit; }
-        .ifs-field-wrap select.ifs-input-field {
-            appearance: none;
-            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
-            background-repeat: no-repeat;
-            background-position: right 10px center;
-            background-size: 14px;
-            padding-right: 32px !important;
-        }
+        .ifs-field-wrap select.ifs-input-field { appearance: none; background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e"); background-repeat: no-repeat; background-position: right 10px center; background-size: 14px; padding-right: 32px !important; }
         .ifs-field-wrap .ifs-input-field:focus { border-color: #be123c; box-shadow: 0 0 0 3px rgba(190, 18, 60, 0.12); }
 
         .uppercase { text-transform: uppercase; }
@@ -1100,69 +989,17 @@ function ifs_terp_refund_reissue_tab() {
         .agent-submeta { font-size: 10.5px; color: #4338ca; font-weight: 600; display: inline-flex; align-items: center; gap: 3px; }
         .agent-submeta .dashicons { font-size: 11px; width: 11px; height: 11px; }
         .direct-submeta { font-size: 10.5px; color: #059669; font-weight: 600; }
-        .ifs-method-tag { font-size: 10.5px; background: #f1f5f9; padding: 2px 7px; border-radius: 4px; color: #475569; font-weight: 600; }
 
-        .ifs-action-strip {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 18px 24px;
-            background: #ffffff;
-            border: 1px solid #e2e8f0;
-            border-radius: 12px;
-        }
-        .ifs-btn-back {
-            color: #64748b;
-            text-decoration: none;
-            font-size: 13.5px;
-            font-weight: 600;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            background: #f8fafc;
-            border: 1px solid #cbd5e1;
-            padding: 8px 14px;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
+        .ifs-action-strip { display: flex; justify-content: space-between; align-items: center; padding: 18px 24px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; }
+        .ifs-btn-back { color: #64748b; text-decoration: none; font-size: 13.5px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; background: #f8fafc; border: 1px solid #cbd5e1; padding: 8px 14px; border-radius: 8px; cursor: pointer; transition: all 0.2s ease; }
         .ifs-btn-back:hover { color: #0f172a; background: #e2e8f0; }
-        .ifs-btn-primary {
-            background: linear-gradient(135deg, #e11d48 0%, #be123c 100%);
-            color: #ffffff !important;
-            border: none;
-            padding: 11px 26px;
-            border-radius: 8px;
-            font-size: 13.5px;
-            font-weight: 700;
-            cursor: pointer;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            box-shadow: 0 4px 14px rgba(225, 29, 72, 0.25);
-            transition: all 0.2s ease;
-        }
-        .ifs-btn-primary:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 6px 18px rgba(225, 29, 72, 0.35);
-        }
+        .ifs-btn-primary { background: linear-gradient(135deg, #e11d48 0%, #be123c 100%); color: #ffffff !important; border: none; padding: 11px 26px; border-radius: 8px; font-size: 13.5px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 4px 14px rgba(225, 29, 72, 0.25); transition: all 0.2s ease; }
+        .ifs-btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(225, 29, 72, 0.35); }
 
-        /* ----------------------------------------------------
-           INTERACTIVE SETTLEMENT VOUCHER CARD (PREVIEW & VIEW)
-        ---------------------------------------------------- */
         .ifs-preview-sticky { position: sticky; top: 30px; }
         .ifs-card-preview-header { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: #64748b; margin-bottom: 12px; display: flex; align-items: center; gap: 6px; }
 
-        .ifs-settlement-card {
-            background: linear-gradient(145deg, #4c0519 0%, #881337 60%, #be123c 100%);
-            border-radius: 16px;
-            padding: 24px;
-            color: #ffffff;
-            box-shadow: 0 16px 36px -6px rgba(190, 18, 60, 0.35);
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            position: relative;
-            overflow: hidden;
-        }
+        .ifs-settlement-card { background: linear-gradient(145deg, #4c0519 0%, #881337 60%, #be123c 100%); border-radius: 16px; padding: 24px; color: #ffffff; box-shadow: 0 16px 36px -6px rgba(190, 18, 60, 0.35); border: 1px solid rgba(255, 255, 255, 0.15); position: relative; overflow: hidden; }
         .settle-top-strip { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; }
         .settle-brand { font-size: 9.5px; font-weight: 800; letter-spacing: 1px; color: #fecdd3; }
         .settle-type { background: rgba(255, 255, 255, 0.2); padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 800; letter-spacing: 0.5px; }
@@ -1182,9 +1019,6 @@ function ifs_terp_refund_reissue_tab() {
         .tip-title { font-size: 12px; font-weight: 800; color: #be123c; display: flex; align-items: center; gap: 6px; margin-bottom: 8px; }
         .tip-list { margin: 0; padding-left: 18px; font-size: 11.5px; color: #64748b; line-height: 1.6; }
 
-        /* ----------------------------------------------------
-           DATA TABLE & CARDS
-        ---------------------------------------------------- */
         .ifs-table-card { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 14px; box-shadow: 0 4px 16px -2px rgba(15, 23, 42, 0.03); overflow: hidden; }
         .ifs-table-top-bar { padding: 22px 26px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #f1f5f9; flex-wrap: wrap; gap: 15px; }
         .ifs-table-heading { margin: 0; font-size: 17px; font-weight: 800; color: #0f172a; display: flex; align-items: center; gap: 8px; }
@@ -1212,9 +1046,6 @@ function ifs_terp_refund_reissue_tab() {
         .ifs-action-pill.delete { background: #fef2f2; color: #dc2626; border-color: #fee2e2; padding: 4px 6px; }
         .ifs-action-pill.delete:hover { background: #fee2e2; color: #b91c1c; }
 
-        /* ----------------------------------------------------
-           SINGLE VOUCHER VIEW CONTAINER
-        ---------------------------------------------------- */
         .ifs-single-view-container { display: flex; flex-direction: column; gap: 20px; }
         .ifs-view-top-bar { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 14px; padding: 18px 24px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; box-shadow: 0 4px 16px -2px rgba(15, 23, 42, 0.03); }
         .view-title-group { display: flex; align-items: center; gap: 12px; }

@@ -26,29 +26,8 @@ function ifs_terp_agent_render_tabs( $active_tab = 'list' ) {
                     <span class="dashicons dashicons-networking"></span>
                 </div>
                 <div class="ifs-pro-title-meta">
-                    <div class="ifs-pro-badge-group">
-                        <span class="ifs-status-dot"></span>
-                        <span class="ifs-meta-tag">Partner Network</span>
-                        <span class="ifs-meta-tag-indigo">B2B Operations</span>
-                    </div>
                     <h2 class="ifs-pro-heading">B2B Sub-Agent Network</h2>
                     <p class="ifs-pro-caption">Manage agent credit limits, individual transaction ledgers, deposits, and commission margins</p>
-                </div>
-            </div>
-            
-            <!-- Quick Stat Badges Strip -->
-            <div class="ifs-pro-stats-strip">
-                <div class="ifs-stat-pill">
-                    <span class="ifs-stat-lbl">Total Agencies</span>
-                    <span class="ifs-stat-num color-dark"><?php echo number_format( $total_agents ); ?></span>
-                </div>
-                <div class="ifs-stat-pill">
-                    <span class="ifs-stat-lbl">Active Partners</span>
-                    <span class="ifs-stat-num color-indigo"><?php echo number_format( $active_agents ); ?></span>
-                </div>
-                <div class="ifs-stat-pill">
-                    <span class="ifs-stat-lbl">Deposit Balance</span>
-                    <span class="ifs-stat-num color-emerald">৳<?php echo number_format( $total_balance, 2 ); ?></span>
                 </div>
             </div>
         </div>

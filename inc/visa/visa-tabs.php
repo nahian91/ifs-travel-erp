@@ -26,29 +26,8 @@ function ifs_terp_visa_render_tabs( $active_tab = 'list' ) {
                     <span class="dashicons dashicons-admin-site-alt3"></span>
                 </div>
                 <div class="ifs-pro-title-meta">
-                    <div class="ifs-pro-badge-group">
-                        <span class="ifs-status-dot"></span>
-                        <span class="ifs-meta-tag">Embassy & VFS Desk</span>
-                        <span class="ifs-meta-tag-amber">Visa Operations</span>
-                    </div>
                     <h2 class="ifs-pro-heading">Visa Processing Operations</h2>
                     <p class="ifs-pro-caption">Track embassy submissions, delivery timelines, and country document requirements</p>
-                </div>
-            </div>
-            
-            <!-- Quick Stat Badges Strip -->
-            <div class="ifs-pro-stats-strip">
-                <div class="ifs-stat-pill">
-                    <span class="ifs-stat-lbl">Total Files</span>
-                    <span class="ifs-stat-num color-dark"><?php echo number_format( $total_apps ); ?></span>
-                </div>
-                <div class="ifs-stat-pill">
-                    <span class="ifs-stat-lbl">In Processing</span>
-                    <span class="ifs-stat-num color-amber"><?php echo number_format( $processing ); ?></span>
-                </div>
-                <div class="ifs-stat-pill">
-                    <span class="ifs-stat-lbl">Approved / Issued</span>
-                    <span class="ifs-stat-num color-green"><?php echo number_format( $approved ); ?></span>
                 </div>
             </div>
         </div>

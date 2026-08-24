@@ -25,32 +25,8 @@ function ifs_terp_hotels_render_tabs( $active_tab = 'list' ) {
                     <span class="dashicons dashicons-building"></span>
                 </div>
                 <div class="ifs-pro-title-meta">
-                    <div class="ifs-pro-badge-group">
-                        <span class="ifs-status-dot"></span>
-                        <span class="ifs-meta-tag">Hospitality Desk</span>
-                        <span class="ifs-meta-tag-indigo">Hotel Reservations</span>
-                    </div>
                     <h2 class="ifs-pro-heading">Hotel & Resort Reservations</h2>
                     <p class="ifs-pro-caption">Manage contracted hotel properties, room vouchers, guest manifests, and hospitality margins</p>
-                </div>
-            </div>
-            
-            <div class="ifs-pro-stats-strip">
-                <div class="ifs-stat-pill">
-                    <span class="ifs-stat-lbl">Total Stays</span>
-                    <span class="ifs-stat-num color-dark"><?php echo number_format( $total_hotels ); ?></span>
-                </div>
-                <div class="ifs-stat-pill">
-                    <span class="ifs-stat-lbl">Contracted Properties</span>
-                    <span class="ifs-stat-num color-blue"><?php echo number_format( $total_props ); ?></span>
-                </div>
-                <div class="ifs-stat-pill">
-                    <span class="ifs-stat-lbl">Active Bookings</span>
-                    <span class="ifs-stat-num color-indigo"><?php echo number_format( $active_hotels ); ?></span>
-                </div>
-                <div class="ifs-stat-pill">
-                    <span class="ifs-stat-lbl">Gross Margin</span>
-                    <span class="ifs-stat-num color-emerald">৳<?php echo number_format( $total_profit, 2 ); ?></span>
                 </div>
             </div>
         </div>

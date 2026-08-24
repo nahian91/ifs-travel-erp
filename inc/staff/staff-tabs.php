@@ -25,29 +25,8 @@ function ifs_terp_staff_render_tabs( $active_tab = 'list' ) {
                     <span class="dashicons dashicons-shield"></span>
                 </div>
                 <div class="ifs-pro-title-meta">
-                    <div class="ifs-pro-badge-group">
-                        <span class="ifs-status-dot"></span>
-                        <span class="ifs-meta-tag">HR & Access Control</span>
-                        <span class="ifs-meta-tag-slate">Role Permissions</span>
-                    </div>
                     <h2 class="ifs-pro-heading">Staff & Personnel Control</h2>
                     <p class="ifs-pro-caption">Manage staff members, access privileges, operation roles, and employee logs</p>
-                </div>
-            </div>
-            
-            <!-- Quick Stat Badges Strip -->
-            <div class="ifs-pro-stats-strip">
-                <div class="ifs-stat-pill">
-                    <span class="ifs-stat-lbl">Total Team</span>
-                    <span class="ifs-stat-num color-dark"><?php echo number_format( $total_staff ); ?></span>
-                </div>
-                <div class="ifs-stat-pill">
-                    <span class="ifs-stat-lbl">Administrators</span>
-                    <span class="ifs-stat-num color-blue"><?php echo number_format( $admin_users ); ?></span>
-                </div>
-                <div class="ifs-stat-pill">
-                    <span class="ifs-stat-lbl">Desk Staff</span>
-                    <span class="ifs-stat-num color-slate"><?php echo number_format( max( 0, $operational_ops ) ); ?></span>
                 </div>
             </div>
         </div>

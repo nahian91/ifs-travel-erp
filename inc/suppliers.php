@@ -22,28 +22,8 @@ function ifs_terp_suppliers_render_tabs( $active_tab = 'list' ) {
                     <span class="dashicons dashicons-chart-area"></span>
                 </div>
                 <div class="ifs-pro-title-meta">
-                    <div class="ifs-pro-badge-group">
-                        <span class="ifs-status-dot"></span>
-                        <span class="ifs-meta-tag">Consortia & Vendors</span>
-                        <span class="ifs-meta-tag-blue">B2B Supplies</span>
-                    </div>
                     <h2 class="ifs-pro-heading">Suppliers & GDS Portal Ledgers</h2>
                     <p class="ifs-pro-caption">Track IATA/GDS deposits, B2B air portal balances, and vendor top-up histories</p>
-                </div>
-            </div>
-            
-            <div class="ifs-pro-stats-strip">
-                <div class="ifs-stat-pill">
-                    <span class="ifs-stat-lbl">Active Portals</span>
-                    <span class="ifs-stat-num color-dark"><?php echo number_format( $total_suppliers ); ?></span>
-                </div>
-                <div class="ifs-stat-pill">
-                    <span class="ifs-stat-lbl">GDS / IATA Consortia</span>
-                    <span class="ifs-stat-num color-blue"><?php echo number_format( $total_gds ); ?></span>
-                </div>
-                <div class="ifs-stat-pill">
-                    <span class="ifs-stat-lbl">Total Portal Balance</span>
-                    <span class="ifs-stat-num color-emerald">৳<?php echo number_format( $total_balance, 2 ); ?></span>
                 </div>
             </div>
         </div>

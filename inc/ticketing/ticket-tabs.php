@@ -29,29 +29,8 @@ function ifs_terp_ticketing_render_tabs( $active_tab = 'list' ) {
                     <span class="dashicons dashicons-tickets-alt"></span>
                 </div>
                 <div class="ifs-pro-title-meta">
-                    <div class="ifs-pro-badge-group">
-                        <span class="ifs-status-dot"></span>
-                        <span class="ifs-meta-tag">GDS & Air Ledger</span>
-                        <span class="ifs-meta-tag-blue">Flight Operations</span>
-                    </div>
                     <h2 class="ifs-pro-heading">Air Ticketing Console</h2>
                     <p class="ifs-pro-caption">Issue tickets, monitor GDS PNR lifecycles, and track gross profit margins</p>
-                </div>
-            </div>
-            
-            <!-- Quick Stat Badges Strip -->
-            <div class="ifs-pro-stats-strip">
-                <div class="ifs-stat-pill">
-                    <span class="ifs-stat-lbl">Total Issued</span>
-                    <span class="ifs-stat-num color-dark"><?php echo number_format( $total_tickets ); ?></span>
-                </div>
-                <div class="ifs-stat-pill">
-                    <span class="ifs-stat-lbl">Issued Today</span>
-                    <span class="ifs-stat-num color-blue"><?php echo number_format( $today_tickets ); ?></span>
-                </div>
-                <div class="ifs-stat-pill">
-                    <span class="ifs-stat-lbl">Today's Profit</span>
-                    <span class="ifs-stat-num color-green">৳<?php echo number_format( $today_profit, 2 ); ?></span>
                 </div>
             </div>
         </div>

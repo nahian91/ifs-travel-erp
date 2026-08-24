@@ -39,31 +39,8 @@ function ifs_terp_report_render_tabs( $active_tab = 'sales' ) {
                     <span class="dashicons dashicons-chart-area"></span>
                 </div>
                 <div class="ifs-pro-title-meta">
-                    <div class="ifs-pro-badge-group">
-                        <span class="ifs-status-dot"></span>
-                        <span class="ifs-meta-tag">Business Intelligence</span>
-                        <span class="ifs-meta-tag-blue">Analytics & Audits</span>
-                    </div>
                     <h2 class="ifs-pro-heading">Operational Reports & Business Analytics</h2>
                     <p class="ifs-pro-caption">Financial audits, turnover metrics, net margin statements, and B2B exposure tracking</p>
-                </div>
-            </div>
-            
-            <!-- Quick Stat Badges Strip -->
-            <div class="ifs-pro-stats-strip">
-                <div class="ifs-stat-pill">
-                    <span class="ifs-stat-lbl">Turnover (Month)</span>
-                    <span class="ifs-stat-num color-blue">৳<?php echo number_format( $monthly_turnover, 2 ); ?></span>
-                </div>
-                <div class="ifs-stat-pill">
-                    <span class="ifs-stat-lbl">Net Margin</span>
-                    <span class="ifs-stat-num <?php echo ( $net_margin >= 0 ) ? 'color-emerald' : 'color-rose'; ?>">
-                        ৳<?php echo number_format( $net_margin, 2 ); ?>
-                    </span>
-                </div>
-                <div class="ifs-stat-pill">
-                    <span class="ifs-stat-lbl">Agent Negative Due</span>
-                    <span class="ifs-stat-num color-rose">৳<?php echo number_format( $agent_dues, 2 ); ?></span>
                 </div>
             </div>
         </div>

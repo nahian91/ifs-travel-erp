@@ -33,31 +33,8 @@ function ifs_terp_accounts_render_tabs( $active_tab = 'invoices' ) {
                     <span class="dashicons dashicons-money-alt"></span>
                 </div>
                 <div class="ifs-pro-title-meta">
-                    <div class="ifs-pro-badge-group">
-                        <span class="ifs-status-dot"></span>
-                        <span class="ifs-meta-tag">Financial Suite</span>
-                        <span class="ifs-meta-tag-cyan">Billing & Ledgers</span>
-                    </div>
                     <h2 class="ifs-pro-heading">Accounts & Financial Control</h2>
                     <p class="ifs-pro-caption">Manage customer billing invoices, office overhead expenses, cash registers, and receivables</p>
-                </div>
-            </div>
-            
-            <!-- Quick Financial Metric Strip -->
-            <div class="ifs-pro-stats-strip">
-                <div class="ifs-stat-pill">
-                    <span class="ifs-stat-lbl">Market Due</span>
-                    <span class="ifs-stat-num color-rose">৳<?php echo number_format( $total_due, 2 ); ?></span>
-                </div>
-                <div class="ifs-stat-pill">
-                    <span class="ifs-stat-lbl">Inflow (Month)</span>
-                    <span class="ifs-stat-num color-teal">৳<?php echo number_format( $month_income, 2 ); ?></span>
-                </div>
-                <div class="ifs-stat-pill">
-                    <span class="ifs-stat-lbl">Net Profit</span>
-                    <span class="ifs-stat-num <?php echo ( $net_profit >= 0 ) ? 'color-green' : 'color-rose'; ?>">
-                        ৳<?php echo number_format( $net_profit, 2 ); ?>
-                    </span>
                 </div>
             </div>
         </div>

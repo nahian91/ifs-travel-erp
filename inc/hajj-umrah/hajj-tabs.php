@@ -28,29 +28,8 @@ function ifs_terp_hajj_render_tabs( $active_tab = 'list' ) {
                     <span class="dashicons dashicons-groups"></span>
                 </div>
                 <div class="ifs-pro-title-meta">
-                    <div class="ifs-pro-badge-group">
-                        <span class="ifs-status-dot"></span>
-                        <span class="ifs-meta-tag">Pilgrimage Desk</span>
-                        <span class="ifs-meta-tag-emerald">Hajj & Umrah</span>
-                    </div>
                     <h2 class="ifs-pro-heading">Hajj & Umrah Operations</h2>
                     <p class="ifs-pro-caption">Manage Mutamirs, Saudi BRN/Mofaza records, room allocations, and package inventories</p>
-                </div>
-            </div>
-            
-            <!-- Quick Stat Badges Strip -->
-            <div class="ifs-pro-stats-strip">
-                <div class="ifs-stat-pill">
-                    <span class="ifs-stat-lbl">Total Pilgrims</span>
-                    <span class="ifs-stat-num color-dark"><?php echo number_format( $total_pilgrims ); ?></span>
-                </div>
-                <div class="ifs-stat-pill">
-                    <span class="ifs-stat-lbl">Active Bookings</span>
-                    <span class="ifs-stat-num color-emerald"><?php echo number_format( $active_booked ); ?></span>
-                </div>
-                <div class="ifs-stat-pill">
-                    <span class="ifs-stat-lbl">Live Packages</span>
-                    <span class="ifs-stat-num color-blue"><?php echo number_format( $total_pkgs ); ?></span>
                 </div>
             </div>
         </div>
