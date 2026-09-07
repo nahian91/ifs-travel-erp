@@ -4,8 +4,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Enterprise Next-Gen Comprehensive Sales & Revenue Report Page
- * Features: Native Aggregations, Performance Margin Matrix, CSV Export & Executive Print Layout
+ * Comprehensive Sales & Revenue Report Page
+ * Flat Minimal UI: No Shadows, Strict 42px Equal Field & Button Heights, Clean Border Architecture
  */
 function ifs_terp_report_sales_page() {
     global $wpdb;
@@ -22,7 +22,7 @@ function ifs_terp_report_sales_page() {
     // Handle CSV Export
     if ( isset( $_GET['action'] ) && $_GET['action'] === 'export_csv' ) {
         if ( ! current_user_can( 'manage_options' ) && ! ifs_terp_has_access( array( 'accountant', 'admin_manager' ) ) ) {
-            wp_die( 'Unauthorized export request.' );
+            wp_die( esc_html__( 'Unauthorized export request.', 'ifs-travel-erp' ) );
         }
 
         header( 'Content-Type: text/csv; charset=utf-8' );
@@ -72,11 +72,11 @@ function ifs_terp_report_sales_page() {
     }
 
     // Direct Database Aggregations
-    $ticket_sales = $wpdb->get_row( $wpdb->prepare( "SELECT COUNT(id) as total_count, COALESCE(SUM(sell_price), 0) as total_sell, COALESCE(SUM(profit), 0) as total_profit FROM $table_tickets WHERE DATE(created_at) BETWEEN %s AND %s AND status != 'Void'", $start_date, $end_date ) );
-    $visa_sales   = $wpdb->get_row( $wpdb->prepare( "SELECT COUNT(id) as total_count, COALESCE(SUM(sell_price), 0) as total_sell, COALESCE(SUM(profit), 0) as total_profit FROM $table_visas WHERE DATE(created_at) BETWEEN %s AND %s AND status != 'Rejected'", $start_date, $end_date ) );
-    $hajj_sales   = $wpdb->get_row( $wpdb->prepare( "SELECT COUNT(id) as total_count, COALESCE(SUM(sell_price), 0) as total_sell, COALESCE(SUM(profit), 0) as total_profit FROM $table_hajj WHERE DATE(created_at) BETWEEN %s AND %s AND status != 'Cancelled'", $start_date, $end_date ) );
-    $hotel_sales  = $wpdb->get_row( $wpdb->prepare( "SELECT COUNT(id) as total_count, COALESCE(SUM(sell_price), 0) as total_sell, COALESCE(SUM(profit), 0) as total_profit FROM $table_hotels WHERE DATE(created_at) BETWEEN %s AND %s AND status != 'Cancelled'", $start_date, $end_date ) );
-    $tour_sales   = $wpdb->get_row( $wpdb->prepare( "SELECT COUNT(id) as total_count, COALESCE(SUM(sell_price), 0) as total_sell, COALESCE(SUM(profit), 0) as total_profit FROM $table_tours WHERE DATE(created_at) BETWEEN %s AND %s AND status != 'Cancelled'", $start_date, $end_date ) );
+    $ticket_sales = $wpdb->get_row( $wpdb->prepare( "SELECT COUNT(id) as total_count, COALESCE(SUM(sell_price), 0) as total_sell, COALESCE(SUM(profit), 0) as total_profit FROM {$table_tickets} WHERE DATE(created_at) BETWEEN %s AND %s AND status != 'Void'", $start_date, $end_date ) );
+    $visa_sales   = $wpdb->get_row( $wpdb->prepare( "SELECT COUNT(id) as total_count, COALESCE(SUM(sell_price), 0) as total_sell, COALESCE(SUM(profit), 0) as total_profit FROM {$table_visas} WHERE DATE(created_at) BETWEEN %s AND %s AND status != 'Rejected'", $start_date, $end_date ) );
+    $hajj_sales   = $wpdb->get_row( $wpdb->prepare( "SELECT COUNT(id) as total_count, COALESCE(SUM(sell_price), 0) as total_sell, COALESCE(SUM(profit), 0) as total_profit FROM {$table_hajj} WHERE DATE(created_at) BETWEEN %s AND %s AND status != 'Cancelled'", $start_date, $end_date ) );
+    $hotel_sales  = $wpdb->get_row( $wpdb->prepare( "SELECT COUNT(id) as total_count, COALESCE(SUM(sell_price), 0) as total_sell, COALESCE(SUM(profit), 0) as total_profit FROM {$table_hotels} WHERE DATE(created_at) BETWEEN %s AND %s AND status != 'Cancelled'", $start_date, $end_date ) );
+    $tour_sales   = $wpdb->get_row( $wpdb->prepare( "SELECT COUNT(id) as total_count, COALESCE(SUM(sell_price), 0) as total_sell, COALESCE(SUM(profit), 0) as total_profit FROM {$table_tours} WHERE DATE(created_at) BETWEEN %s AND %s AND status != 'Cancelled'", $start_date, $end_date ) );
 
     $t_sell   = (float) ( $ticket_sales->total_sell ?? 0 );
     $t_profit = (float) ( $ticket_sales->total_profit ?? 0 );
@@ -112,16 +112,18 @@ function ifs_terp_report_sales_page() {
         <!-- Header & Action Toolbar -->
         <div class="ifs-report-header">
             <div class="ifs-report-title-group">
-                <span class="ifs-report-badge"><span class="dashicons dashicons-analytics"></span> Financial Performance Ledger</span>
-                <h2>Comprehensive Sales &amp; Revenue Overview</h2>
-                <p>Audited turnover, gross operating profits, and yield ratios categorized by operations desk.</p>
+                <span class="ifs-report-badge">
+                    <span class="dashicons dashicons-analytics"></span> <?php esc_html_e( 'Financial Performance Ledger', 'ifs-travel-erp' ); ?>
+                </span>
+                <h2><?php esc_html_e( 'Sales & Revenue Overview', 'ifs-travel-erp' ); ?></h2>
+                <p><?php esc_html_e( 'Audited turnover, gross operating profits, and yield ratios categorized by operations desk.', 'ifs-travel-erp' ); ?></p>
             </div>
             <div class="ifs-report-action-buttons">
-                <a href="<?php echo esc_url( $export_url ); ?>" class="ifs-btn-action-sec">
-                    <span class="dashicons dashicons-download"></span> Export CSV
+                <a href="<?php echo esc_url( $export_url ); ?>" class="ifs-btn-secondary">
+                    <span class="dashicons dashicons-download"></span> <?php esc_html_e( 'Export CSV', 'ifs-travel-erp' ); ?>
                 </a>
-                <button type="button" onclick="window.print();" class="ifs-btn-action-pri">
-                    <span class="dashicons dashicons-printer"></span> Print Executive Report
+                <button type="button" onclick="window.print();" class="ifs-btn-primary">
+                    <span class="dashicons dashicons-printer"></span> <?php esc_html_e( 'Print Report', 'ifs-travel-erp' ); ?>
                 </button>
             </div>
         </div>
@@ -135,24 +137,24 @@ function ifs_terp_report_sales_page() {
 
                 <div class="filter-grid-layout">
                     <div class="filter-field">
-                        <label for="start_date">From Start Date</label>
-                        <div class="filter-input-wrap">
-                            <span class="dashicons dashicons-calendar-alt"></span>
+                        <label class="ifs-field-label" for="start_date"><?php esc_html_e( 'From Start Date', 'ifs-travel-erp' ); ?></label>
+                        <div class="ifs-field-wrap">
+                            <span class="dashicons dashicons-calendar-alt field-icon"></span>
                             <input type="date" name="start_date" id="start_date" value="<?php echo esc_attr( $start_date ); ?>" class="ifs-input-field">
                         </div>
                     </div>
 
                     <div class="filter-field">
-                        <label for="end_date">To End Date</label>
-                        <div class="filter-input-wrap">
-                            <span class="dashicons dashicons-calendar-alt"></span>
+                        <label class="ifs-field-label" for="end_date"><?php esc_html_e( 'To End Date', 'ifs-travel-erp' ); ?></label>
+                        <div class="ifs-field-wrap">
+                            <span class="dashicons dashicons-calendar-alt field-icon"></span>
                             <input type="date" name="end_date" id="end_date" value="<?php echo esc_attr( $end_date ); ?>" class="ifs-input-field">
                         </div>
                     </div>
 
                     <div class="filter-field filter-btn-wrap">
-                        <button type="submit" class="ifs-btn-filter-submit">
-                            <span class="dashicons dashicons-filter"></span> Filter Sales Ledger
+                        <button type="submit" class="ifs-btn-primary full-width-btn">
+                            <span class="dashicons dashicons-filter"></span> <?php esc_html_e( 'Filter Sales Ledger', 'ifs-travel-erp' ); ?>
                         </button>
                     </div>
                 </div>
@@ -164,36 +166,36 @@ function ifs_terp_report_sales_page() {
             <div class="ifs-kpi-chip border-blue">
                 <div class="kpi-chip-icon bg-blue"><span class="dashicons dashicons-chart-line"></span></div>
                 <div>
-                    <span class="kpi-chip-lbl">Gross Sales Turnover</span>
+                    <span class="kpi-chip-lbl"><?php esc_html_e( 'Gross Sales Turnover', 'ifs-travel-erp' ); ?></span>
                     <strong class="kpi-chip-val color-blue font-mono">৳<?php echo number_format( $grand_turnover, 2 ); ?></strong>
-                    <span class="kpi-chip-sub">Total Billed Volume</span>
+                    <span class="kpi-chip-sub"><?php esc_html_e( 'Total Billed Volume', 'ifs-travel-erp' ); ?></span>
                 </div>
             </div>
 
             <div class="ifs-kpi-chip border-emerald">
                 <div class="kpi-chip-icon bg-emerald"><span class="dashicons dashicons-money-alt"></span></div>
                 <div>
-                    <span class="kpi-chip-lbl">Total Gross Margin</span>
+                    <span class="kpi-chip-lbl"><?php esc_html_e( 'Total Gross Margin', 'ifs-travel-erp' ); ?></span>
                     <strong class="kpi-chip-val color-emerald font-mono">৳<?php echo number_format( $grand_profit, 2 ); ?></strong>
-                    <span class="kpi-chip-sub">Net Profit Margin (<?php echo $overall_margin; ?>%)</span>
+                    <span class="kpi-chip-sub"><?php printf( esc_html__( 'Net Profit Margin (%s%%)', 'ifs-travel-erp' ), $overall_margin ); ?></span>
                 </div>
             </div>
 
             <div class="ifs-kpi-chip border-indigo">
                 <div class="kpi-chip-icon bg-indigo"><span class="dashicons dashicons-tickets-alt"></span></div>
                 <div>
-                    <span class="kpi-chip-lbl">Air Tickets Volume</span>
+                    <span class="kpi-chip-lbl"><?php esc_html_e( 'Air Tickets Volume', 'ifs-travel-erp' ); ?></span>
                     <strong class="kpi-chip-val font-mono">৳<?php echo number_format( $t_sell, 2 ); ?></strong>
-                    <span class="kpi-chip-sub"><?php echo number_format( $t_count ); ?> Issued PNRs</span>
+                    <span class="kpi-chip-sub"><?php printf( esc_html__( '%s Issued PNRs', 'ifs-travel-erp' ), number_format( $t_count ) ); ?></span>
                 </div>
             </div>
 
             <div class="ifs-kpi-chip border-amber">
                 <div class="kpi-chip-icon bg-amber"><span class="dashicons dashicons-portfolio"></span></div>
                 <div>
-                    <span class="kpi-chip-lbl">Total Operational Files</span>
-                    <strong class="kpi-chip-val"><?php echo number_format( $total_files ); ?> Files</strong>
-                    <span class="kpi-chip-sub">Combined 5 Core Desks</span>
+                    <span class="kpi-chip-lbl"><?php esc_html_e( 'Total Operational Files', 'ifs-travel-erp' ); ?></span>
+                    <strong class="kpi-chip-val"><?php printf( esc_html__( '%s Files', 'ifs-travel-erp' ), number_format( $total_files ) ); ?></strong>
+                    <span class="kpi-chip-sub"><?php esc_html_e( 'Combined 5 Core Desks', 'ifs-travel-erp' ); ?></span>
                 </div>
             </div>
         </div>
@@ -202,10 +204,10 @@ function ifs_terp_report_sales_page() {
         <div class="ifs-report-table-card">
             <div class="ifs-table-card-head">
                 <h3 class="table-card-heading">
-                    <span class="dashicons dashicons-analytics"></span> Module-Wise Revenue, Cost &amp; Profit Yield Matrix
+                    <span class="dashicons dashicons-analytics"></span> <?php esc_html_e( 'Module-Wise Revenue, Cost & Profit Yield Matrix', 'ifs-travel-erp' ); ?>
                 </h3>
                 <span class="table-card-date-badge">
-                    Period: <?php echo date( 'd M Y', strtotime( $start_date ) ); ?> &mdash; <?php echo date( 'd M Y', strtotime( $end_date ) ); ?>
+                    <?php printf( esc_html__( 'Period: %s — %s', 'ifs-travel-erp' ), date( 'd M Y', strtotime( $start_date ) ), date( 'd M Y', strtotime( $end_date ) ) ); ?>
                 </span>
             </div>
 
@@ -213,11 +215,11 @@ function ifs_terp_report_sales_page() {
                 <table class="ifs-report-datatable">
                     <thead>
                         <tr>
-                            <th>Operations Module Desk</th>
-                            <th style="text-align: center;">Total Volume / Files</th>
-                            <th style="text-align: right;">Gross Turnover (৳)</th>
-                            <th style="text-align: right;">Gross Profit (৳)</th>
-                            <th style="text-align: right;">Yield Margin %</th>
+                            <th><?php esc_html_e( 'Operations Module Desk', 'ifs-travel-erp' ); ?></th>
+                            <th style="text-align: center;"><?php esc_html_e( 'Total Volume / Files', 'ifs-travel-erp' ); ?></th>
+                            <th style="text-align: right;"><?php esc_html_e( 'Gross Turnover (৳)', 'ifs-travel-erp' ); ?></th>
+                            <th style="text-align: right;"><?php esc_html_e( 'Gross Profit (৳)', 'ifs-travel-erp' ); ?></th>
+                            <th style="text-align: right;"><?php esc_html_e( 'Yield Margin %', 'ifs-travel-erp' ); ?></th>
                         </tr>
                     </thead>
                     <tbody>
@@ -226,10 +228,10 @@ function ifs_terp_report_sales_page() {
                             <td>
                                 <div class="mod-cell-title">
                                     <span class="dashicons dashicons-airplane" style="color: #0284c7;"></span>
-                                    <strong>Air Ticketing &amp; PNR Issuance</strong>
+                                    <strong><?php esc_html_e( 'Air Ticketing & PNR Issuance', 'ifs-travel-erp' ); ?></strong>
                                 </div>
                             </td>
-                            <td style="text-align: center;"><span class="vol-badge"><?php echo number_format( $t_count ); ?> Tickets</span></td>
+                            <td style="text-align: center;"><span class="vol-badge"><?php printf( esc_html__( '%s Tickets', 'ifs-travel-erp' ), number_format( $t_count ) ); ?></span></td>
                             <td style="text-align: right;" class="font-mono">৳<?php echo number_format( $t_sell, 2 ); ?></td>
                             <td style="text-align: right;" class="font-mono color-emerald font-bold">৳<?php echo number_format( $t_profit, 2 ); ?></td>
                             <td style="text-align: right;" class="font-mono font-bold"><?php echo ( $t_sell > 0 ) ? number_format( ( $t_profit / $t_sell ) * 100, 1 ) : '0.0'; ?>%</td>
@@ -240,10 +242,10 @@ function ifs_terp_report_sales_page() {
                             <td>
                                 <div class="mod-cell-title">
                                     <span class="dashicons dashicons-id-alt" style="color: #d97706;"></span>
-                                    <strong>Visa Processing Applications</strong>
+                                    <strong><?php esc_html_e( 'Visa Processing Applications', 'ifs-travel-erp' ); ?></strong>
                                 </div>
                             </td>
-                            <td style="text-align: center;"><span class="vol-badge"><?php echo number_format( $v_count ); ?> Files</span></td>
+                            <td style="text-align: center;"><span class="vol-badge"><?php printf( esc_html__( '%s Files', 'ifs-travel-erp' ), number_format( $v_count ) ); ?></span></td>
                             <td style="text-align: right;" class="font-mono">৳<?php echo number_format( $v_sell, 2 ); ?></td>
                             <td style="text-align: right;" class="font-mono color-emerald font-bold">৳<?php echo number_format( $v_profit, 2 ); ?></td>
                             <td style="text-align: right;" class="font-mono font-bold"><?php echo ( $v_sell > 0 ) ? number_format( ( $v_profit / $v_sell ) * 100, 1 ) : '0.0'; ?>%</td>
@@ -254,10 +256,10 @@ function ifs_terp_report_sales_page() {
                             <td>
                                 <div class="mod-cell-title">
                                     <span class="dashicons dashicons-awards" style="color: #059669;"></span>
-                                    <strong>Hajj &amp; Umrah Pilgrims</strong>
+                                    <strong><?php esc_html_e( 'Hajj & Umrah Pilgrims', 'ifs-travel-erp' ); ?></strong>
                                 </div>
                             </td>
-                            <td style="text-align: center;"><span class="vol-badge"><?php echo number_format( $h_count ); ?> Pilgrims</span></td>
+                            <td style="text-align: center;"><span class="vol-badge"><?php printf( esc_html__( '%s Pilgrims', 'ifs-travel-erp' ), number_format( $h_count ) ); ?></span></td>
                             <td style="text-align: right;" class="font-mono">৳<?php echo number_format( $h_sell, 2 ); ?></td>
                             <td style="text-align: right;" class="font-mono color-emerald font-bold">৳<?php echo number_format( $h_profit, 2 ); ?></td>
                             <td style="text-align: right;" class="font-mono font-bold"><?php echo ( $h_sell > 0 ) ? number_format( ( $h_profit / $h_sell ) * 100, 1 ) : '0.0'; ?>%</td>
@@ -268,10 +270,10 @@ function ifs_terp_report_sales_page() {
                             <td>
                                 <div class="mod-cell-title">
                                     <span class="dashicons dashicons-building" style="color: #4f46e5;"></span>
-                                    <strong>Hotel &amp; Resort Reservations</strong>
+                                    <strong><?php esc_html_e( 'Hotel & Resort Reservations', 'ifs-travel-erp' ); ?></strong>
                                 </div>
                             </td>
-                            <td style="text-align: center;"><span class="vol-badge"><?php echo number_format( $ht_count ); ?> Bookings</span></td>
+                            <td style="text-align: center;"><span class="vol-badge"><?php printf( esc_html__( '%s Bookings', 'ifs-travel-erp' ), number_format( $ht_count ) ); ?></span></td>
                             <td style="text-align: right;" class="font-mono">৳<?php echo number_format( $ht_sell, 2 ); ?></td>
                             <td style="text-align: right;" class="font-mono color-emerald font-bold">৳<?php echo number_format( $ht_profit, 2 ); ?></td>
                             <td style="text-align: right;" class="font-mono font-bold"><?php echo ( $ht_sell > 0 ) ? number_format( ( $ht_profit / $ht_sell ) * 100, 1 ) : '0.0'; ?>%</td>
@@ -281,11 +283,11 @@ function ifs_terp_report_sales_page() {
                         <tr>
                             <td>
                                 <div class="mod-cell-title">
-                                    <span class="dashicons dashicons-palmtree" style="color: #e11d48;"></span>
-                                    <strong>Holiday &amp; Tour Packages</strong>
+                                    <span class="dashicons dashicons-palmtree" style="color: #dc2626;"></span>
+                                    <strong><?php esc_html_e( 'Holiday & Tour Packages', 'ifs-travel-erp' ); ?></strong>
                                 </div>
                             </td>
-                            <td style="text-align: center;"><span class="vol-badge"><?php echo number_format( $tour_count ); ?> Packages</span></td>
+                            <td style="text-align: center;"><span class="vol-badge"><?php printf( esc_html__( '%s Packages', 'ifs-travel-erp' ), number_format( $tour_count ) ); ?></span></td>
                             <td style="text-align: right;" class="font-mono">৳<?php echo number_format( $tour_sell, 2 ); ?></td>
                             <td style="text-align: right;" class="font-mono color-emerald font-bold">৳<?php echo number_format( $tour_profit, 2 ); ?></td>
                             <td style="text-align: right;" class="font-mono font-bold"><?php echo ( $tour_sell > 0 ) ? number_format( ( $tour_profit / $tour_sell ) * 100, 1 ) : '0.0'; ?>%</td>
@@ -293,8 +295,8 @@ function ifs_terp_report_sales_page() {
                     </tbody>
                     <tfoot>
                         <tr class="grand-total-row">
-                            <td><strong>GRAND TOTAL CONSOLIDATED</strong></td>
-                            <td style="text-align: center;"><strong><?php echo number_format( $total_files ); ?> Files</strong></td>
+                            <td><strong><?php esc_html_e( 'GRAND TOTAL CONSOLIDATED', 'ifs-travel-erp' ); ?></strong></td>
+                            <td style="text-align: center;"><strong><?php printf( esc_html__( '%s Files', 'ifs-travel-erp' ), number_format( $total_files ) ); ?></strong></td>
                             <td style="text-align: right;" class="font-mono"><strong>৳<?php echo number_format( $grand_turnover, 2 ); ?></strong></td>
                             <td style="text-align: right;" class="font-mono color-emerald font-bold"><strong>৳<?php echo number_format( $grand_profit, 2 ); ?></strong></td>
                             <td style="text-align: right;" class="font-mono font-bold"><strong><?php echo $overall_margin; ?>%</strong></td>
@@ -306,31 +308,38 @@ function ifs_terp_report_sales_page() {
 
     </div>
 
-    <!-- Layout Stylesheet -->
+    <!-- Stylesheet: Flat Minimal UI, Zero Shadows & Strict 42px Uniform Field Heights -->
     <style>
         .ifs-report-wrapper {
             max-width: 1420px;
-            margin: 0 auto;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            margin: 20px auto;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
             color: #0f172a;
+            box-sizing: border-box;
+        }
+        .ifs-report-wrapper *,
+        .ifs-report-wrapper *::before,
+        .ifs-report-wrapper *::after {
+            box-sizing: border-box;
+            box-shadow: none !important;
+            text-shadow: none !important;
         }
 
         .ifs-report-header {
             background: #ffffff;
             border: 1px solid #e2e8f0;
-            border-radius: 16px;
+            border-radius: 14px;
             padding: 24px 28px;
             display: flex;
             justify-content: space-between;
             align-items: center;
             flex-wrap: wrap;
-            gap: 20px;
-            box-shadow: 0 4px 16px -2px rgba(15, 23, 42, 0.04);
-            margin-bottom: 22px;
+            gap: 18px;
+            margin-bottom: 24px;
         }
         .ifs-report-badge {
             background: #eff6ff;
-            color: #1d4ed8;
+            color: #003376;
             padding: 3px 10px;
             border-radius: 6px;
             font-size: 11px;
@@ -339,107 +348,140 @@ function ifs_terp_report_sales_page() {
             letter-spacing: 0.5px;
             display: inline-flex;
             align-items: center;
-            gap: 4px;
+            gap: 5px;
             margin-bottom: 6px;
-            border: 1px solid #dbeafe;
+            border: 1px solid #bfdbfe;
         }
-        .ifs-report-badge .dashicons { font-size: 13px; width: 13px; height: 13px; }
-        .ifs-report-title-group h2 { margin: 0 0 4px 0; font-size: 21px; font-weight: 900; color: #0f172a; letter-spacing: -0.3px; }
+        .ifs-report-badge .dashicons { font-size: 14px; width: 14px; height: 14px; }
+        .ifs-report-title-group h2 { margin: 0 0 4px 0; font-size: 20px; font-weight: 800; color: #0f172a; }
         .ifs-report-title-group p { margin: 0; font-size: 13px; color: #64748b; }
 
         .ifs-report-action-buttons { display: flex; gap: 10px; align-items: center; }
-        .ifs-btn-action-sec {
+        .ifs-btn-secondary {
             background: #f8fafc;
             border: 1px solid #cbd5e1;
-            color: #334155;
-            padding: 10px 18px;
+            color: #475569 !important;
+            height: 42px;
+            padding: 0 20px;
             border-radius: 8px;
             font-size: 13px;
-            font-weight: 700;
+            font-weight: 600;
             text-decoration: none;
             display: inline-flex;
             align-items: center;
             gap: 6px;
-            transition: all 0.2s ease;
+            cursor: pointer;
+            transition: background-color 0.2s ease, color 0.2s ease;
         }
-        .ifs-btn-action-sec:hover { background: #e2e8f0; color: #0f172a; }
-        .ifs-btn-action-pri {
-            background: linear-gradient(135deg, #003376 0%, #0284c7 100%);
+        .ifs-btn-secondary:hover { background: #f1f5f9; color: #0f172a; }
+        .ifs-btn-primary {
+            background: #003376;
             color: #ffffff !important;
             border: none;
-            padding: 10px 22px;
+            height: 42px;
+            padding: 0 24px;
             border-radius: 8px;
-            font-size: 13px;
+            font-size: 13.5px;
             font-weight: 700;
+            text-decoration: none;
             cursor: pointer;
             display: inline-flex;
             align-items: center;
-            gap: 6px;
-            box-shadow: 0 4px 12px rgba(0, 51, 118, 0.25);
-            transition: all 0.2s ease;
+            justify-content: center;
+            gap: 8px;
+            transition: background-color 0.2s ease;
         }
-        .ifs-btn-action-pri:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(0, 51, 118, 0.35); }
-        .ifs-btn-action-pri .dashicons, .ifs-btn-action-sec .dashicons { font-size: 16px; width: 16px; height: 16px; }
+        .ifs-btn-primary:hover { background: #0284c7; }
+        .ifs-btn-primary .dashicons, .ifs-btn-secondary .dashicons { font-size: 16px; width: 16px; height: 16px; }
 
+        /* Filter Card */
         .ifs-filter-card {
             background: #ffffff;
             border: 1px solid #e2e8f0;
             border-radius: 14px;
             padding: 22px 26px;
             margin-bottom: 24px;
-            box-shadow: 0 4px 16px -2px rgba(15, 23, 42, 0.03);
         }
         .filter-grid-layout {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)) auto;
-            gap: 16px;
+            grid-template-columns: repeat(2, 1fr) auto;
+            gap: 18px;
             align-items: flex-end;
         }
-        @media (max-width: 768px) {
+        @media (max-width: 860px) {
             .filter-grid-layout { grid-template-columns: 1fr; }
+            .full-width-btn { width: 100%; }
         }
-        .filter-field { display: flex; flex-direction: column; gap: 5px; }
-        .filter-field label { font-size: 11px; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.4px; }
-        .filter-input-wrap { position: relative; display: flex; align-items: center; width: 100%; }
-        .filter-input-wrap .dashicons {
-            position: absolute;
-            left: 12px;
-            color: #94a3b8;
-            font-size: 16px;
-            width: 16px;
-            height: 16px;
-            pointer-events: none;
-        }
-        .ifs-input-field {
+        .filter-field { 
+            display: flex; 
+            flex-direction: column; 
+            justify-content: flex-start;
+            gap: 6px; 
             width: 100%;
-            padding: 9px 12px 9px 38px !important;
-            border: 1px solid #cbd5e1;
-            border-radius: 8px;
-            font-size: 13.5px;
-            color: #0f172a;
-            background: #ffffff;
-            outline: none;
-            transition: all 0.2s ease;
         }
-        .ifs-input-field:focus { border-color: #003376; box-shadow: 0 0 0 3px rgba(0, 51, 118, 0.12); }
-        .ifs-btn-filter-submit {
-            background: #0f172a;
-            color: #ffffff;
-            border: none;
-            padding: 10px 22px;
-            border-radius: 8px;
-            font-size: 13.5px;
-            font-weight: 700;
-            cursor: pointer;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            height: 38px;
-            transition: all 0.2s ease;
+        .ifs-field-label { 
+            font-size: 11px; 
+            font-weight: 700; 
+            color: #475569; 
+            text-transform: uppercase; 
+            letter-spacing: 0.5px; 
+            line-height: 1.2;
         }
-        .ifs-btn-filter-submit:hover { background: #1e293b; }
-        .ifs-btn-filter-submit .dashicons { font-size: 15px; width: 15px; height: 15px; }
+        .ifs-field-wrap { 
+            position: relative; 
+            display: flex; 
+            align-items: center; 
+            width: 100%; 
+            height: 42px; 
+        }
+        .ifs-field-wrap .field-icon {
+            position: absolute; 
+            left: 12px; 
+            top: 50%;
+            transform: translateY(-50%);
+            color: #94a3b8; 
+            font-size: 18px; 
+            width: 18px; 
+            height: 18px; 
+            line-height: 18px;
+            pointer-events: none; 
+            z-index: 3; 
+            transition: color 0.2s ease;
+        }
+        .ifs-input-field { 
+            width: 100% !important; 
+            height: 42px !important; 
+            max-height: 42px !important; 
+            min-height: 42px !important; 
+            line-height: 40px !important; 
+            padding: 0 14px 0 40px !important; 
+            border: 1px solid #cbd5e1 !important; 
+            border-radius: 8px !important; 
+            font-size: 13.5px !important; 
+            color: #0f172a !important; 
+            background-color: #ffffff !important; 
+            outline: none !important; 
+            transition: border-color 0.2s ease, background-color 0.2s ease; 
+            margin: 0 !important; 
+            display: block; 
+        }
+        input[type="date"].ifs-input-field { cursor: pointer; }
+        input[type="date"].ifs-input-field::-webkit-calendar-picker-indicator { 
+            opacity: 0.6; 
+            cursor: pointer; 
+            margin-right: -4px; 
+            transition: opacity 0.2s ease; 
+        }
+        input[type="date"].ifs-input-field::-webkit-calendar-picker-indicator:hover { opacity: 1; }
+        .ifs-input-field:focus { 
+            border-color: #003376 !important; 
+            background-color: #f8fafc !important; 
+        }
+        .ifs-field-wrap:focus-within .field-icon { 
+            color: #003376; 
+        }
 
+        /* KPI Ribbon */
         .ifs-report-kpi-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
@@ -454,33 +496,42 @@ function ifs_terp_report_sales_page() {
             display: flex;
             align-items: center;
             gap: 16px;
-            box-shadow: 0 2px 8px -2px rgba(15, 23, 42, 0.03);
             border-left: 5px solid #cbd5e1;
         }
-        .ifs-kpi-chip.border-blue { border-left-color: #0284c7; }
+        .ifs-kpi-chip.border-blue    { border-left-color: #003376; }
         .ifs-kpi-chip.border-emerald { border-left-color: #059669; }
-        .ifs-kpi-chip.border-indigo { border-left-color: #4f46e5; }
-        .ifs-kpi-chip.border-amber { border-left-color: #d97706; }
+        .ifs-kpi-chip.border-indigo  { border-left-color: #4f46e5; }
+        .ifs-kpi-chip.border-amber   { border-left-color: #d97706; }
 
-        .kpi-chip-icon { width: 46px; height: 46px; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: #ffffff; flex-shrink: 0; }
-        .kpi-chip-icon.bg-blue { background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%); }
-        .kpi-chip-icon.bg-emerald { background: linear-gradient(135deg, #059669 0%, #047857 100%); }
-        .kpi-chip-icon.bg-indigo { background: linear-gradient(135deg, #4f46e5 0%, #3730a3 100%); }
-        .kpi-chip-icon.bg-amber { background: linear-gradient(135deg, #d97706 0%, #b45309 100%); }
+        .kpi-chip-icon { 
+            width: 44px; 
+            height: 44px; 
+            border-radius: 10px; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            color: #ffffff; 
+            flex-shrink: 0; 
+        }
+        .kpi-chip-icon.bg-blue    { background: #003376; }
+        .kpi-chip-icon.bg-emerald { background: #059669; }
+        .kpi-chip-icon.bg-indigo  { background: #4f46e5; }
+        .kpi-chip-icon.bg-amber   { background: #d97706; }
         .kpi-chip-icon .dashicons { font-size: 22px; width: 22px; height: 22px; }
 
         .kpi-chip-lbl { font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.4px; display: block; margin-bottom: 2px; }
         .kpi-chip-val { font-size: 19px; font-weight: 900; color: #0f172a; display: block; letter-spacing: -0.5px; }
         .kpi-chip-sub { font-size: 11px; color: #64748b; font-weight: 600; margin-top: 2px; display: block; }
-        .color-blue { color: #003376 !important; }
+        .color-blue    { color: #003376 !important; }
         .color-emerald { color: #059669 !important; }
 
+        /* Master Detailed Table Card */
         .ifs-report-table-card {
             background: #ffffff;
             border: 1px solid #e2e8f0;
             border-radius: 14px;
-            box-shadow: 0 4px 16px -2px rgba(15, 23, 42, 0.03);
             overflow: hidden;
+            margin-bottom: 24px;
         }
         .ifs-table-card-head {
             padding: 22px 26px;
@@ -491,38 +542,40 @@ function ifs_terp_report_sales_page() {
             flex-wrap: wrap;
             gap: 15px;
         }
-        .table-card-heading { margin: 0; font-size: 17px; font-weight: 800; color: #0f172a; display: flex; align-items: center; gap: 8px; }
+        .table-card-heading { margin: 0; font-size: 16px; font-weight: 800; color: #0f172a; display: flex; align-items: center; gap: 8px; }
         .table-card-heading .dashicons { color: #003376; font-size: 20px; width: 20px; height: 20px; }
-        .table-card-date-badge { font-size: 12px; font-weight: 700; color: #475569; background: #f8fafc; padding: 5px 12px; border-radius: 6px; border: 1px solid #e2e8f0; }
+        .table-card-date-badge { font-size: 12px; font-weight: 700; color: #475569; background: #f8fafc; padding: 4px 10px; border-radius: 6px; border: 1px solid #e2e8f0; }
 
-        .ifs-table-responsive { padding: 15px 24px 24px 24px; overflow-x: auto; }
-        .ifs-report-datatable { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+        .ifs-table-responsive { padding: 12px 22px 20px; overflow-x: auto; }
+        .ifs-report-datatable { width: 100%; border-collapse: collapse; font-size: 13px; }
         .ifs-report-datatable thead th {
             background: #f8fafc;
             color: #475569;
-            font-size: 11px;
+            font-size: 10.5px;
             font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 0.5px;
-            padding: 12px 16px;
+            padding: 10px 14px;
             border-bottom: 2px solid #e2e8f0;
             text-align: left;
+            white-space: nowrap;
         }
         .ifs-report-datatable tbody td {
-            padding: 14px 16px;
+            padding: 12px 14px;
             border-bottom: 1px solid #f1f5f9;
             vertical-align: middle;
             color: #334155;
         }
         .ifs-report-datatable tbody tr:hover td { background: #f8fafc; }
         .mod-cell-title { display: flex; align-items: center; gap: 8px; color: #0f172a; }
-        .mod-cell-title .dashicons { font-size: 18px; width: 18px; height: 18px; }
-        .vol-badge { background: #f1f5f9; color: #334155; font-weight: 700; font-size: 11px; padding: 3px 8px; border-radius: 6px; border: 1px solid #e2e8f0; }
+        .mod-cell-title .dashicons { font-size: 17px; width: 17px; height: 17px; }
+        .vol-badge { background: #f1f5f9; color: #334155; font-weight: 700; font-size: 11px; padding: 2px 7px; border-radius: 4px; border: 1px solid #e2e8f0; }
 
         .grand-total-row { background: #f8fafc; border-top: 2px solid #cbd5e1; }
-        .grand-total-row td { padding: 16px; font-size: 14.5px; color: #0f172a; }
+        .grand-total-row td { padding: 14px; font-size: 14px; color: #0f172a; }
 
-        .font-mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+        .font-mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important; }
+        .font-bold { font-weight: 700; }
 
         @media print {
             #adminmenuback, #adminmenuwrap, #wpadminbar, #wpfooter, .ifs-report-header, .ifs-filter-card {
@@ -534,7 +587,7 @@ function ifs_terp_report_sales_page() {
             }
             body.wp-admin { background: #ffffff !important; }
             .ifs-report-wrapper { max-width: 100% !important; padding: 0 !important; }
-            .ifs-report-table-card { box-shadow: none !important; border: 1px solid #000 !important; }
+            .ifs-report-table-card { border: 1px solid #000 !important; }
         }
     </style>
     <?php

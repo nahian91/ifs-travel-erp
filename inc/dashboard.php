@@ -4,330 +4,302 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Dashboard Tab - IFS Travel ERP Operations & Financial Control Panel
- * Database Mapping: iterp_tickets, iterp_visas, iterp_invoices, iterp_ledger, iterp_agents, iterp_customers
+ * Dashboard Tab - IFS Travel ERP Overview Panel
  */
 function ifs_terp_dashboard_tab() {
     global $wpdb;
 
-    // Core Database Table Registries
-    $table_tickets   = $wpdb->prefix . 'iterp_tickets';
-    $table_visas     = $wpdb->prefix . 'iterp_visas';
-    $table_invoices  = $wpdb->prefix . 'iterp_invoices';
-    $table_ledger    = $wpdb->prefix . 'iterp_ledger';
-    $table_agents    = $wpdb->prefix . 'iterp_agents';
-    $table_customers = $wpdb->prefix . 'iterp_customers';
-    $table_hajj      = $wpdb->prefix . 'iterp_hajj_bookings';
+    // Database Tables
+    $tbl_tickets   = $wpdb->prefix . 'iterp_tickets';
+    $tbl_visas     = $wpdb->prefix . 'iterp_visa_applications';
+    $tbl_invoices  = $wpdb->prefix . 'iterp_invoices';
+    $tbl_ledger    = $wpdb->prefix . 'iterp_ledger';
+    $tbl_agents    = $wpdb->prefix . 'iterp_agents';
+    $tbl_customers = $wpdb->prefix . 'iterp_customers';
+    $tbl_hajj      = $wpdb->prefix . 'iterp_hajj_bookings';
 
-    // Time Frames & Ranges
+    // Time Frames
     $today_start = current_time( 'Y-m-d 00:00:00' );
     $today_end   = current_time( 'Y-m-d 23:59:59' );
     $month_start = current_time( 'Y-m-01 00:00:00' );
     $month_end   = current_time( 'Y-m-t 23:59:59' );
 
-    /* =========================================================================
-       1. CORE STATS & AGGREGATIONS
-       ========================================================================= */
-    $total_tickets_today = (int) $wpdb->get_var( $wpdb->prepare(
-        "SELECT COUNT(id) FROM $table_tickets WHERE created_at BETWEEN %s AND %s",
-        $today_start,
-        $today_end
+    // 1. Financial Inflow/Outflow Aggregation (Single Optimized Query)
+    $ledger_totals = $wpdb->get_row( $wpdb->prepare(
+        "SELECT 
+            SUM(CASE WHEN transaction_type = 'Income'  AND transaction_date BETWEEN %s AND %s THEN amount ELSE 0 END) AS today_income,
+            SUM(CASE WHEN transaction_type = 'Expense' AND transaction_date BETWEEN %s AND %s THEN amount ELSE 0 END) AS today_expense,
+            SUM(CASE WHEN transaction_type = 'Income'  AND transaction_date BETWEEN %s AND %s THEN amount ELSE 0 END) AS month_income,
+            SUM(CASE WHEN transaction_type = 'Expense' AND transaction_date BETWEEN %s AND %s THEN amount ELSE 0 END) AS month_expense
+         FROM $tbl_ledger",
+        $today_start, $today_end,
+        $today_start, $today_end,
+        $month_start, $month_end,
+        $month_start, $month_end
     ) );
 
-    $processing_visas_count = (int) $wpdb->get_var( $wpdb->prepare(
-        "SELECT COUNT(id) FROM $table_visas WHERE status = %s",
-        'Processing'
-    ) );
+    $today_income  = (float) ( $ledger_totals->today_income ?? 0 );
+    $today_expense = (float) ( $ledger_totals->today_expense ?? 0 );
+    $month_income  = (float) ( $ledger_totals->month_income ?? 0 );
+    $month_expense = (float) ( $ledger_totals->month_expense ?? 0 );
+    $net_margin    = $month_income - $month_expense;
 
-    $active_hajj_count = (int) $wpdb->get_var(
-        "SELECT COUNT(id) FROM $table_hajj WHERE status IN ('Booked', 'Confirmed')"
+    // 2. Operational Counts
+    $today_tickets    = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(id) FROM $tbl_tickets WHERE created_at BETWEEN %s AND %s", $today_start, $today_end ) );
+    $processing_visas = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(id) FROM $tbl_visas WHERE status = %s", 'Processing' ) );
+    $active_hajj      = (int) $wpdb->get_var( "SELECT COUNT(id) FROM $tbl_hajj WHERE status IN ('Booked', 'Confirmed')" );
+    $market_dues      = (float) $wpdb->get_var( "SELECT SUM(due_amount) FROM $tbl_invoices WHERE due_amount > 0" );
+    $active_agents    = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(id) FROM $tbl_agents WHERE status = %s", 'Active' ) );
+
+    // 3. Tab URL Generator
+    $tab_url = function( $tab, $sub = '', $view = '' ) {
+        $args = array(
+            'page' => 'ifs_travel_erp',
+            'tab'  => sanitize_key( $tab ),
+        );
+        if ( ! empty( $sub ) ) {
+            $args['sub'] = sanitize_key( $sub );
+        }
+        if ( ! empty( $view ) ) {
+            $args['view'] = sanitize_key( $view );
+        }
+        return add_query_arg( $args, admin_url( 'admin.php' ) );
+    };
+
+    // 4. Quick Action Buttons Config
+    $quick_actions = array(
+        array( 'label' => __( 'New Flight Ticket', 'ifs-travel-erp' ), 'icon' => 'dashicons-tickets-alt',     'url' => $tab_url( 'ticketing', '', 'add' ),             'color' => '#0284c7', 'primary' => true ),
+        array( 'label' => __( 'New Visa', 'ifs-travel-erp' ),          'icon' => 'dashicons-admin-site-alt3', 'url' => $tab_url( 'visa', '', 'add' ),                  'color' => '#d97706' ),
+        array( 'label' => __( 'New Pilgrim', 'ifs-travel-erp' ),       'icon' => 'dashicons-groups',          'url' => $tab_url( 'hajj_umrah', '', 'add' ),             'color' => '#059669' ),
+        array( 'label' => __( 'Create Invoice', 'ifs-travel-erp' ),    'icon' => 'dashicons-media-document',  'url' => $tab_url( 'invoices', '', 'add' ),               'color' => '#7c3aed' ),
+        array( 'label' => __( 'Record Income', 'ifs-travel-erp' ),     'icon' => 'dashicons-money-alt',       'url' => $tab_url( 'accounts', 'income', 'add' ),         'color' => '#15803d' ),
+        array( 'label' => __( 'Record Expense', 'ifs-travel-erp' ),    'icon' => 'dashicons-cart',            'url' => $tab_url( 'accounts', 'expense', 'add' ),        'color' => '#dc2626' ),
     );
 
-    $today_income = (float) $wpdb->get_var( $wpdb->prepare(
-        "SELECT SUM(amount) FROM $table_ledger WHERE transaction_type = 'Income' AND transaction_date BETWEEN %s AND %s",
-        $today_start,
-        $today_end
-    ) );
-
-    $today_expense = (float) $wpdb->get_var( $wpdb->prepare(
-        "SELECT SUM(amount) FROM $table_ledger WHERE transaction_type = 'Expense' AND transaction_date BETWEEN %s AND %s",
-        $today_start,
-        $today_end
-    ) );
-
-    $month_income = (float) $wpdb->get_var( $wpdb->prepare(
-        "SELECT SUM(amount) FROM $table_ledger WHERE transaction_type = 'Income' AND transaction_date BETWEEN %s AND %s",
-        $month_start,
-        $month_end
-    ) );
-
-    $month_expense = (float) $wpdb->get_var( $wpdb->prepare(
-        "SELECT SUM(amount) FROM $table_ledger WHERE transaction_type = 'Expense' AND transaction_date BETWEEN %s AND %s",
-        $month_start,
-        $month_end
-    ) );
-
-    $net_profit_loss = $month_income - $month_expense;
-
-    $pending_dues_amount = (float) $wpdb->get_var(
-        "SELECT SUM(due_amount) FROM $table_invoices WHERE due_amount > 0"
+    // 5. KPI Cards Config
+    $kpi_cards = array(
+        array(
+            'title'    => __( "Today's Tickets", 'ifs-travel-erp' ),
+            'value'    => number_format( $today_tickets ),
+            'color'    => 'blue',
+            'icon'     => 'dashicons-tickets-alt',
+            'link'     => $tab_url( 'ticketing' ),
+            'link_txt' => __( 'View tickets &rarr;', 'ifs-travel-erp' )
+        ),
+        array(
+            'title'    => __( 'Visas in Progress', 'ifs-travel-erp' ),
+            'value'    => number_format( $processing_visas ),
+            'color'    => 'amber',
+            'icon'     => 'dashicons-admin-site-alt3',
+            'link'     => $tab_url( 'visa' ),
+            'link_txt' => __( 'Track applications &rarr;', 'ifs-travel-erp' )
+        ),
+        array(
+            'title'    => __( 'Hajj & Umrah Pilgrims', 'ifs-travel-erp' ),
+            'value'    => number_format( $active_hajj ),
+            'color'    => 'cyan',
+            'icon'     => 'dashicons-groups',
+            'link'     => $tab_url( 'hajj_umrah' ),
+            'link_txt' => __( 'Pilgrim list &rarr;', 'ifs-travel-erp' )
+        ),
+        array(
+            'title'    => __( 'Total Unpaid Dues', 'ifs-travel-erp' ),
+            'value'    => '৳' . number_format( $market_dues, 2 ),
+            'color'    => 'rose',
+            'icon'     => 'dashicons-warning',
+            'link'     => $tab_url( 'invoices' ),
+            'link_txt' => __( 'Collect dues &rarr;', 'ifs-travel-erp' )
+        ),
+        array(
+            'title'    => __( "Today's Inflow", 'ifs-travel-erp' ),
+            'value'    => '৳' . number_format( $today_income, 2 ),
+            'color'    => 'emerald',
+            'icon'     => 'dashicons-arrow-down-alt',
+            'sub'      => __( 'Cash & bank received', 'ifs-travel-erp' ),
+            'link'     => $tab_url( 'accounts', 'income' ),
+            'link_txt' => __( 'Income ledger &rarr;', 'ifs-travel-erp' )
+        ),
+        array(
+            'title'    => __( "Today's Outflow", 'ifs-travel-erp' ),
+            'value'    => '৳' . number_format( $today_expense, 2 ),
+            'color'    => 'slate',
+            'icon'     => 'dashicons-arrow-up-alt',
+            'sub'      => __( 'Expenses paid', 'ifs-travel-erp' ),
+            'link'     => $tab_url( 'accounts', 'expense' ),
+            'link_txt' => __( 'Expense ledger &rarr;', 'ifs-travel-erp' )
+        ),
+        array(
+            'title'    => __( 'Profit This Month', 'ifs-travel-erp' ),
+            'value'    => '৳' . number_format( $net_margin, 2 ),
+            'color'    => ( $net_margin >= 0 ) ? 'emerald' : 'rose',
+            'icon'     => 'dashicons-chart-line',
+            'sub'      => ( $net_margin >= 0 ) ? __( 'Profitable', 'ifs-travel-erp' ) : __( 'Net Loss', 'ifs-travel-erp' ),
+            'link'     => $tab_url( 'accounts', 'reports' ),
+            'link_txt' => __( 'Financial report &rarr;', 'ifs-travel-erp' )
+        ),
+        array(
+            'title'    => __( 'Active B2B Agents', 'ifs-travel-erp' ),
+            'value'    => number_format( $active_agents ),
+            'color'    => 'indigo',
+            'icon'     => 'dashicons-networking',
+            'link'     => $tab_url( 'b2b_agents' ),
+            'link_txt' => __( 'View agents &rarr;', 'ifs-travel-erp' )
+        ),
     );
 
-    $active_agents_count = (int) $wpdb->get_var( $wpdb->prepare(
-        "SELECT COUNT(id) FROM $table_agents WHERE status = %s",
-        'Active'
-    ) );
-
-    /* =========================================================================
-       2. RECENT RECORDS FOR LIVE FEED
-       ========================================================================= */
+    // 6. Recent Feeds
     $recent_tickets = $wpdb->get_results( "
         SELECT t.*, c.full_name as customer_name 
-        FROM $table_tickets t 
-        LEFT JOIN $table_customers c ON t.customer_id = c.id 
+        FROM $tbl_tickets t 
+        LEFT JOIN $tbl_customers c ON t.customer_id = c.id 
         ORDER BY t.id DESC LIMIT 5
     " );
 
     $recent_visas = $wpdb->get_results( "
         SELECT v.*, c.full_name as customer_name 
-        FROM $table_visas v 
-        LEFT JOIN $table_customers c ON v.customer_id = c.id 
+        FROM $tbl_visas v 
+        LEFT JOIN $tbl_customers c ON v.customer_id = c.id 
         ORDER BY v.id DESC LIMIT 5
     " );
 
-    // Admin URL Anchors
-    $ticketing_tab_url = admin_url( 'admin.php?page=ifs_travel_erp&tab=ticketing' );
-    $accounts_tab_url  = admin_url( 'admin.php?page=ifs_travel_erp&tab=accounts' );
-    $visa_tab_url      = admin_url( 'admin.php?page=ifs_travel_erp&tab=visa' );
-    $hajj_tab_url      = admin_url( 'admin.php?page=ifs_travel_erp&tab=hajj_umrah' );
-    $agents_tab_url    = admin_url( 'admin.php?page=ifs_travel_erp&tab=b2b_agents' );
-
-    // Greeting Engine
-    $current_hour = (int) current_time( 'H' );
-    if ( $current_hour >= 5 && $current_hour < 12 ) {
-        $greeting_prefix = 'Good Morning';
-    } elseif ( $current_hour >= 12 && $current_hour < 17 ) {
-        $greeting_prefix = 'Good Afternoon';
-    } elseif ( $current_hour >= 17 && $current_hour < 21 ) {
-        $greeting_prefix = 'Good Evening';
-    } else {
-        $greeting_prefix = 'Welcome Back';
-    }
-
-    $current_wp_user = wp_get_current_user();
-    $user_display_name = ! empty( $current_wp_user->display_name ) ? $current_wp_user->display_name : 'Partner';
-    $rendered_greeting = $greeting_prefix . ', ' . $user_display_name;
+    // 7. Greeting Text
+    $hour         = (int) current_time( 'H' );
+    $greeting     = ( $hour < 12 ) ? __( 'Good morning', 'ifs-travel-erp' ) : ( ( $hour < 17 ) ? __( 'Good afternoon', 'ifs-travel-erp' ) : __( 'Good evening', 'ifs-travel-erp' ) );
+    $current_user = wp_get_current_user();
+    $user_name    = ! empty( $current_user->display_name ) ? $current_user->display_name : 'Team';
+    $gmt_offset   = (float) get_option( 'gmt_offset' );
     ?>
-    <div class="ifs-dashboard-container">
+
+    <div class="ifs-dash-wrap">
         
-        <!-- Premium Header Hero Banner -->
-        <div class="ifs-dash-hero-banner">
-            <div class="ifs-hero-intro">
-                <div class="ifs-hero-avatar-box">
-                    <img src="<?php echo esc_url( ITERP_URL . 'assets/img/logo.png' ); ?>" 
-                         alt="System Logo" onerror="this.style.display='none'">
-                    <div class="status-online-dot"></div>
+        <!-- Welcome Hero Header -->
+        <div class="ifs-dash-hero">
+            <div class="ifs-hero-profile">
+                <div class="ifs-hero-logo">
+                    <img src="<?php echo esc_url( ITERP_URL . 'assets/img/logo.png' ); ?>" alt="Logo" onerror="this.style.display='none'">
+                    <span class="online-indicator"></span>
                 </div>
                 <div>
-                    <span class="hero-badge">Enterprise Operations Hub</span>
-                    <h1 class="hero-title"><?php echo esc_html( $rendered_greeting ); ?></h1>
-                    <p class="hero-subtitle">Real-time financial reconciliation, multi-module ticketing, and agency audit workflows.</p>
+                    <h1 class="ifs-hero-title"><?php echo esc_html( "$greeting, $user_name!" ); ?></h1>
+                    <p class="ifs-hero-desc"><?php esc_html_e( 'Here is what is happening across your travel operations today.', 'ifs-travel-erp' ); ?></p>
                 </div>
             </div>
 
-            <div class="ifs-hero-datetime-box">
-                <div class="hero-date">
-                    <span class="dashicons dashicons-calendar-alt"></span> 
-                    <?php echo date( 'l, jS F Y' ); ?>
-                </div>
-                <div class="hero-time">
-                    <span class="dashicons dashicons-clock"></span>
-                    <span id="ifsTerpLiveTickerClock">00:00:00</span>
-                </div>
+            <div class="ifs-hero-timebox">
+                <div class="timebox-date"><span class="dashicons dashicons-calendar-alt"></span> <?php echo esc_html( date_i18n( 'l, jS F Y', current_time( 'timestamp' ) ) ); ?></div>
+                <div class="timebox-time"><span class="dashicons dashicons-clock"></span> <span id="ifsLiveClock"><?php echo esc_html( current_time( 'H:i:s' ) ); ?></span></div>
             </div>
         </div>
 
-        <!-- Quick Action Shortcuts Bar -->
-        <div class="ifs-quick-action-strip">
-            <span class="strip-label">Quick Actions:</span>
-            <div class="strip-links">
-                <a href="<?php echo esc_url( $ticketing_tab_url . '&sub=add' ); ?>" class="ifs-action-chip primary">
-                    <span class="dashicons dashicons-tickets-alt"></span> Issue Air Ticket
-                </a>
-                <a href="<?php echo esc_url( $visa_tab_url . '&sub=add' ); ?>" class="ifs-action-chip">
-                    <span class="dashicons dashicons-admin-site-alt3" style="color: #d97706;"></span> New Visa File
-                </a>
-                <a href="<?php echo esc_url( $hajj_tab_url . '&sub=add' ); ?>" class="ifs-action-chip">
-                    <span class="dashicons dashicons-groups" style="color: #0284c7;"></span> Pilgrim Booking
-                </a>
-                <a href="<?php echo esc_url( $accounts_tab_url . '&sub=create_invoice' ); ?>" class="ifs-action-chip">
-                    <span class="dashicons dashicons-media-document" style="color: #7c3aed;"></span> Generate Invoice
-                </a>
-                <a href="<?php echo esc_url( $accounts_tab_url . '&sub=ledger' ); ?>" class="ifs-action-chip">
-                    <span class="dashicons dashicons-money-alt" style="color: #dc2626;"></span> Record Expense
-                </a>
+        <!-- Quick Shortcut Actions -->
+        <div class="ifs-quick-links">
+            <span class="quick-title"><?php esc_html_e( 'Quick Actions:', 'ifs-travel-erp' ); ?></span>
+            <div class="quick-buttons">
+                <?php foreach ( $quick_actions as $btn ) : ?>
+                    <a href="<?php echo esc_url( $btn['url'] ); ?>" class="ifs-btn-chip <?php echo ! empty( $btn['primary'] ) ? 'btn-primary' : ''; ?>">
+                        <span class="dashicons <?php echo esc_attr( $btn['icon'] ); ?>" style="<?php echo empty( $btn['primary'] ) ? 'color: ' . esc_attr( $btn['color'] ) . ';' : ''; ?>"></span>
+                        <?php echo esc_html( $btn['label'] ); ?>
+                    </a>
+                <?php endforeach; ?>
             </div>
         </div>
 
-        <!-- Metric KPI Cards Matrix -->
-        <div class="ifs-metric-cards-grid">
-            
-            <div class="ifs-kpi-card border-blue">
-                <div class="kpi-icon-wrap bg-blue"><span class="dashicons dashicons-tickets-alt"></span></div>
-                <div class="kpi-content">
-                    <span class="kpi-title">Tickets Issued (Today)</span>
-                    <div class="kpi-value"><?php echo number_format( $total_tickets_today ); ?></div>
-                    <a href="<?php echo esc_url( $ticketing_tab_url ); ?>" class="kpi-link">View Flight Ledger &rarr;</a>
-                </div>
-            </div>
-
-            <div class="ifs-kpi-card border-amber">
-                <div class="kpi-icon-wrap bg-amber"><span class="dashicons dashicons-admin-site-alt3"></span></div>
-                <div class="kpi-content">
-                    <span class="kpi-title">Visas in Processing</span>
-                    <div class="kpi-value"><?php echo number_format( $processing_visas_count ); ?></div>
-                    <a href="<?php echo esc_url( $visa_tab_url ); ?>" class="kpi-link">Track Applications &rarr;</a>
-                </div>
-            </div>
-
-            <div class="ifs-kpi-card border-cyan">
-                <div class="kpi-icon-wrap bg-cyan"><span class="dashicons dashicons-groups"></span></div>
-                <div class="kpi-content">
-                    <span class="kpi-title">Active Hajj & Umrah</span>
-                    <div class="kpi-value"><?php echo number_format( $active_hajj_count ); ?> <span class="unit-sub">Pilgrims</span></div>
-                    <a href="<?php echo esc_url( $hajj_tab_url ); ?>" class="kpi-link">Pilgrim Directory &rarr;</a>
-                </div>
-            </div>
-
-            <div class="ifs-kpi-card border-rose">
-                <div class="kpi-icon-wrap bg-rose"><span class="dashicons dashicons-warning"></span></div>
-                <div class="kpi-content">
-                    <span class="kpi-title">Total Market Due</span>
-                    <div class="kpi-value text-rose">৳<?php echo number_format( $pending_dues_amount, 2 ); ?></div>
-                    <a href="<?php echo esc_url( $accounts_tab_url ); ?>" class="kpi-link text-rose">Collect Receivables &rarr;</a>
-                </div>
-            </div>
-
-            <div class="ifs-kpi-card border-emerald">
-                <div class="kpi-icon-wrap bg-emerald"><span class="dashicons dashicons-arrow-down-alt"></span></div>
-                <div class="kpi-content">
-                    <span class="kpi-title">Today's Inflow (Income)</span>
-                    <div class="kpi-value text-emerald">৳<?php echo number_format( $today_income, 2 ); ?></div>
-                    <span class="kpi-sub-text">Daily Cash Register</span>
-                </div>
-            </div>
-
-            <div class="ifs-kpi-card border-slate">
-                <div class="kpi-icon-wrap bg-slate"><span class="dashicons dashicons-arrow-up-alt"></span></div>
-                <div class="kpi-content">
-                    <span class="kpi-title">Today's Outflow (Expense)</span>
-                    <div class="kpi-value text-slate">৳<?php echo number_format( $today_expense, 2 ); ?></div>
-                    <span class="kpi-sub-text">Office & Operating Cost</span>
-                </div>
-            </div>
-
-            <div class="ifs-kpi-card border-<?php echo ( $net_profit_loss >= 0 ) ? 'emerald' : 'rose'; ?>">
-                <div class="kpi-icon-wrap <?php echo ( $net_profit_loss >= 0 ) ? 'bg-emerald' : 'bg-rose'; ?>"><span class="dashicons dashicons-chart-line"></span></div>
-                <div class="kpi-content">
-                    <span class="kpi-title">Net Margin (This Month)</span>
-                    <div class="kpi-value <?php echo ( $net_profit_loss >= 0 ) ? 'text-emerald' : 'text-rose'; ?>">
-                        ৳<?php echo number_format( $net_profit_loss, 2 ); ?>
+        <!-- Metric Cards Grid -->
+        <div class="ifs-kpi-grid">
+            <?php foreach ( $kpi_cards as $kpi ) : ?>
+                <div class="ifs-kpi-box border-<?php echo esc_attr( $kpi['color'] ); ?>">
+                    <div class="kpi-icon bg-<?php echo esc_attr( $kpi['color'] ); ?>">
+                        <span class="dashicons <?php echo esc_attr( $kpi['icon'] ); ?>"></span>
                     </div>
-                    <span class="kpi-sub-text font-bold"><?php echo ( $net_profit_loss >= 0 ) ? 'Profitable Month' : 'Net Loss Status'; ?></span>
+                    <div class="kpi-body">
+                        <span class="kpi-label"><?php echo esc_html( $kpi['title'] ); ?></span>
+                        <div class="kpi-number text-<?php echo esc_attr( $kpi['color'] ); ?>"><?php echo esc_html( $kpi['value'] ); ?></div>
+                        <?php if ( ! empty( $kpi['link'] ) ) : ?>
+                            <a href="<?php echo esc_url( $kpi['link'] ); ?>" class="kpi-link"><?php echo wp_kses_post( $kpi['link_txt'] ); ?></a>
+                        <?php elseif ( ! empty( $kpi['sub'] ) ) : ?>
+                            <span class="kpi-note"><?php echo esc_html( $kpi['sub'] ); ?></span>
+                        <?php endif; ?>
+                    </div>
                 </div>
-            </div>
-
-            <div class="ifs-kpi-card border-indigo">
-                <div class="kpi-icon-wrap bg-indigo"><span class="dashicons dashicons-networking"></span></div>
-                <div class="kpi-content">
-                    <span class="kpi-title">Active B2B Sub-Agents</span>
-                    <div class="kpi-value"><?php echo number_format( $active_agents_count ); ?></div>
-                    <a href="<?php echo esc_url( $agents_tab_url ); ?>" class="kpi-link">B2B Network &rarr;</a>
-                </div>
-            </div>
-
+            <?php endforeach; ?>
         </div>
 
-        <!-- Recent Operations Feeds (Two Column Layout) -->
-        <div class="ifs-feed-dual-grid">
+        <!-- Recent Activity Feed -->
+        <div class="ifs-feed-layout">
             
-            <!-- Latest Air Tickets Feed -->
-            <div class="ifs-feed-card">
-                <div class="feed-card-header">
-                    <h3 class="feed-title">
-                        <span class="dashicons dashicons-tickets-alt"></span> Recent Air Tickets
-                    </h3>
-                    <a href="<?php echo esc_url( $ticketing_tab_url ); ?>" class="feed-view-all">View All</a>
+            <!-- Latest Air Tickets -->
+            <div class="ifs-table-card">
+                <div class="card-header">
+                    <h3><span class="dashicons dashicons-tickets-alt"></span> <?php esc_html_e( 'Recent Flight Tickets', 'ifs-travel-erp' ); ?></h3>
+                    <a href="<?php echo esc_url( $tab_url( 'ticketing' ) ); ?>" class="card-link"><?php esc_html_e( 'View All', 'ifs-travel-erp' ); ?></a>
                 </div>
-
-                <div class="table-responsive-wrap">
-                    <table class="ifs-premium-table">
+                <div class="table-scroll">
+                    <table class="ifs-clean-table">
                         <thead>
                             <tr>
-                                <th>Passenger / PNR</th>
-                                <th>Sector / Airline</th>
-                                <th style="text-align: right;">Sell (৳)</th>
-                                <th style="text-align: right;">Status</th>
+                                <th><?php esc_html_e( 'Passenger / PNR', 'ifs-travel-erp' ); ?></th>
+                                <th><?php esc_html_e( 'Sector / Airline', 'ifs-travel-erp' ); ?></th>
+                                <th class="col-align-right"><?php esc_html_e( 'Fare', 'ifs-travel-erp' ); ?></th>
+                                <th class="col-align-right"><?php esc_html_e( 'Status', 'ifs-travel-erp' ); ?></th>
                             </tr>
                         </thead>
                         <tbody>
-                            <?php if ( $recent_tickets ) : foreach ( $recent_tickets as $t ) : ?>
+                            <?php if ( ! empty( $recent_tickets ) ) : foreach ( $recent_tickets as $t ) : ?>
                                 <tr>
                                     <td>
-                                        <div class="row-main-title"><?php echo esc_html( $t->customer_name ?: 'Direct Client' ); ?></div>
-                                        <div class="row-sub-code"><?php echo esc_html( $t->pnr ); ?></div>
+                                        <div class="tbl-main"><?php echo esc_html( ! empty( $t->customer_name ) ? $t->customer_name : ( ! empty( $t->passenger_name ) ? $t->passenger_name : 'Direct Client' ) ); ?></div>
+                                        <div class="tbl-sub"><?php echo esc_html( $t->pnr ); ?></div>
                                     </td>
                                     <td>
-                                        <div class="row-main-title"><?php echo esc_html( $t->airline ); ?></div>
-                                        <div class="row-sub-code"><?php echo esc_html( $t->sector ); ?></div>
+                                        <div class="tbl-main"><?php echo esc_html( $t->airline ); ?></div>
+                                        <div class="tbl-sub"><?php echo esc_html( $t->sector ); ?></div>
                                     </td>
-                                    <td style="text-align: right; font-weight: 700; font-family: ui-monospace, monospace;">৳<?php echo number_format( $t->sell_price, 2 ); ?></td>
-                                    <td style="text-align: right;">
-                                        <span class="ifs-badge-status status-issued"><?php echo esc_html( $t->status ); ?></span>
+                                    <td class="col-align-right font-mono-weight">৳<?php echo esc_html( number_format( (float) $t->sell_price, 2 ) ); ?></td>
+                                    <td class="col-align-right">
+                                        <span class="badge badge-success"><?php echo esc_html( $t->status ); ?></span>
                                     </td>
                                 </tr>
                             <?php endforeach; else : ?>
-                                <tr><td colspan="4" class="empty-feed-row">No recent air tickets found.</td></tr>
+                                <tr><td colspan="4" class="no-records"><?php esc_html_e( 'No recent tickets issued yet.', 'ifs-travel-erp' ); ?></td></tr>
                             <?php endif; ?>
                         </tbody>
                     </table>
                 </div>
             </div>
 
-            <!-- Latest Visa Applications Feed -->
-            <div class="ifs-feed-card">
-                <div class="feed-card-header">
-                    <h3 class="feed-title">
-                        <span class="dashicons dashicons-admin-site-alt3"></span> Recent Visa Applications
-                    </h3>
-                    <a href="<?php echo esc_url( $visa_tab_url ); ?>" class="feed-view-all">View All</a>
+            <!-- Latest Visas -->
+            <div class="ifs-table-card">
+                <div class="card-header">
+                    <h3><span class="dashicons dashicons-admin-site-alt3"></span> <?php esc_html_e( 'Recent Visa Files', 'ifs-travel-erp' ); ?></h3>
+                    <a href="<?php echo esc_url( $tab_url( 'visa' ) ); ?>" class="card-link"><?php esc_html_e( 'View All', 'ifs-travel-erp' ); ?></a>
                 </div>
-
-                <div class="table-responsive-wrap">
-                    <table class="ifs-premium-table">
+                <div class="table-scroll">
+                    <table class="ifs-clean-table">
                         <thead>
                             <tr>
-                                <th>Applicant Name</th>
-                                <th>Country</th>
-                                <th>Exp. Delivery</th>
-                                <th style="text-align: right;">Status</th>
+                                <th><?php esc_html_e( 'Applicant', 'ifs-travel-erp' ); ?></th>
+                                <th><?php esc_html_e( 'Destination', 'ifs-travel-erp' ); ?></th>
+                                <th><?php esc_html_e( 'Delivery Date', 'ifs-travel-erp' ); ?></th>
+                                <th class="col-align-right"><?php esc_html_e( 'Status', 'ifs-travel-erp' ); ?></th>
                             </tr>
                         </thead>
                         <tbody>
-                            <?php if ( $recent_visas ) : foreach ( $recent_visas as $v ) : ?>
+                            <?php if ( ! empty( $recent_visas ) ) : foreach ( $recent_visas as $v ) : 
+                                $has_valid_delivery = ! empty( $v->expected_delivery ) && $v->expected_delivery !== '1970-01-01' && $v->expected_delivery !== '0000-00-00';
+                            ?>
                                 <tr>
                                     <td>
-                                        <div class="row-main-title"><?php echo esc_html( $v->customer_name ?: 'Direct Client' ); ?></div>
-                                        <div class="row-sub-code"><?php echo esc_html( $v->visa_type ); ?></div>
+                                        <div class="tbl-main"><?php echo esc_html( ! empty( $v->customer_name ) ? $v->customer_name : ( ! empty( $v->passenger_name ) ? $v->passenger_name : 'Direct Client' ) ); ?></div>
+                                        <div class="tbl-sub"><?php echo esc_html( $v->visa_type ); ?></div>
                                     </td>
-                                    <td><strong style="color: #0f172a;"><?php echo esc_html( $v->country ); ?></strong></td>
-                                    <td style="color: #64748b; font-size: 12.5px;"><?php echo ( $v->expected_delivery != '1970-01-01' ) ? date('d M Y', strtotime($v->expected_delivery)) : '-'; ?></td>
-                                    <td style="text-align: right;">
-                                        <span class="ifs-badge-status status-processing"><?php echo esc_html( $v->status ); ?></span>
+                                    <td><strong><?php echo esc_html( $v->country ); ?></strong></td>
+                                    <td><?php echo $has_valid_delivery ? esc_html( date_i18n( 'd M Y', strtotime( $v->expected_delivery ) ) ) : '—'; ?></td>
+                                    <td class="col-align-right">
+                                        <span class="badge badge-warning"><?php echo esc_html( $v->status ); ?></span>
                                     </td>
                                 </tr>
                             <?php endforeach; else : ?>
-                                <tr><td colspan="4" class="empty-feed-row">No visa applications found.</td></tr>
+                                <tr><td colspan="4" class="no-records"><?php esc_html_e( 'No visa applications recorded.', 'ifs-travel-erp' ); ?></td></tr>
                             <?php endif; ?>
                         </tbody>
                     </table>
@@ -338,337 +310,26 @@ function ifs_terp_dashboard_tab() {
 
     </div>
 
-    <!-- Premium Dashboard Stylesheet -->
-    <style>
-        .ifs-dashboard-container {
-            max-width: 1400px;
-            margin: 0 auto;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            color: #0f172a;
-        }
-
-        /* Hero Banner */
-        .ifs-dash-hero-banner {
-            background: #ffffff;
-            border: 1px solid #e2e8f0;
-            border-radius: 16px;
-            padding: 24px 30px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 20px;
-            box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.04);
-            margin-bottom: 24px;
-        }
-        .ifs-hero-intro {
-            display: flex;
-            align-items: center;
-            gap: 20px;
-        }
-        .ifs-hero-avatar-box {
-            position: relative;
-            width: 56px;
-            height: 56px;
-            border-radius: 14px;
-            background: #f1f5f9;
-            border: 1px solid #e2e8f0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-shrink: 0;
-            overflow: hidden;
-        }
-        .ifs-hero-avatar-box img {
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
-            padding: 6px;
-        }
-        .status-online-dot {
-            position: absolute;
-            bottom: 4px;
-            right: 4px;
-            width: 10px;
-            height: 10px;
-            background: #10b981;
-            border: 2px solid #ffffff;
-            border-radius: 50%;
-        }
-        .hero-badge {
-            display: inline-block;
-            font-size: 10.5px;
-            font-weight: 800;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            background: #e0f2fe;
-            color: #0369a1;
-            padding: 2px 8px;
-            border-radius: 6px;
-            margin-bottom: 4px;
-        }
-        .hero-title {
-            margin: 0 0 2px 0;
-            font-size: 22px;
-            font-weight: 900;
-            color: #0f172a;
-            letter-spacing: -0.4px;
-        }
-        .hero-subtitle {
-            margin: 0;
-            font-size: 13px;
-            color: #64748b;
-        }
-        .ifs-hero-datetime-box {
-            background: #f8fafc;
-            border: 1px solid #e2e8f0;
-            border-radius: 12px;
-            padding: 12px 18px;
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-            text-align: right;
-        }
-        .hero-date {
-            font-size: 12.5px;
-            font-weight: 700;
-            color: #334155;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            justify-content: flex-end;
-        }
-        .hero-date .dashicons { font-size: 15px; width: 15px; height: 15px; color: #0284c7; }
-        .hero-time {
-            font-size: 15px;
-            font-weight: 800;
-            color: #003376;
-            font-family: ui-monospace, monospace;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            justify-content: flex-end;
-        }
-        .hero-time .dashicons { font-size: 15px; width: 15px; height: 15px; color: #003376; }
-
-        /* Quick Action Strip */
-        .ifs-quick-action-strip {
-            background: #ffffff;
-            border: 1px solid #e2e8f0;
-            border-radius: 12px;
-            padding: 14px 22px;
-            display: flex;
-            align-items: center;
-            gap: 16px;
-            margin-bottom: 24px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.02);
-            flex-wrap: wrap;
-        }
-        .strip-label {
-            font-size: 12px;
-            font-weight: 800;
-            color: #64748b;
-            text-transform: uppercase;
-            letter-spacing: 0.4px;
-        }
-        .strip-links {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-            align-items: center;
-        }
-        .ifs-action-chip {
-            background: #f8fafc;
-            color: #334155;
-            border: 1px solid #cbd5e1;
-            padding: 7px 14px;
-            border-radius: 8px;
-            font-size: 12.5px;
-            font-weight: 700;
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            transition: all 0.2s ease;
-        }
-        .ifs-action-chip.primary {
-            background: linear-gradient(135deg, #003376 0%, #0284c7 100%);
-            color: #ffffff;
-            border-color: transparent;
-            box-shadow: 0 4px 12px rgba(0, 51, 118, 0.2);
-        }
-        .ifs-action-chip:hover {
-            transform: translateY(-1px);
-            background: #f1f5f9;
-            color: #0f172a;
-            border-color: #94a3b8;
-        }
-        .ifs-action-chip.primary:hover {
-            background: linear-gradient(135deg, #002255 0%, #026aa2 100%);
-            color: #ffffff;
-        }
-        .ifs-action-chip .dashicons { font-size: 15px; width: 15px; height: 15px; }
-
-        /* Metric KPI Cards Matrix */
-        .ifs-metric-cards-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-            gap: 20px;
-            margin-bottom: 26px;
-        }
-        .ifs-kpi-card {
-            background: #ffffff;
-            border: 1px solid #e2e8f0;
-            border-radius: 14px;
-            padding: 20px 22px;
-            display: flex;
-            align-items: flex-start;
-            gap: 16px;
-            box-shadow: 0 4px 16px -2px rgba(15, 23, 42, 0.03);
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
-        }
-        .ifs-kpi-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 24px -4px rgba(15, 23, 42, 0.06);
-        }
-        .ifs-kpi-card.border-blue { border-left: 5px solid #3b82f6; }
-        .ifs-kpi-card.border-amber { border-left: 5px solid #f59e0b; }
-        .ifs-kpi-card.border-cyan { border-left: 5px solid #0284c7; }
-        .ifs-kpi-card.border-rose { border-left: 5px solid #ef4444; }
-        .ifs-kpi-card.border-emerald { border-left: 5px solid #10b981; }
-        .ifs-kpi-card.border-slate { border-left: 5px solid #64748b; }
-        .ifs-kpi-card.border-indigo { border-left: 5px solid #8b5cf6; }
-
-        .kpi-icon-wrap {
-            width: 44px;
-            height: 44px;
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #ffffff;
-            flex-shrink: 0;
-        }
-        .kpi-icon-wrap.bg-blue { background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); }
-        .kpi-icon-wrap.bg-amber { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); }
-        .kpi-icon-wrap.bg-cyan { background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%); }
-        .kpi-icon-wrap.bg-rose { background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); }
-        .kpi-icon-wrap.bg-emerald { background: linear-gradient(135deg, #10b981 0%, #059669 100%); }
-        .kpi-icon-wrap.bg-slate { background: linear-gradient(135deg, #64748b 0%, #475569 100%); }
-        .kpi-icon-wrap.bg-indigo { background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%); }
-        .kpi-icon-wrap .dashicons { font-size: 20px; width: 20px; height: 20px; }
-
-        .kpi-content { flex: 1; min-width: 0; }
-        .kpi-title { font-size: 11px; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 0.4px; display: block; margin-bottom: 4px; }
-        .kpi-value { font-size: 24px; font-weight: 900; color: #0f172a; letter-spacing: -0.5px; line-height: 1.1; margin-bottom: 6px; font-family: ui-monospace, monospace; }
-        .unit-sub { font-size: 13px; font-weight: 600; color: #64748b; font-family: -apple-system, sans-serif; }
-        .kpi-sub-text { font-size: 12px; color: #64748b; font-weight: 600; display: block; }
-        .kpi-link { font-size: 12px; font-weight: 700; color: #0284c7; text-decoration: none; display: inline-block; }
-        .kpi-link:hover { text-decoration: underline; }
-        .text-rose { color: #dc2626 !important; }
-        .text-emerald { color: #059669 !important; }
-        .text-slate { color: #475569 !important; }
-        .font-bold { font-weight: 800 !important; }
-
-        /* Feeds Grid */
-        .ifs-feed-dual-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(480px, 1fr));
-            gap: 24px;
-        }
-        .ifs-feed-card {
-            background: #ffffff;
-            border: 1px solid #e2e8f0;
-            border-radius: 14px;
-            padding: 24px;
-            box-shadow: 0 4px 16px -2px rgba(15, 23, 42, 0.03);
-        }
-        .feed-card-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 18px;
-            padding-bottom: 12px;
-            border-bottom: 1px solid #f1f5f9;
-        }
-        .feed-title {
-            margin: 0;
-            font-size: 16px;
-            font-weight: 800;
-            color: #0f172a;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .feed-title .dashicons { color: #003376; font-size: 20px; width: 20px; height: 20px; }
-        .feed-view-all {
-            font-size: 12.5px;
-            font-weight: 700;
-            color: #003376;
-            text-decoration: none;
-            background: #f1f5f9;
-            padding: 4px 10px;
-            border-radius: 6px;
-            transition: background 0.15s ease;
-        }
-        .feed-view-all:hover { background: #e2e8f0; }
-
-        /* Premium Table Design */
-        .table-responsive-wrap { overflow-x: auto; }
-        .ifs-premium-table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 13px;
-        }
-        .ifs-premium-table thead th {
-            background: #f8fafc;
-            color: #475569;
-            font-size: 11px;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            padding: 10px 14px;
-            border-bottom: 2px solid #e2e8f0;
-            text-align: left;
-        }
-        .ifs-premium-table tbody td {
-            padding: 12px 14px;
-            border-bottom: 1px solid #f1f5f9;
-            vertical-align: middle;
-            color: #334155;
-        }
-        .ifs-premium-table tbody tr:hover td { background: #f8fafc; }
-        .row-main-title { font-weight: 700; color: #0f172a; font-size: 13px; }
-        .row-sub-code { font-family: ui-monospace, monospace; font-size: 11px; color: #64748b; margin-top: 2px; }
-
-        .ifs-badge-status {
-            display: inline-flex;
-            align-items: center;
-            padding: 3px 8px;
-            border-radius: 6px;
-            font-size: 11px;
-            font-weight: 700;
-            text-transform: uppercase;
-        }
-        .status-issued { background: #dcfce7; color: #15803d; }
-        .status-processing { background: #fef3c7; color: #b45309; }
-        .empty-feed-row { text-align: center; padding: 25px !important; color: #94a3b8; font-style: italic; }
-    </style>
-
+    <!-- WordPress Synced Clock Script -->
     <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        function ifsTerpDashboardClockEngine() {
-            var timeObject = new Date();
-            var processString = timeObject.getHours().toString().padStart(2, '0') + ':' + 
-                                timeObject.getMinutes().toString().padStart(2, '0') + ':' + 
-                                timeObject.getSeconds().toString().padStart(2, '0');
-            var tickerContainer = document.getElementById('ifsTerpLiveTickerClock');
-            if (tickerContainer) {
-                tickerContainer.textContent = processString;
+    jQuery(document).ready(function($) {
+        var offsetMs = <?php echo (float) ( $gmt_offset * 3600 * 1000 ); ?>;
+        var currentUtcMs = <?php echo (int) ( time() * 1000 ); ?>;
+        
+        function updateClock() {
+            currentUtcMs += 1000;
+            var localDate = new Date(currentUtcMs + offsetMs);
+            
+            var hours = localDate.getUTCHours().toString().padStart(2, '0');
+            var minutes = localDate.getUTCMinutes().toString().padStart(2, '0');
+            var seconds = localDate.getUTCSeconds().toString().padStart(2, '0');
+            
+            var el = document.getElementById('ifsLiveClock');
+            if (el) {
+                el.textContent = hours + ':' + minutes + ':' + seconds;
             }
         }
-        setInterval(ifsTerpDashboardClockEngine, 1000);
-        ifsTerpDashboardClockEngine();
+        setInterval(updateClock, 1000);
     });
     </script>
     <?php

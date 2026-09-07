@@ -9,11 +9,16 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 function ifs_terp_ticket_view_page() {
     global $wpdb;
-    $id       = isset( $_GET['id'] ) ? intval( $_GET['id'] ) : 0;
+    $id       = isset( $_GET['id'] ) ? absint( wp_unslash( $_GET['id'] ) ) : 0;
     $base_url = admin_url( 'admin.php?page=ifs_travel_erp&tab=ticketing' );
 
+    // Sub-Navigation Tabs Integration
+    if ( function_exists( 'ifs_terp_ticketing_render_tabs' ) ) {
+        ifs_terp_ticketing_render_tabs( 'view', $id );
+    }
+
     if ( ! $id ) {
-        echo '<div class="ifs-toast danger"><span class="dashicons dashicons-warning"></span> Invalid Ticket ID.</div>';
+        echo '<div class="ifs-toast danger"><span class="dashicons dashicons-warning"></span> ' . esc_html__( 'Invalid Ticket ID.', 'ifs-travel-erp' ) . '</div>';
         return;
     }
 
@@ -27,44 +32,58 @@ function ifs_terp_ticket_view_page() {
                c.title AS customer_title, c.full_name AS customer_name, c.mobile AS customer_mobile, c.passport_no AS customer_passport, c.email AS customer_email, c.nationality, c.passport_expiry,
                s.supplier_name,
                a.agency_name, a.contact_person AS agent_contact
-        FROM $table_tickets t
-        LEFT JOIN $table_customers c ON t.customer_id = c.id
-        LEFT JOIN $table_suppliers s ON t.supplier_id = s.id
-        LEFT JOIN $table_agents a ON t.agent_id = a.id
+        FROM {$table_tickets} t
+        LEFT JOIN {$table_customers} c ON t.customer_id = c.id
+        LEFT JOIN {$table_suppliers} s ON t.supplier_id = s.id
+        LEFT JOIN {$table_agents} a ON t.agent_id = a.id
         WHERE t.id = %d
     ", $id );
     
     $ticket = $wpdb->get_row( $query );
 
     if ( ! $ticket ) {
-        echo '<div class="ifs-toast danger"><span class="dashicons dashicons-dismiss"></span> Air ticket record could not be found.</div>';
+        echo '<div class="ifs-toast danger"><span class="dashicons dashicons-dismiss"></span> ' . esc_html__( 'Air ticket record could not be found.', 'ifs-travel-erp' ) . '</div>';
         return;
     }
 
     // Status Badges
     $status_class = 'status-issued';
-    $status_lower = strtolower( $ticket->status );
-    if ( $status_lower === 'refunded' )     $status_class = 'status-refunded';
-    elseif ( $status_lower === 'void' )     $status_class = 'status-void';
-    elseif ( $status_lower === 'reissued' ) $status_class = 'status-reissued';
+    $status_lower = strtolower( (string) $ticket->status );
+    if ( $status_lower === 'refunded' ) {
+        $status_class = 'status-refunded';
+    } elseif ( $status_lower === 'void' ) {
+        $status_class = 'status-void';
+    } elseif ( $status_lower === 'reissued' ) {
+        $status_class = 'status-reissued';
+    }
 
-    $title_prefix = ! empty( $ticket->customer_title ) ? esc_html( $ticket->customer_title ) . '. ' : '';
-    $pax_name     = ! empty( $ticket->passenger_name ) ? esc_html( $ticket->passenger_name ) : ( ! empty( $ticket->customer_name ) ? $title_prefix . esc_html( $ticket->customer_name ) : 'Guest Traveler' );
-    $passport_num = ! empty( $ticket->passport_no ) ? esc_html( $ticket->passport_no ) : ( ! empty( $ticket->customer_passport ) ? esc_html( $ticket->customer_passport ) : 'NOT PROVIDED' );
+    // Format Passenger Name (Capitalize / Title Case)
+    $title_prefix = ! empty( $ticket->customer_title ) ? ucfirst( strtolower( $ticket->customer_title ) ) . '. ' : '';
+    $raw_name     = ! empty( $ticket->passenger_name ) ? $ticket->passenger_name : ( ! empty( $ticket->customer_name ) ? $ticket->customer_name : 'Guest Traveler' );
+    $pax_name     = $title_prefix . mb_convert_case( trim( (string) $raw_name ), MB_CASE_TITLE, 'UTF-8' );
+
+    // Snapshot Fallbacks
+    $passport_num = ! empty( $ticket->passport_no ) ? $ticket->passport_no : ( ! empty( $ticket->customer_passport ) ? $ticket->customer_passport : 'NOT PROVIDED' );
+    $phone_num    = ! empty( $ticket->passenger_phone ) ? $ticket->passenger_phone : ( ! empty( $ticket->customer_mobile ) ? $ticket->customer_mobile : 'N/A' );
+    $email_addr   = ! empty( $ticket->passenger_email ) ? $ticket->passenger_email : ( ! empty( $ticket->customer_email ) ? $ticket->customer_email : 'N/A' );
 
     // Sector parsing for Route Header
-    $sectors = explode( '-', $ticket->sector );
+    $sectors = explode( '-', (string) $ticket->sector );
     $origin  = $sectors[0] ?? 'DAC';
-    $dest    = end( $sectors ) ?? 'DXB';
+    $dest    = ( count( $sectors ) > 1 ) ? $sectors[ count( $sectors ) - 1 ] : ( $sectors[0] ?? 'DXB' );
 
     // Name initials for avatar
-    $parts   = explode( ' ', trim( $pax_name ) );
-    $initial = ( count( $parts ) > 1 ) ? ( mb_substr( $parts[0], 0, 1 ) . mb_substr( $parts[count($parts)-1], 0, 1 ) ) : mb_substr( $pax_name, 0, 2 );
+    $parts   = preg_split( '/\s+/', trim( (string) $raw_name ) );
+    $initial = ( count( $parts ) > 1 ) ? ( mb_substr( $parts[0], 0, 1 ) . mb_substr( $parts[ count( $parts ) - 1 ], 0, 1 ) ) : mb_substr( (string) $raw_name, 0, 2 );
     $initial = strtoupper( $initial );
 
     // Payment badge styling
     $pay_status = $ticket->payment_status ?? 'Paid';
     $pay_class  = ( $pay_status === 'Paid' ) ? 'pay-paid' : ( ( $pay_status === 'Partial' ) ? 'pay-partial' : 'pay-due' );
+
+    // Financial balance
+    $paid_amt = (float) ( $ticket->paid_amount ?? 0 );
+    $due_amt  = isset( $ticket->due_amount ) ? (float) $ticket->due_amount : max( 0, (float) $ticket->sell_price - $paid_amt );
     ?>
 
     <div class="ifs-ticket-view-workspace">
@@ -72,12 +91,12 @@ function ifs_terp_ticket_view_page() {
         <!-- Top Executive Identity & Actions Strip -->
         <div class="ifs-view-header-strip">
             <div class="ifs-header-identity">
-                <a href="<?php echo esc_url( $base_url . '&sub=list' ); ?>" class="ifs-back-round-btn" title="Return to Ticket Ledger">
-                    <span class="dashicons dashicons-arrow-left-alt"></span>
+                <a href="<?php echo esc_url( $base_url . '&sub=list' ); ?>" class="ifs-back-round-btn" title="<?php esc_attr_e( 'Return to Ticket Ledger', 'ifs-travel-erp' ); ?>">
+                    <span class="dashicons dashicons-arrow-left-alt2"></span>
                 </a>
                 <div>
                     <div class="ifs-badge-row">
-                        <span class="ifs-id-pill">#TKT-<?php echo str_pad( (string) $ticket->id, 5, '0', STR_PAD_LEFT ); ?></span>
+                        <span class="ifs-id-pill font-mono">#TKT-<?php echo esc_html( str_pad( (string) $ticket->id, 5, '0', STR_PAD_LEFT ) ); ?></span>
                         <span class="ifs-gds-pill"><?php echo esc_html( $ticket->gds_pcc ?: 'Sabre GDS' ); ?></span>
                         <span class="ifs-pay-pill <?php echo esc_attr( $pay_class ); ?>"><?php echo esc_html( $pay_status ); ?></span>
                         <span class="ifs-status-badge <?php echo esc_attr( $status_class ); ?>"><?php echo esc_html( $ticket->status ); ?></span>
@@ -88,10 +107,10 @@ function ifs_terp_ticket_view_page() {
 
             <div class="ifs-header-actions">
                 <button type="button" onclick="window.print();" class="ifs-btn-print">
-                    <span class="dashicons dashicons-printer"></span> Print Itinerary
+                    <span class="dashicons dashicons-printer"></span> <?php esc_html_e( 'Print Itinerary', 'ifs-travel-erp' ); ?>
                 </button>
                 <a href="<?php echo esc_url( $base_url . '&sub=edit&id=' . $id ); ?>" class="ifs-btn-edit">
-                    <span class="dashicons dashicons-edit"></span> Edit Booking
+                    <span class="dashicons dashicons-edit"></span> <?php esc_html_e( 'Edit Booking', 'ifs-travel-erp' ); ?>
                 </a>
             </div>
         </div>
@@ -101,7 +120,7 @@ function ifs_terp_ticket_view_page() {
             <div class="ifs-metric-box">
                 <div class="metric-icon bg-blue"><span class="dashicons dashicons-airplane"></span></div>
                 <div>
-                    <span class="metric-lbl">Routing Sector</span>
+                    <span class="metric-lbl"><?php esc_html_e( 'Routing Sector', 'ifs-travel-erp' ); ?></span>
                     <strong class="metric-val font-mono"><?php echo esc_html( $ticket->sector ); ?></strong>
                 </div>
             </div>
@@ -109,35 +128,35 @@ function ifs_terp_ticket_view_page() {
             <div class="ifs-metric-box">
                 <div class="metric-icon bg-indigo"><span class="dashicons dashicons-money-alt"></span></div>
                 <div>
-                    <span class="metric-lbl">Client Selling Invoice</span>
-                    <strong class="metric-val color-blue">৳<?php echo number_format( (float) $ticket->sell_price, 2 ); ?></strong>
+                    <span class="metric-lbl"><?php esc_html_e( 'Client Invoiced', 'ifs-travel-erp' ); ?></span>
+                    <strong class="metric-val color-blue">৳<?php echo esc_html( number_format( (float) $ticket->sell_price, 2 ) ); ?></strong>
                 </div>
             </div>
 
             <div class="ifs-metric-box">
                 <div class="metric-icon bg-slate"><span class="dashicons dashicons-cart"></span></div>
                 <div>
-                    <span class="metric-lbl">Supplier Net Cost</span>
-                    <strong class="metric-val color-slate">৳<?php echo number_format( (float) $ticket->buy_price, 2 ); ?></strong>
+                    <span class="metric-lbl"><?php esc_html_e( 'Supplier Cost', 'ifs-travel-erp' ); ?></span>
+                    <strong class="metric-val color-slate">৳<?php echo esc_html( number_format( (float) $ticket->buy_price, 2 ) ); ?></strong>
                 </div>
             </div>
 
             <div class="ifs-metric-box">
                 <div class="metric-icon bg-emerald"><span class="dashicons dashicons-chart-line"></span></div>
                 <div>
-                    <span class="metric-lbl">Gross Margin / Profit</span>
-                    <strong class="metric-val <?php echo ( $ticket->profit >= 0 ) ? 'color-emerald' : 'color-rose'; ?>">৳<?php echo number_format( (float) $ticket->profit, 2 ); ?></strong>
+                    <span class="metric-lbl"><?php esc_html_e( 'Net Margin', 'ifs-travel-erp' ); ?></span>
+                    <strong class="metric-val <?php echo ( $ticket->profit >= 0 ) ? 'color-emerald' : 'color-rose'; ?>">৳<?php echo esc_html( number_format( (float) $ticket->profit, 2 ) ); ?></strong>
                 </div>
             </div>
         </div>
 
-        <!-- Split Grid: Left Pass Widget & Right Comprehensive Detail Panels -->
+        <!-- Split Grid -->
         <div class="ifs-dossier-split-layout">
             
             <!-- Left Column: Printable Digital Boarding Pass -->
             <div class="ifs-dossier-left-sidebar">
                 
-                <!-- Ultra-Luxury Boarding Pass Card -->
+                <!-- Luxury Boarding Pass Card -->
                 <div class="ifs-lux-boarding-pass">
                     <div class="pass-top-band">
                         <div class="pass-carrier-wrap">
@@ -153,7 +172,7 @@ function ifs_terp_ticket_view_page() {
                     <div class="pass-route-arc-box">
                         <div class="route-station origin">
                             <span class="station-code font-mono"><?php echo esc_html( $origin ); ?></span>
-                            <span class="station-city">Origin</span>
+                            <span class="station-city"><?php esc_html_e( 'Origin', 'ifs-travel-erp' ); ?></span>
                         </div>
                         <div class="route-arc-visual">
                             <div class="arc-line-dotted"></div>
@@ -162,7 +181,7 @@ function ifs_terp_ticket_view_page() {
                         </div>
                         <div class="route-station dest">
                             <span class="station-code font-mono"><?php echo esc_html( $dest ); ?></span>
-                            <span class="station-city">Destination</span>
+                            <span class="station-city"><?php esc_html_e( 'Destination', 'ifs-travel-erp' ); ?></span>
                         </div>
                     </div>
 
@@ -174,81 +193,100 @@ function ifs_terp_ticket_view_page() {
 
                     <div class="pass-pax-hero">
                         <div class="pax-meta-cell">
-                            <span class="pax-label">PASSENGER NAME</span>
-                            <strong class="pax-name-val uppercase"><?php echo $pax_name; ?></strong>
+                            <span class="pax-label"><?php esc_html_e( 'Passenger Name', 'ifs-travel-erp' ); ?></span>
+                            <strong class="pax-name-val"><?php echo esc_html( $pax_name ); ?></strong>
                         </div>
                         <div class="pax-meta-cell text-right">
-                            <span class="pax-label">DEPARTURE DATE</span>
-                            <strong class="pax-date-val font-mono"><?php echo date( 'd M Y', strtotime( $ticket->travel_date ) ); ?></strong>
+                            <span class="pax-label"><?php esc_html_e( 'Departure Date', 'ifs-travel-erp' ); ?></span>
+                            <strong class="pax-date-val font-mono">
+                                <?php echo esc_html( date_i18n( 'd M Y', strtotime( $ticket->travel_date ) ) ); ?>
+                                <?php echo ! empty( $ticket->flight_time ) ? ' (' . esc_html( $ticket->flight_time ) . ')' : ''; ?>
+                            </strong>
                         </div>
                     </div>
 
                     <div class="pass-specs-grid font-mono">
                         <div class="spec-cell">
-                            <span class="spec-label">GDS / AIRLINE PNR</span>
+                            <span class="spec-label"><?php esc_html_e( 'GDS / Airline PNR', 'ifs-travel-erp' ); ?></span>
                             <strong class="spec-value color-cyan"><?php echo esc_html( $ticket->pnr ); ?><?php echo ! empty( $ticket->airline_pnr ) ? ' / ' . esc_html( $ticket->airline_pnr ) : ''; ?></strong>
                         </div>
                         <div class="spec-cell">
-                            <span class="spec-label">BAGGAGE</span>
+                            <span class="spec-label"><?php esc_html_e( 'Baggage Allowance', 'ifs-travel-erp' ); ?></span>
                             <strong class="spec-value"><?php echo esc_html( $ticket->baggage ?: '20 KG' ); ?></strong>
                         </div>
                         <div class="spec-cell">
-                            <span class="spec-label">E-TICKET NO</span>
+                            <span class="spec-label"><?php esc_html_e( 'E-Ticket Number', 'ifs-travel-erp' ); ?></span>
                             <strong class="spec-value"><?php echo esc_html( $ticket->ticket_no ); ?></strong>
                         </div>
                         <div class="spec-cell">
-                            <span class="spec-label">TOTAL FARE</span>
-                            <strong class="spec-value color-green">৳<?php echo number_format( (float) $ticket->sell_price, 2 ); ?></strong>
+                            <span class="spec-label"><?php esc_html_e( 'Total Fare', 'ifs-travel-erp' ); ?></span>
+                            <strong class="spec-value color-green">৳<?php echo esc_html( number_format( (float) $ticket->sell_price, 2 ) ); ?></strong>
                         </div>
                     </div>
 
                     <div class="pass-barcode-area">
                         <div class="barcode-matrix-lines"></div>
-                        <span class="barcode-code-text font-mono">M1<?php echo esc_html( str_replace( ' ', '/', $pax_name ) ); ?>  E<?php echo esc_html( $ticket->pnr ); ?> <?php echo esc_html( $ticket->sector ); ?></span>
+                        <span class="barcode-code-text font-mono">M1<?php echo esc_html( str_replace( ' ', '/', strtoupper( (string) $raw_name ) ) ); ?>  E<?php echo esc_html( $ticket->pnr ); ?> <?php echo esc_html( $ticket->sector ); ?></span>
                     </div>
                 </div>
 
                 <!-- Issuing Channel & Settlement Card -->
                 <div class="ifs-info-panel-card">
-                    <h4 class="panel-card-title"><span class="dashicons dashicons-networking"></span> Issuing Channel &amp; Settlement</h4>
+                    <h4 class="panel-card-title"><span class="dashicons dashicons-networking"></span> <?php esc_html_e( 'Issuing Channel & Settlement', 'ifs-travel-erp' ); ?></h4>
                     <div class="ifs-panel-table">
                         <div class="panel-row">
-                            <span class="panel-key"><span class="dashicons dashicons-admin-site"></span> Issuing Portal:</span>
+                            <span class="panel-key"><span class="dashicons dashicons-calendar-alt"></span> <?php esc_html_e( 'Issue Date:', 'ifs-travel-erp' ); ?></span>
+                            <span class="panel-val font-mono"><?php echo ( ! empty( $ticket->issue_date ) && $ticket->issue_date !== '1970-01-01' ) ? esc_html( date_i18n( 'd M, Y', strtotime( $ticket->issue_date ) ) ) : ( ! empty( $ticket->created_at ) ? esc_html( date_i18n( 'd M, Y', strtotime( $ticket->created_at ) ) ) : 'N/A' ); ?></span>
+                        </div>
+                        <div class="panel-row">
+                            <span class="panel-key"><span class="dashicons dashicons-admin-site"></span> <?php esc_html_e( 'GDS System:', 'ifs-travel-erp' ); ?></span>
                             <span class="panel-val font-mono"><?php echo esc_html( $ticket->gds_pcc ?: 'Sabre GDS' ); ?></span>
                         </div>
                         <div class="panel-row">
-                            <span class="panel-key"><span class="dashicons dashicons-store"></span> Supplier / Consortia:</span>
+                            <span class="panel-key"><span class="dashicons dashicons-store"></span> <?php esc_html_e( 'Supplier:', 'ifs-travel-erp' ); ?></span>
                             <span class="panel-val"><?php echo esc_html( $ticket->supplier_name ?: 'Direct IATA / BSP' ); ?></span>
                         </div>
+                        <?php if ( ! empty( $ticket->supplier_ref ) ) : ?>
+                            <div class="panel-row">
+                                <span class="panel-key"><span class="dashicons dashicons-admin-links"></span> <?php esc_html_e( 'Supplier Ref:', 'ifs-travel-erp' ); ?></span>
+                                <span class="panel-val font-mono"><?php echo esc_html( $ticket->supplier_ref ); ?></span>
+                            </div>
+                        <?php endif; ?>
                         <div class="panel-row">
-                            <span class="panel-key"><span class="dashicons dashicons-groups"></span> B2B Sub-Agent:</span>
+                            <span class="panel-key"><span class="dashicons dashicons-groups"></span> <?php esc_html_e( 'Sub-Agent:', 'ifs-travel-erp' ); ?></span>
                             <span class="panel-val <?php echo ! empty( $ticket->agency_name ) ? 'color-indigo font-bold' : ''; ?>">
                                 <?php echo esc_html( $ticket->agency_name ?: 'Direct Retail Sale' ); ?>
                             </span>
                         </div>
                         <div class="panel-row">
-                            <span class="panel-key"><span class="dashicons dashicons-money-alt"></span> Payment Status:</span>
+                            <span class="panel-key"><span class="dashicons dashicons-money-alt"></span> <?php esc_html_e( 'Pay Status:', 'ifs-travel-erp' ); ?></span>
                             <span class="panel-val"><span class="ifs-pay-pill <?php echo esc_attr( $pay_class ); ?>"><?php echo esc_html( $pay_status ); ?></span></span>
                         </div>
                         <div class="panel-row">
-                            <span class="panel-key"><span class="dashicons dashicons-vault"></span> Payment Method:</span>
+                            <span class="panel-key"><span class="dashicons dashicons-vault"></span> <?php esc_html_e( 'Pay Method:', 'ifs-travel-erp' ); ?></span>
                             <span class="panel-val"><?php echo esc_html( $ticket->payment_method ?? 'Bank Transfer' ); ?></span>
                         </div>
+                        <?php if ( ! empty( $ticket->transaction_id ) ) : ?>
+                            <div class="panel-row">
+                                <span class="panel-key"><span class="dashicons dashicons-id-alt"></span> <?php esc_html_e( 'Txn ID:', 'ifs-travel-erp' ); ?></span>
+                                <span class="panel-val font-mono font-bold"><?php echo esc_html( $ticket->transaction_id ); ?></span>
+                            </div>
+                        <?php endif; ?>
                     </div>
                 </div>
 
                 <!-- Document Attachment Box -->
                 <?php if ( ! empty( $ticket->ticket_copy_url ) ) : ?>
                     <div class="ifs-info-panel-card">
-                        <h4 class="panel-card-title"><span class="dashicons dashicons-pdf"></span> Attached E-Ticket PDF</h4>
+                        <h4 class="panel-card-title"><span class="dashicons dashicons-pdf"></span> <?php esc_html_e( 'Attached E-Ticket PDF', 'ifs-travel-erp' ); ?></h4>
                         <div class="ifs-attachment-preview">
                             <div class="attach-icon"><span class="dashicons dashicons-pdf"></span></div>
                             <div class="attach-meta">
                                 <span class="attach-title">eTicket_<?php echo esc_html( $ticket->pnr ); ?>.pdf</span>
                                 <span class="attach-link-url"><?php echo esc_html( $ticket->ticket_copy_url ); ?></span>
                             </div>
-                            <a href="<?php echo esc_url( $ticket->ticket_copy_url ); ?>" target="_blank" class="ifs-btn-view-doc">
-                                <span class="dashicons dashicons-external"></span> Open
+                            <a href="<?php echo esc_url( $ticket->ticket_copy_url ); ?>" target="_blank" rel="noopener noreferrer" class="ifs-btn-view-doc">
+                                <span class="dashicons dashicons-external"></span> <?php esc_html_e( 'Open', 'ifs-travel-erp' ); ?>
                             </a>
                         </div>
                     </div>
@@ -262,77 +300,113 @@ function ifs_terp_ticket_view_page() {
                 <!-- 1. Flight & Routing Segment Details -->
                 <div class="ifs-history-container-card">
                     <div class="ifs-history-header-nav">
-                        <h3 class="history-title"><span class="dashicons dashicons-location-alt"></span> Flight Segment &amp; Routing Specifications</h3>
+                        <h3 class="history-title"><span class="dashicons dashicons-location-alt"></span> <?php esc_html_e( 'Flight & Route Details', 'ifs-travel-erp' ); ?></h3>
                     </div>
 
                     <div class="ifs-specs-two-col">
                         <div class="spec-item">
-                            <span class="spec-title"><span class="dashicons dashicons-airplane"></span> Operating Airline Carrier</span>
+                            <span class="spec-title"><span class="dashicons dashicons-airplane"></span> <?php esc_html_e( 'Airline', 'ifs-travel-erp' ); ?></span>
                             <strong class="spec-data"><?php echo esc_html( $ticket->airline ); ?></strong>
                         </div>
                         <div class="spec-item">
-                            <span class="spec-title"><span class="dashicons dashicons-tag"></span> Flight Number</span>
+                            <span class="spec-title"><span class="dashicons dashicons-tag"></span> <?php esc_html_e( 'Flight Number', 'ifs-travel-erp' ); ?></span>
                             <strong class="spec-data font-mono"><?php echo esc_html( $ticket->flight_no ?: 'Open / Unassigned' ); ?></strong>
                         </div>
                         <div class="spec-item">
-                            <span class="spec-title"><span class="dashicons dashicons-randomize"></span> Sector / Route</span>
+                            <span class="spec-title"><span class="dashicons dashicons-randomize"></span> <?php esc_html_e( 'Route', 'ifs-travel-erp' ); ?></span>
                             <strong class="spec-data font-mono color-blue"><?php echo esc_html( $ticket->sector ); ?></strong>
                         </div>
                         <div class="spec-item">
-                            <span class="spec-title"><span class="dashicons dashicons-admin-site"></span> Transit / Via Stops</span>
+                            <span class="spec-title"><span class="dashicons dashicons-admin-site"></span> <?php esc_html_e( 'Transit', 'ifs-travel-erp' ); ?></span>
                             <strong class="spec-data"><?php echo esc_html( $ticket->via_transit ?? 'Direct' ); ?></strong>
                         </div>
                         <div class="spec-item">
-                            <span class="spec-title"><span class="dashicons dashicons-portfolio"></span> Cabin Class</span>
+                            <span class="spec-title"><span class="dashicons dashicons-image-rotate"></span> <?php esc_html_e( 'Trip Type', 'ifs-travel-erp' ); ?></span>
+                            <strong class="spec-data"><?php echo esc_html( $ticket->flight_type ?? 'One Way' ); ?></strong>
+                        </div>
+                        <div class="spec-item">
+                            <span class="spec-title"><span class="dashicons dashicons-portfolio"></span> <?php esc_html_e( 'Cabin Class', 'ifs-travel-erp' ); ?></span>
                             <strong class="spec-data"><?php echo esc_html( $ticket->cabin_class ); ?></strong>
                         </div>
                         <div class="spec-item">
-                            <span class="spec-title"><span class="dashicons dashicons-media-code"></span> Fare Basis Code</span>
+                            <span class="spec-title"><span class="dashicons dashicons-media-code"></span> <?php esc_html_e( 'Fare Basis', 'ifs-travel-erp' ); ?></span>
                             <strong class="spec-data font-mono"><?php echo esc_html( $ticket->fare_basis ?: 'Standard Fare' ); ?></strong>
                         </div>
                         <div class="spec-item">
-                            <span class="spec-title"><span class="dashicons-calendar-alt dashicons"></span> Departure Travel Date</span>
-                            <strong class="spec-data"><?php echo date( 'l, d F Y', strtotime( $ticket->travel_date ) ); ?></strong>
-                        </div>
-                        <div class="spec-item">
-                            <span class="spec-title"><span class="dashicons dashicons-clock"></span> Departure Schedule</span>
-                            <strong class="spec-data font-mono"><?php echo esc_html( $ticket->flight_time ?: 'Standard Schedule' ); ?></strong>
-                        </div>
-                        <?php if ( $ticket->flight_type === 'Round Trip' && ! empty( $ticket->return_date ) && $ticket->return_date !== '1970-01-01' ) : ?>
-                            <div class="spec-item">
-                                <span class="spec-title"><span class="dashicons dashicons-image-rotate"></span> Return Flight Date</span>
-                                <strong class="spec-data color-emerald">
-                                    <?php echo date( 'l, d F Y', strtotime( $ticket->return_date ) ); ?>
-                                    <?php echo ! empty( $ticket->return_flight_time ) ? ' (' . esc_html( $ticket->return_flight_time ) . ')' : ''; ?>
-                                </strong>
-                            </div>
-                        <?php endif; ?>
-                        <div class="spec-item">
-                            <span class="spec-title"><span class="dashicons dashicons-archive"></span> Baggage Policy</span>
+                            <span class="spec-title"><span class="dashicons dashicons-archive"></span> <?php esc_html_e( 'Baggage', 'ifs-travel-erp' ); ?></span>
                             <strong class="spec-data"><?php echo esc_html( $ticket->baggage ?: '20 KG' ); ?></strong>
                         </div>
+                        <div class="spec-item">
+                            <span class="spec-title"><span class="dashicons-calendar-alt dashicons"></span> <?php esc_html_e( 'Departure Date', 'ifs-travel-erp' ); ?></span>
+                            <strong class="spec-data"><?php echo esc_html( date_i18n( 'l, d F Y', strtotime( $ticket->travel_date ) ) ); ?></strong>
+                        </div>
+                        <div class="spec-item">
+                            <span class="spec-title"><span class="dashicons dashicons-clock"></span> <?php esc_html_e( 'Departure Time', 'ifs-travel-erp' ); ?></span>
+                            <strong class="spec-data font-mono"><?php echo esc_html( $ticket->flight_time ?: 'Standard Schedule' ); ?></strong>
+                        </div>
+                        <div class="spec-item">
+                            <span class="spec-title"><span class="dashicons-calendar dashicons"></span> <?php esc_html_e( 'Arrival Date', 'ifs-travel-erp' ); ?></span>
+                            <strong class="spec-data">
+                                <?php echo ( ! empty( $ticket->arrival_date ) && $ticket->arrival_date !== '1970-01-01' ) ? esc_html( date_i18n( 'l, d F Y', strtotime( $ticket->arrival_date ) ) ) : esc_html( date_i18n( 'l, d F Y', strtotime( $ticket->travel_date ) ) ); ?>
+                            </strong>
+                        </div>
+                        <div class="spec-item">
+                            <span class="spec-title"><span class="dashicons dashicons-clock"></span> <?php esc_html_e( 'Arrival Time', 'ifs-travel-erp' ); ?></span>
+                            <strong class="spec-data font-mono"><?php echo esc_html( $ticket->arrival_time ?: 'Estimated' ); ?></strong>
+                        </div>
                     </div>
+
+                    <!-- Return Flight Segment (If Round Trip) -->
+                    <?php if ( $ticket->flight_type === 'Round Trip' && ! empty( $ticket->return_date ) && $ticket->return_date !== '1970-01-01' ) : ?>
+                        <div class="ifs-return-segment-block">
+                            <span class="return-segment-title"><span class="dashicons dashicons-image-rotate"></span> <?php esc_html_e( 'Return Flight Details', 'ifs-travel-erp' ); ?></span>
+                            <div class="ifs-specs-two-col">
+                                <div class="spec-item">
+                                    <span class="spec-title"><span class="dashicons dashicons-tag"></span> <?php esc_html_e( 'Return Flight No', 'ifs-travel-erp' ); ?></span>
+                                    <strong class="spec-data font-mono"><?php echo esc_html( $ticket->return_flight_no ?: ( $ticket->flight_no ?: 'Open' ) ); ?></strong>
+                                </div>
+                                <div class="spec-item">
+                                    <span class="spec-title"><span class="dashicons dashicons-calendar-alt"></span> <?php esc_html_e( 'Return Date', 'ifs-travel-erp' ); ?></span>
+                                    <strong class="spec-data color-emerald"><?php echo esc_html( date_i18n( 'l, d F Y', strtotime( $ticket->return_date ) ) ); ?></strong>
+                                </div>
+                                <div class="spec-item">
+                                    <span class="spec-title"><span class="dashicons dashicons-clock"></span> <?php esc_html_e( 'Return Time', 'ifs-travel-erp' ); ?></span>
+                                    <strong class="spec-data font-mono"><?php echo esc_html( $ticket->return_flight_time ?: 'Standard Schedule' ); ?></strong>
+                                </div>
+                                <?php if ( ! empty( $ticket->return_arrival_time ) ) : ?>
+                                    <div class="spec-item">
+                                        <span class="spec-title"><span class="dashicons dashicons-clock"></span> <?php esc_html_e( 'Return Arrival Time', 'ifs-travel-erp' ); ?></span>
+                                        <strong class="spec-data font-mono"><?php echo esc_html( $ticket->return_arrival_time ); ?></strong>
+                                    </div>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                    <?php endif; ?>
                 </div>
 
                 <!-- 2. Passenger Manifest & Identity -->
                 <div class="ifs-history-container-card" style="margin-top: 22px;">
                     <div class="ifs-history-header-nav">
-                        <h3 class="history-title"><span class="dashicons dashicons-admin-users"></span> Passenger Manifest &amp; Contact Profile</h3>
+                        <h3 class="history-title"><span class="dashicons dashicons-admin-users"></span> <?php esc_html_e( 'Passenger Details', 'ifs-travel-erp' ); ?></h3>
                     </div>
 
                     <div class="ifs-passenger-dossier-card">
                         <div class="dossier-avatar"><?php echo esc_html( $initial ); ?></div>
                         <div class="dossier-info">
                             <h4 class="dossier-name">
-                                <a href="<?php echo esc_url( admin_url( 'admin.php?page=ifs_travel_erp&tab=customers&sub=view&id=' . $ticket->customer_id ) ); ?>">
-                                    <?php echo $pax_name; ?>
-                                </a>
+                                <?php if ( ! empty( $ticket->customer_id ) ) : ?>
+                                    <a href="<?php echo esc_url( admin_url( 'admin.php?page=ifs_travel_erp&tab=customers&sub=view&id=' . $ticket->customer_id ) ); ?>">
+                                        <?php echo esc_html( $pax_name ); ?>
+                                    </a>
+                                <?php else : ?>
+                                    <?php echo esc_html( $pax_name ); ?>
+                                <?php endif; ?>
                             </h4>
                             <div class="dossier-meta-grid">
-                                <div><span>Mobile:</span> <strong><a href="tel:<?php echo esc_attr( $ticket->customer_mobile ); ?>"><?php echo esc_html( $ticket->customer_mobile ?: 'N/A' ); ?></a></strong></div>
-                                <div><span>Email:</span> <strong><?php echo esc_html( $ticket->customer_email ?: 'N/A' ); ?></strong></div>
-                                <div><span>Passport No:</span> <strong class="font-mono"><?php echo $passport_num; ?></strong></div>
-                                <div><span>Passport Expiry:</span> <strong><?php echo ( ! empty( $ticket->passport_expiry ) && $ticket->passport_expiry !== '1970-01-01' ) ? date( 'd M, Y', strtotime( $ticket->passport_expiry ) ) : 'N/A'; ?></strong></div>
+                                <div><span><?php esc_html_e( 'Mobile:', 'ifs-travel-erp' ); ?></span> <strong><a href="tel:<?php echo esc_attr( $phone_num ); ?>"><?php echo esc_html( $phone_num ); ?></a></strong></div>
+                                <div><span><?php esc_html_e( 'Email:', 'ifs-travel-erp' ); ?></span> <strong><?php echo esc_html( $email_addr ); ?></strong></div>
+                                <div><span><?php esc_html_e( 'Passport No:', 'ifs-travel-erp' ); ?></span> <strong class="font-mono"><?php echo esc_html( $passport_num ); ?></strong></div>
+                                <div><span><?php esc_html_e( 'Passport Expiry:', 'ifs-travel-erp' ); ?></span> <strong><?php echo ( ! empty( $ticket->passport_expiry ) && $ticket->passport_expiry !== '1970-01-01' ) ? esc_html( date_i18n( 'd M, Y', strtotime( $ticket->passport_expiry ) ) ) : 'N/A'; ?></strong></div>
                             </div>
                         </div>
                     </div>
@@ -341,59 +415,69 @@ function ifs_terp_ticket_view_page() {
                 <!-- 3. Comprehensive Commercial & Accounting Ledger -->
                 <div class="ifs-history-container-card" style="margin-top: 22px;">
                     <div class="ifs-history-header-nav">
-                        <h3 class="history-title"><span class="dashicons dashicons-chart-area"></span> Commercial Breakdown &amp; Agency Settlement</h3>
+                        <h3 class="history-title"><span class="dashicons dashicons-chart-area"></span> <?php esc_html_e( 'Fare & Settlement Breakdown', 'ifs-travel-erp' ); ?></h3>
                     </div>
 
                     <table class="ifs-finance-table">
                         <thead>
                             <tr>
-                                <th>Accounting Head / Description</th>
-                                <th style="text-align: right;">Amount (BDT ৳)</th>
+                                <th><?php esc_html_e( 'Description', 'ifs-travel-erp' ); ?></th>
+                                <th style="text-align: right;"><?php esc_html_e( 'Amount (৳)', 'ifs-travel-erp' ); ?></th>
                             </tr>
                         </thead>
                         <tbody>
                             <?php if ( ! empty( $ticket->base_fare ) && $ticket->base_fare > 0 ) : ?>
                                 <tr>
-                                    <td><span class="dashicons dashicons-arrow-right-alt2"></span> Airline Base Airfare</td>
-                                    <td style="text-align: right;" class="font-mono">৳<?php echo number_format( (float) $ticket->base_fare, 2 ); ?></td>
+                                    <td><span class="dashicons dashicons-arrow-right-alt2"></span> <?php esc_html_e( 'Base Fare', 'ifs-travel-erp' ); ?></td>
+                                    <td style="text-align: right;" class="font-mono">৳<?php echo esc_html( number_format( (float) $ticket->base_fare, 2 ) ); ?></td>
                                 </tr>
                             <?php endif; ?>
                             <?php if ( ! empty( $ticket->tax_amount ) && $ticket->tax_amount > 0 ) : ?>
                                 <tr>
-                                    <td><span class="dashicons dashicons-arrow-right-alt2"></span> Government Taxes, Fuel &amp; Airport Surcharges</td>
-                                    <td style="text-align: right;" class="font-mono">৳<?php echo number_format( (float) $ticket->tax_amount, 2 ); ?></td>
+                                    <td><span class="dashicons dashicons-arrow-right-alt2"></span> <?php esc_html_e( 'Taxes & Surcharges', 'ifs-travel-erp' ); ?></td>
+                                    <td style="text-align: right;" class="font-mono">৳<?php echo esc_html( number_format( (float) $ticket->tax_amount, 2 ) ); ?></td>
                                 </tr>
                             <?php endif; ?>
                             <?php if ( ! empty( $ticket->commission_amount ) && $ticket->commission_amount > 0 ) : ?>
                                 <tr>
-                                    <td><span class="dashicons dashicons-arrow-right-alt2"></span> Agency Commission / Incentive Earned (+)</td>
-                                    <td style="text-align: right; color: #16a34a;" class="font-mono font-bold">+৳<?php echo number_format( (float) $ticket->commission_amount, 2 ); ?></td>
+                                    <td><span class="dashicons dashicons-arrow-right-alt2"></span> <?php esc_html_e( 'Commission Earned (+)', 'ifs-travel-erp' ); ?></td>
+                                    <td style="text-align: right; color: #16a34a;" class="font-mono font-bold">+৳<?php echo esc_html( number_format( (float) $ticket->commission_amount, 2 ) ); ?></td>
                                 </tr>
                             <?php endif; ?>
                             <?php if ( ! empty( $ticket->ait_amount ) && $ticket->ait_amount > 0 ) : ?>
                                 <tr>
-                                    <td><span class="dashicons dashicons-arrow-right-alt2"></span> AIT 0.3% Source Tax Deduction (-)</td>
-                                    <td style="text-align: right; color: #dc2626;" class="font-mono font-bold">-৳<?php echo number_format( (float) $ticket->ait_amount, 2 ); ?></td>
+                                    <td><span class="dashicons dashicons-arrow-right-alt2"></span> <?php esc_html_e( 'AIT 0.3% Tax (-)', 'ifs-travel-erp' ); ?></td>
+                                    <td style="text-align: right; color: #dc2626;" class="font-mono font-bold">-৳<?php echo esc_html( number_format( (float) $ticket->ait_amount, 2 ) ); ?></td>
                                 </tr>
                             <?php endif; ?>
                             <?php if ( ! empty( $ticket->discount_amount ) && $ticket->discount_amount > 0 ) : ?>
                                 <tr>
-                                    <td><span class="dashicons dashicons-arrow-right-alt2"></span> Client Discount / Rebate Allowed (-)</td>
-                                    <td style="text-align: right; color: #dc2626;" class="font-mono font-bold">-৳<?php echo number_format( (float) $ticket->discount_amount, 2 ); ?></td>
+                                    <td><span class="dashicons dashicons-arrow-right-alt2"></span> <?php esc_html_e( 'Discount Allowed (-)', 'ifs-travel-erp' ); ?></td>
+                                    <td style="text-align: right; color: #dc2626;" class="font-mono font-bold">-৳<?php echo esc_html( number_format( (float) $ticket->discount_amount, 2 ) ); ?></td>
                                 </tr>
                             <?php endif; ?>
                             <tr class="highlight-row">
-                                <td><strong>Supplier Net Cost Rate (Payable to Consortia / GDS)</strong></td>
-                                <td style="text-align: right;" class="font-mono font-bold color-slate">৳<?php echo number_format( (float) $ticket->buy_price, 2 ); ?></td>
+                                <td><strong><?php esc_html_e( 'Cost Price (Payable to Supplier)', 'ifs-travel-erp' ); ?></strong></td>
+                                <td style="text-align: right;" class="font-mono font-bold color-slate">৳<?php echo esc_html( number_format( (float) $ticket->buy_price, 2 ) ); ?></td>
                             </tr>
                             <tr class="highlight-row">
-                                <td><strong>Client / Passenger Invoiced Amount (Gross Revenue)</strong></td>
-                                <td style="text-align: right;" class="font-mono font-bold color-blue">৳<?php echo number_format( (float) $ticket->sell_price, 2 ); ?></td>
+                                <td><strong><?php esc_html_e( 'Sale Price (Invoiced to Client)', 'ifs-travel-erp' ); ?></strong></td>
+                                <td style="text-align: right;" class="font-mono font-bold color-blue">৳<?php echo esc_html( number_format( (float) $ticket->sell_price, 2 ) ); ?></td>
                             </tr>
+                            <tr>
+                                <td><span class="dashicons dashicons-yes-alt"></span> <?php esc_html_e( 'Paid Amount', 'ifs-travel-erp' ); ?></td>
+                                <td style="text-align: right; color: #059669;" class="font-mono font-bold">৳<?php echo esc_html( number_format( (float) $paid_amt, 2 ) ); ?></td>
+                            </tr>
+                            <?php if ( $due_amt > 0 ) : ?>
+                                <tr>
+                                    <td><span class="dashicons dashicons-warning"></span> <?php esc_html_e( 'Due Amount', 'ifs-travel-erp' ); ?></td>
+                                    <td style="text-align: right; color: #dc2626;" class="font-mono font-bold">৳<?php echo esc_html( number_format( (float) $due_amt, 2 ) ); ?></td>
+                                </tr>
+                            <?php endif; ?>
                             <tr class="total-row">
-                                <td><strong>Net Agency Profit Yield (After Commission, AIT &amp; Discount)</strong></td>
+                                <td><strong><?php esc_html_e( 'Net Agency Profit', 'ifs-travel-erp' ); ?></strong></td>
                                 <td style="text-align: right;" class="font-mono font-bold <?php echo ( $ticket->profit >= 0 ) ? 'color-emerald' : 'color-rose'; ?>">
-                                    ৳<?php echo number_format( (float) $ticket->profit, 2 ); ?>
+                                    ৳<?php echo esc_html( number_format( (float) $ticket->profit, 2 ) ); ?>
                                 </td>
                             </tr>
                         </tbody>
@@ -401,7 +485,7 @@ function ifs_terp_ticket_view_page() {
 
                     <?php if ( ! empty( $ticket->remarks ) ) : ?>
                         <div class="ifs-ticket-remarks-box">
-                            <span class="remarks-title"><span class="dashicons dashicons-info"></span> Operational Remarks &amp; SSR Notes:</span>
+                            <span class="remarks-title"><span class="dashicons dashicons-info"></span> <?php esc_html_e( 'Remarks & Notes:', 'ifs-travel-erp' ); ?></span>
                             <p class="remarks-body"><?php echo nl2br( esc_html( $ticket->remarks ) ); ?></p>
                         </div>
                     <?php endif; ?>
@@ -412,7 +496,7 @@ function ifs_terp_ticket_view_page() {
         </div>
     </div>
 
-    <!-- Ultra High-End Dossier Stylesheet -->
+    <!-- Stylesheet -->
     <style>
         .ifs-ticket-view-workspace { max-width: 1420px; margin: 0 auto; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; color: #0f172a; }
         
@@ -518,7 +602,7 @@ function ifs_terp_ticket_view_page() {
         .metric-icon.bg-emerald { background: linear-gradient(135deg, #059669 0%, #047857 100%); }
         .metric-icon .dashicons { font-size: 22px; width: 22px; height: 22px; }
 
-        .metric-lbl { font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.4px; display: block; margin-bottom: 2px; }
+        .metric-lbl { font-size: 11px; font-weight: 700; color: #64748b; text-transform: capitalize; letter-spacing: 0.3px; display: block; margin-bottom: 2px; }
         .metric-val { font-size: 18px; font-weight: 800; color: #0f172a; }
         .color-blue { color: #003376 !important; }
         .color-slate { color: #475569 !important; }
@@ -584,13 +668,13 @@ function ifs_terp_ticket_view_page() {
         .pass-pax-hero { display: flex; justify-content: space-between; align-items: center; background: rgba(0, 0, 0, 0.2); padding: 10px 14px; border-radius: 10px; margin-bottom: 14px; border: 1px solid rgba(255, 255, 255, 0.08); }
         .pax-meta-cell { display: flex; flex-direction: column; gap: 2px; }
         .pax-meta-cell.text-right { text-align: right; }
-        .pax-label { font-size: 8px; font-weight: 800; color: #7dd3fc; letter-spacing: 0.6px; }
-        .pax-name-val { font-size: 12.5px; font-weight: 800; color: #ffffff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 190px; }
+        .pax-label { font-size: 8px; font-weight: 800; color: #7dd3fc; letter-spacing: 0.6px; text-transform: capitalize; }
+        .pax-name-val { font-size: 13px; font-weight: 800; color: #ffffff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 190px; }
         .pax-date-val { font-size: 11px; font-weight: 700; color: #ffffff; }
 
         .pass-specs-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 14px; padding-bottom: 14px; margin-bottom: 14px; border-bottom: 1px dashed rgba(255, 255, 255, 0.2); }
         .spec-cell { display: flex; flex-direction: column; gap: 2px; }
-        .spec-label { font-size: 8px; font-weight: 800; color: #7dd3fc; letter-spacing: 0.6px; }
+        .spec-label { font-size: 8px; font-weight: 800; color: #7dd3fc; letter-spacing: 0.6px; text-transform: capitalize; }
         .spec-value { font-size: 11px; font-weight: 700; color: #ffffff; }
         .color-cyan { color: #38bdf8 !important; }
         .color-green { color: #86efac !important; }
@@ -601,7 +685,7 @@ function ifs_terp_ticket_view_page() {
 
         /* Left Info Cards */
         .ifs-info-panel-card { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 14px; padding: 22px; margin-bottom: 22px; box-shadow: 0 4px 16px -2px rgba(15, 23, 42, 0.03); }
-        .panel-card-title { margin: 0 0 16px 0; font-size: 14px; font-weight: 800; color: #0f172a; display: flex; align-items: center; gap: 8px; padding-bottom: 12px; border-bottom: 1px solid #f1f5f9; }
+        .panel-card-title { margin: 0 0 16px 0; font-size: 14px; font-weight: 800; color: #0f172a; display: flex; align-items: center; gap: 8px; padding-bottom: 12px; border-bottom: 1px solid #f1f5f9; text-transform: capitalize; }
         .panel-card-title .dashicons { color: #003376; font-size: 18px; width: 18px; height: 18px; }
         .ifs-panel-table { display: flex; flex-direction: column; gap: 12px; }
         .panel-row { display: flex; justify-content: space-between; align-items: center; font-size: 13px; gap: 10px; }
@@ -622,15 +706,18 @@ function ifs_terp_ticket_view_page() {
         /* Right History Container & Tables */
         .ifs-history-container-card { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 14px; padding: 26px; box-shadow: 0 4px 16px -2px rgba(15, 23, 42, 0.03); }
         .ifs-history-header-nav { padding-bottom: 16px; border-bottom: 1px solid #f1f5f9; margin-bottom: 20px; }
-        .history-title { margin: 0; font-size: 16px; font-weight: 800; color: #0f172a; display: flex; align-items: center; gap: 8px; }
+        .history-title { margin: 0; font-size: 16px; font-weight: 800; color: #0f172a; display: flex; align-items: center; gap: 8px; text-transform: capitalize; }
         .history-title .dashicons { color: #003376; font-size: 20px; width: 20px; height: 20px; }
 
-        .ifs-specs-two-col { display: grid; grid-template-columns: repeat(2, 1fr); gap: 18px; }
+        .ifs-specs-two-col { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
         @media (max-width: 640px) { .ifs-specs-two-col { grid-template-columns: 1fr; } }
         .spec-item { display: flex; flex-direction: column; gap: 3px; background: #f8fafc; padding: 12px 16px; border-radius: 10px; border: 1px solid #e2e8f0; }
-        .spec-title { font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; display: flex; align-items: center; gap: 4px; }
-        .spec-title .dashicons { font-size: 13px; width: 13px; height: 13px; }
-        .spec-data { font-size: 14px; font-weight: 800; color: #0f172a; }
+        .spec-title { font-size: 11px; font-weight: 700; color: #64748b; text-transform: capitalize; display: flex; align-items: center; gap: 4px; }
+        .spec-title .dashicons { font-size: 13px; width: 13px; height: 13px; color: #94a3b8; }
+        .spec-data { font-size: 13.5px; font-weight: 800; color: #0f172a; }
+
+        .ifs-return-segment-block { margin-top: 18px; padding-top: 18px; border-top: 1px dashed #cbd5e1; }
+        .return-segment-title { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 800; text-transform: capitalize; color: #0284c7; margin-bottom: 12px; }
 
         /* Passenger Dossier Card */
         .ifs-passenger-dossier-card { display: flex; align-items: center; gap: 18px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 18px; }
@@ -644,7 +731,7 @@ function ifs_terp_ticket_view_page() {
 
         /* Commercial Accounting Table */
         .ifs-finance-table { width: 100%; border-collapse: collapse; font-size: 13px; margin-bottom: 16px; }
-        .ifs-finance-table thead th { background: #f8fafc; padding: 10px 14px; text-align: left; font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; border-bottom: 2px solid #e2e8f0; }
+        .ifs-finance-table thead th { background: #f8fafc; padding: 10px 14px; text-align: left; font-size: 11px; font-weight: 700; color: #64748b; text-transform: capitalize; border-bottom: 2px solid #e2e8f0; }
         .ifs-finance-table tbody td { padding: 12px 14px; border-bottom: 1px solid #f1f5f9; color: #334155; }
         .ifs-finance-table tbody td .dashicons { font-size: 13px; width: 13px; height: 13px; color: #94a3b8; }
         .highlight-row { background: #f8fafc; }
@@ -653,7 +740,7 @@ function ifs_terp_ticket_view_page() {
 
         /* Remarks Box */
         .ifs-ticket-remarks-box { background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 10px; padding: 14px 18px; }
-        .remarks-title { font-size: 11.5px; font-weight: 700; text-transform: uppercase; color: #475569; display: flex; align-items: center; gap: 4px; margin-bottom: 4px; }
+        .remarks-title { font-size: 11.5px; font-weight: 700; text-transform: capitalize; color: #475569; display: flex; align-items: center; gap: 4px; margin-bottom: 4px; }
         .remarks-title .dashicons { font-size: 14px; width: 14px; height: 14px; color: #0284c7; }
         .remarks-body { margin: 0; font-size: 13px; color: #334155; line-height: 1.5; }
 
@@ -664,16 +751,23 @@ function ifs_terp_ticket_view_page() {
         /* Print Optimization */
         @media print {
             body * { visibility: hidden; }
-            .ifs-lux-boarding-pass, .ifs-lux-boarding-pass * { visibility: visible; }
+            .ifs-ticket-view-workspace, .ifs-ticket-view-workspace * { visibility: visible; }
+            .ifs-ticket-view-workspace { position: absolute; left: 0; top: 0; width: 100%; }
+            .ifs-view-header-strip, .ifs-header-actions, .ifs-back-round-btn, .ifs-btn-view-doc { display: none !important; }
+            .ifs-dossier-split-layout { display: block !important; }
             .ifs-lux-boarding-pass {
-                position: absolute;
-                left: 0;
-                top: 0;
-                width: 100%;
-                box-shadow: none;
-                border: 1px solid #000;
+                box-shadow: none !important;
+                border: 1px solid #000 !important;
                 -webkit-print-color-adjust: exact;
                 print-color-adjust: exact;
+                margin-bottom: 20px;
+                page-break-inside: avoid;
+            }
+            .ifs-history-container-card, .ifs-info-panel-card {
+                box-shadow: none !important;
+                border: 1px solid #cbd5e1 !important;
+                page-break-inside: avoid;
+                margin-top: 16px !important;
             }
         }
     </style>

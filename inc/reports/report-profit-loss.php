@@ -5,7 +5,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 /**
  * Enterprise Ultra-Modern Profit & Loss Statement Console
- * Features: Multi-Module Gross Revenue Streams, Overhead Expense Ledger, CSV Export & Executive Financial Statement Matrix
+ * Flat Minimal UI: No Shadows, Strict 42px Uniform Interactive Heights, Normalized Clean Controls
  */
 function ifs_terp_report_profit_loss_page() {
     global $wpdb;
@@ -47,7 +47,7 @@ function ifs_terp_report_profit_loss_page() {
     // Handle CSV Export
     if ( isset( $_GET['action'] ) && $_GET['action'] === 'export_csv' ) {
         if ( ! current_user_can( 'manage_options' ) && ! ifs_terp_has_access( array( 'accountant', 'admin_manager' ) ) ) {
-            wp_die( 'Unauthorized export request.' );
+            wp_die( esc_html__( 'Unauthorized export request.', 'ifs-travel-erp' ) );
         }
 
         header( 'Content-Type: text/csv; charset=utf-8' );
@@ -85,16 +85,18 @@ function ifs_terp_report_profit_loss_page() {
         <!-- Header & Action Controls -->
         <div class="ifs-pnl-header">
             <div class="pnl-header-title-group">
-                <span class="ifs-pnl-badge"><span class="dashicons dashicons-media-spreadsheet"></span> Audited Financial Statement</span>
-                <h2>Comprehensive Profit &amp; Loss Statement</h2>
-                <p>Consolidated executive statement reconciling multi-module gross revenue margins against overhead operational expenses.</p>
+                <span class="ifs-pnl-badge">
+                    <span class="dashicons dashicons-media-spreadsheet"></span> <?php esc_html_e( 'Audited Financial Statement', 'ifs-travel-erp' ); ?>
+                </span>
+                <h2><?php esc_html_e( 'Comprehensive Profit & Loss Statement', 'ifs-travel-erp' ); ?></h2>
+                <p><?php esc_html_e( 'Consolidated executive statement reconciling multi-module gross revenue margins against overhead operational expenses.', 'ifs-travel-erp' ); ?></p>
             </div>
             <div class="ifs-pnl-header-actions">
-                <a href="<?php echo esc_url( $export_url ); ?>" class="ifs-btn-action-sec">
-                    <span class="dashicons dashicons-download"></span> Export CSV
+                <a href="<?php echo esc_url( $export_url ); ?>" class="ifs-btn-secondary">
+                    <span class="dashicons dashicons-download"></span> <?php esc_html_e( 'Export CSV', 'ifs-travel-erp' ); ?>
                 </a>
-                <button type="button" onclick="window.print();" class="ifs-btn-action-pri">
-                    <span class="dashicons dashicons-printer"></span> Print Statement
+                <button type="button" onclick="window.print();" class="ifs-btn-primary">
+                    <span class="dashicons dashicons-printer"></span> <?php esc_html_e( 'Print Statement', 'ifs-travel-erp' ); ?>
                 </button>
             </div>
         </div>
@@ -108,24 +110,24 @@ function ifs_terp_report_profit_loss_page() {
 
                 <div class="filter-grid-layout">
                     <div class="filter-field">
-                        <label for="pnl_start_date">Period Start Date</label>
-                        <div class="filter-input-wrap">
-                            <span class="dashicons dashicons-calendar-alt"></span>
+                        <label class="ifs-field-label" for="pnl_start_date"><?php esc_html_e( 'Period Start Date', 'ifs-travel-erp' ); ?></label>
+                        <div class="ifs-field-wrap">
+                            <span class="dashicons dashicons-calendar-alt field-icon"></span>
                             <input type="date" name="start_date" id="pnl_start_date" value="<?php echo esc_attr( $start_date ); ?>" class="ifs-input-field">
                         </div>
                     </div>
 
                     <div class="filter-field">
-                        <label for="pnl_end_date">Period End Date</label>
-                        <div class="filter-input-wrap">
-                            <span class="dashicons dashicons-calendar-alt"></span>
+                        <label class="ifs-field-label" for="pnl_end_date"><?php esc_html_e( 'Period End Date', 'ifs-travel-erp' ); ?></label>
+                        <div class="ifs-field-wrap">
+                            <span class="dashicons dashicons-calendar-alt field-icon"></span>
                             <input type="date" name="end_date" id="pnl_end_date" value="<?php echo esc_attr( $end_date ); ?>" class="ifs-input-field">
                         </div>
                     </div>
 
                     <div class="filter-field filter-btn-wrap">
-                        <button type="submit" class="ifs-btn-filter-submit">
-                            <span class="dashicons dashicons-calculator"></span> Recalculate Statement
+                        <button type="submit" class="ifs-btn-primary full-width-btn">
+                            <span class="dashicons dashicons-calculator"></span> <?php esc_html_e( 'Recalculate Statement', 'ifs-travel-erp' ); ?>
                         </button>
                     </div>
                 </div>
@@ -135,42 +137,42 @@ function ifs_terp_report_profit_loss_page() {
         <!-- Top Financial Metric Chips -->
         <div class="ifs-pnl-metrics-grid">
             <div class="ifs-kpi-chip border-emerald">
-                <div class="kpi-chip-icon bg-emerald"><span class="dashicons dashicons-arrow-up-alt"></span></div>
+                <div class="chip-icon bg-emerald"><span class="dashicons dashicons-arrow-up-alt"></span></div>
                 <div>
-                    <span class="kpi-chip-lbl">Gross Operating Income</span>
+                    <span class="kpi-chip-lbl"><?php esc_html_e( 'Gross Operating Income', 'ifs-travel-erp' ); ?></span>
                     <strong class="kpi-chip-val color-emerald font-mono">৳<?php echo number_format( $total_gross_income, 2 ); ?></strong>
-                    <span class="kpi-chip-sub">Across 5 Operational Desks</span>
+                    <span class="kpi-chip-sub"><?php esc_html_e( 'Across 5 Operational Desks', 'ifs-travel-erp' ); ?></span>
                 </div>
             </div>
 
             <div class="ifs-kpi-chip border-rose">
-                <div class="kpi-chip-icon bg-rose"><span class="dashicons dashicons-arrow-down-alt"></span></div>
+                <div class="chip-icon bg-rose"><span class="dashicons dashicons-arrow-down-alt"></span></div>
                 <div>
-                    <span class="kpi-chip-lbl">Overhead Expenses</span>
+                    <span class="kpi-chip-lbl"><?php esc_html_e( 'Overhead Expenses', 'ifs-travel-erp' ); ?></span>
                     <strong class="kpi-chip-val color-rose font-mono">৳<?php echo number_format( $total_expenses, 2 ); ?></strong>
-                    <span class="kpi-chip-sub">Office Rent, Bills &amp; Operations</span>
+                    <span class="kpi-chip-sub"><?php esc_html_e( 'Office Rent, Bills & Operations', 'ifs-travel-erp' ); ?></span>
                 </div>
             </div>
 
             <div class="ifs-kpi-chip <?php echo $is_profit ? 'border-emerald' : 'border-rose'; ?>">
-                <div class="kpi-chip-icon <?php echo $is_profit ? 'bg-emerald' : 'bg-rose'; ?>">
+                <div class="chip-icon <?php echo $is_profit ? 'bg-emerald' : 'bg-rose'; ?>">
                     <span class="dashicons dashicons-chart-pie"></span>
                 </div>
                 <div>
-                    <span class="kpi-chip-lbl">Net Operating Balance</span>
+                    <span class="kpi-chip-lbl"><?php esc_html_e( 'Net Operating Balance', 'ifs-travel-erp' ); ?></span>
                     <strong class="kpi-chip-val font-mono <?php echo $is_profit ? 'color-emerald' : 'color-rose'; ?>">
                         <?php echo $is_profit ? '+৳' : '-৳'; ?><?php echo number_format( abs( $net_profit ), 2 ); ?>
                     </strong>
-                    <span class="kpi-chip-sub"><?php echo $is_profit ? 'Profitable Performance' : 'Operating Loss'; ?></span>
+                    <span class="kpi-chip-sub"><?php echo $is_profit ? esc_html__( 'Profitable Performance', 'ifs-travel-erp' ) : esc_html__( 'Operating Loss', 'ifs-travel-erp' ); ?></span>
                 </div>
             </div>
 
             <div class="ifs-kpi-chip border-blue">
-                <div class="kpi-chip-icon bg-blue"><span class="dashicons dashicons-performance"></span></div>
+                <div class="chip-icon bg-blue"><span class="dashicons dashicons-performance"></span></div>
                 <div>
-                    <span class="kpi-chip-lbl">Net Yield Margin</span>
+                    <span class="kpi-chip-lbl"><?php esc_html_e( 'Net Yield Margin', 'ifs-travel-erp' ); ?></span>
                     <strong class="kpi-chip-val color-blue font-mono"><?php echo number_format( $margin_pct, 1 ); ?>%</strong>
-                    <span class="kpi-chip-sub">Profit to Revenue Ratio</span>
+                    <span class="kpi-chip-sub"><?php esc_html_e( 'Profit to Revenue Ratio', 'ifs-travel-erp' ); ?></span>
                 </div>
             </div>
         </div>
@@ -184,11 +186,11 @@ function ifs_terp_report_profit_loss_page() {
                     <div class="head-title-wrap">
                         <span class="dashicons dashicons-plus-alt"></span>
                         <div>
-                            <h3 class="statement-head-title">Operating Revenue (Gross Margins)</h3>
-                            <span class="statement-head-sub">Net commissions retained from service sales</span>
+                            <h3 class="statement-head-title"><?php esc_html_e( 'Operating Revenue (Gross Margins)', 'ifs-travel-erp' ); ?></h3>
+                            <span class="statement-head-sub"><?php esc_html_e( 'Net commissions retained from service sales', 'ifs-travel-erp' ); ?></span>
                         </div>
                     </div>
-                    <span class="statement-pill pill-income">Revenue Inflow</span>
+                    <span class="statement-pill pill-income"><?php esc_html_e( 'Revenue Inflow', 'ifs-travel-erp' ); ?></span>
                 </div>
 
                 <div class="statement-card-body">
@@ -199,8 +201,8 @@ function ifs_terp_report_profit_loss_page() {
                                     <div class="stream-title-cell">
                                         <span class="dashicons dashicons-airplane color-blue"></span>
                                         <div>
-                                            <strong>Air Ticketing &amp; PNR Commissions</strong>
-                                            <span class="stream-meta">IATA / GDS &amp; Sub-Agent Bookings</span>
+                                            <strong><?php esc_html_e( 'Air Ticketing & PNR Commissions', 'ifs-travel-erp' ); ?></strong>
+                                            <span class="stream-meta"><?php esc_html_e( 'IATA / GDS & Sub-Agent Bookings', 'ifs-travel-erp' ); ?></span>
                                         </div>
                                     </div>
                                 </td>
@@ -211,8 +213,8 @@ function ifs_terp_report_profit_loss_page() {
                                     <div class="stream-title-cell">
                                         <span class="dashicons dashicons-id-alt color-amber"></span>
                                         <div>
-                                            <strong>Visa Processing Margin Yield</strong>
-                                            <span class="stream-meta">Embassy service charges &amp; fees</span>
+                                            <strong><?php esc_html_e( 'Visa Processing Margin Yield', 'ifs-travel-erp' ); ?></strong>
+                                            <span class="stream-meta"><?php esc_html_e( 'Embassy service charges & fees', 'ifs-travel-erp' ); ?></span>
                                         </div>
                                     </div>
                                 </td>
@@ -223,8 +225,8 @@ function ifs_terp_report_profit_loss_page() {
                                     <div class="stream-title-cell">
                                         <span class="dashicons dashicons-awards color-emerald"></span>
                                         <div>
-                                            <strong>Hajj &amp; Umrah Pilgrim Packages</strong>
-                                            <span class="stream-meta">Pilgrim package margin surplus</span>
+                                            <strong><?php esc_html_e( 'Hajj & Umrah Pilgrim Packages', 'ifs-travel-erp' ); ?></strong>
+                                            <span class="stream-meta"><?php esc_html_e( 'Pilgrim package margin surplus', 'ifs-travel-erp' ); ?></span>
                                         </div>
                                     </div>
                                 </td>
@@ -235,8 +237,8 @@ function ifs_terp_report_profit_loss_page() {
                                     <div class="stream-title-cell">
                                         <span class="dashicons dashicons-building color-indigo"></span>
                                         <div>
-                                            <strong>Hotel &amp; Resort Reservations</strong>
-                                            <span class="stream-meta">Direct contracts &amp; supplier vouchers</span>
+                                            <strong><?php esc_html_e( 'Hotel & Resort Reservations', 'ifs-travel-erp' ); ?></strong>
+                                            <span class="stream-meta"><?php esc_html_e( 'Direct contracts & supplier vouchers', 'ifs-travel-erp' ); ?></span>
                                         </div>
                                     </div>
                                 </td>
@@ -247,8 +249,8 @@ function ifs_terp_report_profit_loss_page() {
                                     <div class="stream-title-cell">
                                         <span class="dashicons dashicons-palmtree color-rose"></span>
                                         <div>
-                                            <strong>Holiday &amp; Tour Packages</strong>
-                                            <span class="stream-meta">Custom itineraries &amp; group packages</span>
+                                            <strong><?php esc_html_e( 'Holiday & Tour Packages', 'ifs-travel-erp' ); ?></strong>
+                                            <span class="stream-meta"><?php esc_html_e( 'Custom itineraries & group packages', 'ifs-travel-erp' ); ?></span>
                                         </div>
                                     </div>
                                 </td>
@@ -257,7 +259,7 @@ function ifs_terp_report_profit_loss_page() {
                         </tbody>
                         <tfoot>
                             <tr class="statement-subtotal-row income-total">
-                                <td><strong>TOTAL GROSS REVENUE INFLOW</strong></td>
+                                <td><strong><?php esc_html_e( 'TOTAL GROSS REVENUE INFLOW', 'ifs-travel-erp' ); ?></strong></td>
                                 <td class="font-mono total-amount color-emerald">৳<?php echo number_format( $total_gross_income, 2 ); ?></td>
                             </tr>
                         </tfoot>
@@ -271,11 +273,11 @@ function ifs_terp_report_profit_loss_page() {
                     <div class="head-title-wrap">
                         <span class="dashicons dashicons-minus"></span>
                         <div>
-                            <h3 class="statement-head-title">Administrative &amp; Overhead Expenses</h3>
-                            <span class="statement-head-sub">Rent, salaries, utilities, and general ledger expenses</span>
+                            <h3 class="statement-head-title"><?php esc_html_e( 'Administrative & Overhead Expenses', 'ifs-travel-erp' ); ?></h3>
+                            <span class="statement-head-sub"><?php esc_html_e( 'Rent, salaries, utilities, and general ledger expenses', 'ifs-travel-erp' ); ?></span>
                         </div>
                     </div>
-                    <span class="statement-pill pill-expense">Expense Outflow</span>
+                    <span class="statement-pill pill-expense"><?php esc_html_e( 'Expense Outflow', 'ifs-travel-erp' ); ?></span>
                 </div>
 
                 <div class="statement-card-body">
@@ -288,7 +290,7 @@ function ifs_terp_report_profit_loss_page() {
                                             <span class="dashicons dashicons-money-alt" style="color: #94a3b8;"></span>
                                             <div>
                                                 <strong><?php echo esc_html( $exp->category ); ?></strong>
-                                                <span class="stream-meta">General Ledger Disbursement</span>
+                                                <span class="stream-meta"><?php esc_html_e( 'General Ledger Disbursement', 'ifs-travel-erp' ); ?></span>
                                             </div>
                                         </div>
                                     </td>
@@ -298,14 +300,14 @@ function ifs_terp_report_profit_loss_page() {
                                 <tr>
                                     <td colspan="2" class="empty-expense-cell">
                                         <span class="dashicons dashicons-yes-alt"></span>
-                                        <p>No operational overhead expenses recorded in this period.</p>
+                                        <p><?php esc_html_e( 'No operational overhead expenses recorded in this period.', 'ifs-travel-erp' ); ?></p>
                                     </td>
                                 </tr>
                             <?php endif; ?>
                         </tbody>
                         <tfoot>
                             <tr class="statement-subtotal-row expense-total">
-                                <td><strong>TOTAL OPERATING DISBURSEMENTS</strong></td>
+                                <td><strong><?php esc_html_e( 'TOTAL OPERATING DISBURSEMENTS', 'ifs-travel-erp' ); ?></strong></td>
                                 <td class="font-mono total-amount color-rose">৳<?php echo number_format( $total_expenses, 2 ); ?></td>
                             </tr>
                         </tfoot>
@@ -318,51 +320,64 @@ function ifs_terp_report_profit_loss_page() {
         <!-- Net Operating Bottom-Line Hero Banner -->
         <div class="ifs-pnl-summary-hero <?php echo $is_profit ? 'hero-profit' : 'hero-loss'; ?>">
             <div class="hero-left-meta">
-                <span class="hero-tag"><span class="dashicons dashicons-shield"></span> Fiscal Reconciliation Summary</span>
-                <h3 class="hero-title"><?php echo $is_profit ? 'Net Operating Profit (Surplus)' : 'Net Operating Loss (Deficit)'; ?></h3>
+                <span class="hero-tag"><span class="dashicons dashicons-shield"></span> <?php esc_html_e( 'Fiscal Reconciliation Summary', 'ifs-travel-erp' ); ?></span>
+                <h3 class="hero-title"><?php echo $is_profit ? esc_html__( 'Net Operating Profit (Surplus)', 'ifs-travel-erp' ) : esc_html__( 'Net Operating Loss (Deficit)', 'ifs-travel-erp' ); ?></h3>
                 <p class="hero-desc">
-                    Statement period covers <strong><?php echo date( 'd M Y', strtotime( $start_date ) ); ?></strong> to <strong><?php echo date( 'd M Y', strtotime( $end_date ) ); ?></strong> after deducting all overhead expense disbursements.
+                    <?php 
+                    printf( 
+                        esc_html__( 'Statement period covers %1$s to %2$s after deducting all overhead expense disbursements.', 'ifs-travel-erp' ),
+                        '<strong>' . date( 'd M Y', strtotime( $start_date ) ) . '</strong>',
+                        '<strong>' . date( 'd M Y', strtotime( $end_date ) ) . '</strong>'
+                    ); 
+                    ?>
                 </p>
             </div>
             <div class="hero-right-figure">
-                <span class="hero-figure-lbl">NET BOTTOM-LINE BALANCE</span>
+                <span class="hero-figure-lbl"><?php esc_html_e( 'NET BOTTOM-LINE BALANCE', 'ifs-travel-erp' ); ?></span>
                 <div class="hero-figure-amount font-mono">
                     <?php echo $is_profit ? '+৳' : '-৳'; ?><?php echo number_format( abs( $net_profit ), 2 ); ?>
                 </div>
                 <div class="hero-yield-badge font-mono">
-                    Operating Yield Margin: <strong><?php echo number_format( $margin_pct, 1 ); ?>%</strong>
+                    <?php printf( esc_html__( 'Operating Yield Margin: %s', 'ifs-travel-erp' ), '<strong>' . number_format( $margin_pct, 1 ) . '%</strong>' ); ?>
                 </div>
             </div>
         </div>
 
     </div>
 
-    <!-- Ultra-Modern Stylesheet -->
+    <!-- Stylesheet: Flat Minimal UI, Zero Shadows & Strict 42px Uniform Field Heights -->
     <style>
         .ifs-pnl-wrapper {
             max-width: 1420px;
-            margin: 0 auto;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            margin: 20px auto;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
             color: #0f172a;
+            box-sizing: border-box;
+        }
+        .ifs-pnl-wrapper *,
+        .ifs-pnl-wrapper *::before,
+        .ifs-pnl-wrapper *::after {
+            box-sizing: border-box;
+            box-shadow: none !important;
+            text-shadow: none !important;
         }
 
         /* Header */
         .ifs-pnl-header {
             background: #ffffff;
             border: 1px solid #e2e8f0;
-            border-radius: 16px;
+            border-radius: 14px;
             padding: 24px 28px;
             display: flex;
             justify-content: space-between;
             align-items: center;
             flex-wrap: wrap;
-            gap: 20px;
-            box-shadow: 0 4px 16px -2px rgba(15, 23, 42, 0.04);
-            margin-bottom: 22px;
+            gap: 18px;
+            margin-bottom: 24px;
         }
         .ifs-pnl-badge {
             background: #eff6ff;
-            color: #1d4ed8;
+            color: #003376;
             padding: 3px 10px;
             border-radius: 6px;
             font-size: 11px;
@@ -371,47 +386,51 @@ function ifs_terp_report_profit_loss_page() {
             letter-spacing: 0.5px;
             display: inline-flex;
             align-items: center;
-            gap: 4px;
+            gap: 5px;
             margin-bottom: 6px;
-            border: 1px solid #dbeafe;
+            border: 1px solid #bfdbfe;
         }
-        .ifs-pnl-badge .dashicons { font-size: 13px; width: 13px; height: 13px; }
-        .pnl-header-title-group h2 { margin: 0 0 4px 0; font-size: 21px; font-weight: 900; color: #0f172a; letter-spacing: -0.3px; }
+        .ifs-pnl-badge .dashicons { font-size: 14px; width: 14px; height: 14px; }
+        .pnl-header-title-group h2 { margin: 0 0 4px 0; font-size: 20px; font-weight: 800; color: #0f172a; }
         .pnl-header-title-group p { margin: 0; font-size: 13px; color: #64748b; }
 
         .ifs-pnl-header-actions { display: flex; gap: 10px; align-items: center; }
-        .ifs-btn-action-sec {
+        .ifs-btn-secondary {
             background: #f8fafc;
             border: 1px solid #cbd5e1;
-            color: #334155;
-            padding: 10px 18px;
+            color: #475569 !important;
+            height: 42px;
+            padding: 0 20px;
             border-radius: 8px;
             font-size: 13px;
-            font-weight: 700;
+            font-weight: 600;
             text-decoration: none;
             display: inline-flex;
             align-items: center;
             gap: 6px;
-            transition: all 0.2s ease;
+            cursor: pointer;
+            transition: background-color 0.2s ease, color 0.2s ease;
         }
-        .ifs-btn-action-sec:hover { background: #e2e8f0; color: #0f172a; }
-        .ifs-btn-action-pri {
-            background: linear-gradient(135deg, #003376 0%, #0284c7 100%);
+        .ifs-btn-secondary:hover { background: #f1f5f9; color: #0f172a; }
+        .ifs-btn-primary {
+            background: #003376;
             color: #ffffff !important;
             border: none;
-            padding: 10px 22px;
+            height: 42px;
+            padding: 0 24px;
             border-radius: 8px;
-            font-size: 13px;
+            font-size: 13.5px;
             font-weight: 700;
+            text-decoration: none;
             cursor: pointer;
             display: inline-flex;
             align-items: center;
-            gap: 6px;
-            box-shadow: 0 4px 12px rgba(0, 51, 118, 0.25);
-            transition: all 0.2s ease;
+            justify-content: center;
+            gap: 8px;
+            transition: background-color 0.2s ease;
         }
-        .ifs-btn-action-pri:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(0, 51, 118, 0.35); }
-        .ifs-btn-action-pri .dashicons, .ifs-btn-action-sec .dashicons { font-size: 16px; width: 16px; height: 16px; }
+        .ifs-btn-primary:hover { background: #0284c7; }
+        .ifs-btn-primary .dashicons, .ifs-btn-secondary .dashicons { font-size: 16px; width: 16px; height: 16px; }
 
         /* Filter Card */
         .ifs-filter-card {
@@ -420,58 +439,85 @@ function ifs_terp_report_profit_loss_page() {
             border-radius: 14px;
             padding: 22px 26px;
             margin-bottom: 24px;
-            box-shadow: 0 4px 16px -2px rgba(15, 23, 42, 0.03);
         }
         .filter-grid-layout {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)) auto;
-            gap: 16px;
+            grid-template-columns: repeat(2, 1fr) auto;
+            gap: 18px;
             align-items: flex-end;
         }
-        @media (max-width: 768px) {
+        @media (max-width: 860px) {
             .filter-grid-layout { grid-template-columns: 1fr; }
+            .full-width-btn { width: 100%; }
         }
-        .filter-field { display: flex; flex-direction: column; gap: 5px; }
-        .filter-field label { font-size: 11px; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.4px; }
-        .filter-input-wrap { position: relative; display: flex; align-items: center; width: 100%; }
-        .filter-input-wrap .dashicons {
-            position: absolute;
-            left: 12px;
-            color: #94a3b8;
-            font-size: 16px;
-            width: 16px;
-            height: 16px;
-            pointer-events: none;
-        }
-        .ifs-input-field {
+        .filter-field { 
+            display: flex; 
+            flex-direction: column; 
+            justify-content: flex-start;
+            gap: 6px; 
             width: 100%;
-            padding: 9px 12px 9px 38px !important;
-            border: 1px solid #cbd5e1;
-            border-radius: 8px;
-            font-size: 13.5px;
-            color: #0f172a;
-            background: #ffffff;
-            outline: none;
-            transition: all 0.2s ease;
         }
-        .ifs-input-field:focus { border-color: #003376; box-shadow: 0 0 0 3px rgba(0, 51, 118, 0.12); }
-        .ifs-btn-filter-submit {
-            background: #0f172a;
-            color: #ffffff;
-            border: none;
-            padding: 10px 22px;
-            border-radius: 8px;
-            font-size: 13.5px;
-            font-weight: 700;
-            cursor: pointer;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            height: 38px;
-            transition: all 0.2s ease;
+        .ifs-field-label { 
+            font-size: 11px; 
+            font-weight: 700; 
+            color: #475569; 
+            text-transform: uppercase; 
+            letter-spacing: 0.5px; 
+            line-height: 1.2;
         }
-        .ifs-btn-filter-submit:hover { background: #1e293b; }
-        .ifs-btn-filter-submit .dashicons { font-size: 15px; width: 15px; height: 15px; }
+        .ifs-field-wrap { 
+            position: relative; 
+            display: flex; 
+            align-items: center; 
+            width: 100%; 
+            height: 42px; 
+        }
+        .ifs-field-wrap .field-icon {
+            position: absolute; 
+            left: 12px; 
+            top: 50%;
+            transform: translateY(-50%);
+            color: #94a3b8; 
+            font-size: 18px; 
+            width: 18px; 
+            height: 18px; 
+            line-height: 18px;
+            pointer-events: none; 
+            z-index: 3; 
+            transition: color 0.2s ease;
+        }
+        .ifs-input-field { 
+            width: 100% !important; 
+            height: 42px !important; 
+            max-height: 42px !important; 
+            min-height: 42px !important; 
+            line-height: 40px !important; 
+            padding: 0 14px 0 40px !important; 
+            border: 1px solid #cbd5e1 !important; 
+            border-radius: 8px !important; 
+            font-size: 13.5px !important; 
+            color: #0f172a !important; 
+            background-color: #ffffff !important; 
+            outline: none !important; 
+            transition: border-color 0.2s ease, background-color 0.2s ease; 
+            margin: 0 !important; 
+            display: block; 
+        }
+        input[type="date"].ifs-input-field { cursor: pointer; }
+        input[type="date"].ifs-input-field::-webkit-calendar-picker-indicator { 
+            opacity: 0.6; 
+            cursor: pointer; 
+            margin-right: -4px; 
+            transition: opacity 0.2s ease; 
+        }
+        input[type="date"].ifs-input-field::-webkit-calendar-picker-indicator:hover { opacity: 1; }
+        .ifs-input-field:focus { 
+            border-color: #003376 !important; 
+            background-color: #f8fafc !important; 
+        }
+        .ifs-field-wrap:focus-within .field-icon { 
+            color: #003376; 
+        }
 
         /* KPI Ribbon */
         .ifs-pnl-metrics-grid {
@@ -488,27 +534,35 @@ function ifs_terp_report_profit_loss_page() {
             display: flex;
             align-items: center;
             gap: 16px;
-            box-shadow: 0 2px 8px -2px rgba(15, 23, 42, 0.03);
             border-left: 5px solid #cbd5e1;
         }
-        .ifs-kpi-chip.border-blue { border-left-color: #0284c7; }
+        .ifs-kpi-chip.border-blue    { border-left-color: #003376; }
         .ifs-kpi-chip.border-emerald { border-left-color: #059669; }
-        .ifs-kpi-chip.border-rose { border-left-color: #e11d48; }
+        .ifs-kpi-chip.border-rose    { border-left-color: #dc2626; }
 
-        .kpi-chip-icon { width: 46px; height: 46px; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: #ffffff; flex-shrink: 0; }
-        .kpi-chip-icon.bg-blue { background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%); }
-        .kpi-chip-icon.bg-emerald { background: linear-gradient(135deg, #059669 0%, #047857 100%); }
-        .kpi-chip-icon.bg-rose { background: linear-gradient(135deg, #e11d48 0%, #be123c 100%); }
+        .kpi-chip-icon { 
+            width: 44px; 
+            height: 44px; 
+            border-radius: 10px; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            color: #ffffff; 
+            flex-shrink: 0; 
+        }
+        .kpi-chip-icon.bg-blue    { background: #003376; }
+        .kpi-chip-icon.bg-emerald { background: #059669; }
+        .kpi-chip-icon.bg-rose    { background: #dc2626; }
         .kpi-chip-icon .dashicons { font-size: 22px; width: 22px; height: 22px; }
 
         .kpi-chip-lbl { font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.4px; display: block; margin-bottom: 2px; }
         .kpi-chip-val { font-size: 19px; font-weight: 900; color: #0f172a; display: block; letter-spacing: -0.5px; }
         .kpi-chip-sub { font-size: 11px; color: #64748b; font-weight: 600; margin-top: 2px; display: block; }
-        .color-blue { color: #003376 !important; }
+        .color-blue    { color: #003376 !important; }
         .color-emerald { color: #059669 !important; }
-        .color-rose { color: #e11d48 !important; }
-        .color-indigo { color: #4f46e5 !important; }
-        .color-amber { color: #d97706 !important; }
+        .color-rose    { color: #dc2626 !important; }
+        .color-indigo  { color: #4f46e5 !important; }
+        .color-amber   { color: #d97706 !important; }
 
         /* 2-Column Split Cards */
         .ifs-pnl-split-grid {
@@ -526,7 +580,6 @@ function ifs_terp_report_profit_loss_page() {
             background: #ffffff;
             border: 1px solid #e2e8f0;
             border-radius: 14px;
-            box-shadow: 0 4px 16px -2px rgba(15, 23, 42, 0.03);
             overflow: hidden;
         }
         .statement-card-head {
@@ -536,7 +589,7 @@ function ifs_terp_report_profit_loss_page() {
             align-items: center;
             border-bottom: 1px solid #e2e8f0;
         }
-        .statement-card-head.bg-income { background: #f0fdf4; }
+        .statement-card-head.bg-income  { background: #f0fdf4; }
         .statement-card-head.bg-expense { background: #fef2f2; }
 
         .head-title-wrap { display: flex; align-items: center; gap: 10px; }
@@ -549,18 +602,19 @@ function ifs_terp_report_profit_loss_page() {
             justify-content: center;
             color: #ffffff;
             font-size: 16px;
+            flex-shrink: 0;
         }
-        .bg-income .dashicons { background: #059669; }
-        .bg-expense .dashicons { background: #e11d48; }
+        .bg-income .dashicons  { background: #059669; }
+        .bg-expense .dashicons { background: #dc2626; }
 
         .statement-head-title { margin: 0; font-size: 15px; font-weight: 800; color: #0f172a; }
         .statement-head-sub { font-size: 11.5px; color: #64748b; margin-top: 1px; display: block; }
-        .statement-pill { font-size: 10.5px; font-weight: 800; text-transform: uppercase; padding: 2px 8px; border-radius: 6px; }
-        .pill-income { background: #dcfce7; color: #15803d; }
-        .pill-expense { background: #fee2e2; color: #b91c1c; }
+        .statement-pill { font-size: 10.5px; font-weight: 800; text-transform: uppercase; padding: 2px 8px; border-radius: 4px; }
+        .pill-income  { background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; }
+        .pill-expense { background: #fee2e2; color: #b91c1c; border: 1px solid #fecaca; }
 
         .statement-card-body { padding: 8px 22px 18px 22px; }
-        .ifs-statement-table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+        .ifs-statement-table { width: 100%; border-collapse: collapse; font-size: 13px; }
         .ifs-statement-table tbody td { padding: 12px 0; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
         .stream-title-cell { display: flex; align-items: center; gap: 10px; }
         .stream-title-cell .dashicons { font-size: 18px; width: 18px; height: 18px; flex-shrink: 0; }
@@ -569,12 +623,12 @@ function ifs_terp_report_profit_loss_page() {
         .empty-expense-cell { text-align: center; padding: 36px 0 !important; color: #94a3b8; font-size: 13px; }
         .empty-expense-cell .dashicons { font-size: 26px; width: 26px; height: 26px; color: #059669; margin-bottom: 4px; }
 
-        .statement-subtotal-row td { padding: 14px 0 !important; font-size: 14px; border-top: 2px solid #cbd5e1; border-bottom: none; }
+        .statement-subtotal-row td { padding: 14px 0 !important; font-size: 13.5px; border-top: 2px solid #cbd5e1; border-bottom: none; }
         .total-amount { text-align: right; font-size: 15.5px; font-weight: 900; }
 
-        /* Net Profit/Loss Bottom Line Hero Banner */
+        /* Net Profit/Loss Bottom Line Hero Banner (Flat Bordered Design) */
         .ifs-pnl-summary-hero {
-            border-radius: 16px;
+            border-radius: 14px;
             padding: 26px 30px;
             color: #ffffff;
             display: flex;
@@ -582,19 +636,18 @@ function ifs_terp_report_profit_loss_page() {
             align-items: center;
             flex-wrap: wrap;
             gap: 20px;
-            box-shadow: 0 12px 30px -4px rgba(15, 23, 42, 0.1);
         }
         .hero-profit {
-            background: linear-gradient(135deg, #065f46 0%, #047857 50%, #059669 100%);
-            border: 1px solid rgba(255, 255, 255, 0.15);
+            background: #064e3b;
+            border: 1px solid #047857;
         }
         .hero-loss {
-            background: linear-gradient(135deg, #881337 0%, #9f1239 50%, #e11d48 100%);
-            border: 1px solid rgba(255, 255, 255, 0.15);
+            background: #881337;
+            border: 1px solid #be123c;
         }
 
         .hero-tag {
-            background: rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.18);
             padding: 3px 10px;
             border-radius: 6px;
             font-size: 11px;
@@ -605,25 +658,27 @@ function ifs_terp_report_profit_loss_page() {
             align-items: center;
             gap: 4px;
             margin-bottom: 6px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
         }
         .hero-tag .dashicons { font-size: 13px; width: 13px; height: 13px; }
-        .hero-title { margin: 0 0 4px 0; font-size: 22px; font-weight: 900; letter-spacing: -0.3px; }
-        .hero-desc { margin: 0; font-size: 13px; opacity: 0.9; max-width: 520px; line-height: 1.5; }
+        .hero-title { margin: 0 0 4px 0; font-size: 22px; font-weight: 900; letter-spacing: -0.3px; color: #ffffff; }
+        .hero-desc { margin: 0; font-size: 13px; opacity: 0.9; max-width: 520px; line-height: 1.5; color: #f1f5f9; }
 
         .hero-right-figure { text-align: right; }
         .hero-figure-lbl { font-size: 10px; font-weight: 800; letter-spacing: 0.8px; opacity: 0.85; display: block; margin-bottom: 2px; }
-        .hero-figure-amount { font-size: 30px; font-weight: 900; letter-spacing: -0.5px; }
+        .hero-figure-amount { font-size: 30px; font-weight: 900; letter-spacing: -0.5px; color: #ffffff; }
         .hero-yield-badge {
             margin-top: 4px;
             font-size: 12px;
-            background: rgba(0, 0, 0, 0.2);
+            background: rgba(0, 0, 0, 0.25);
             padding: 4px 10px;
             border-radius: 6px;
             display: inline-block;
             border: 1px solid rgba(255, 255, 255, 0.15);
+            color: #ffffff;
         }
 
-        .font-mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+        .font-mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important; }
         .font-bold { font-weight: 700; }
 
         /* Print Optimization */
@@ -631,14 +686,10 @@ function ifs_terp_report_profit_loss_page() {
             #adminmenuback, #adminmenuwrap, #wpadminbar, #wpfooter, .ifs-pnl-header-actions, .ifs-filter-card {
                 display: none !important;
             }
-            #wpcontent, #wpbody-content {
-                margin-left: 0 !important;
-                padding: 0 !important;
-            }
+            #wpcontent, #wpbody-content { margin-left: 0 !important; padding: 0 !important; }
             body.wp-admin { background: #ffffff !important; }
             .ifs-pnl-wrapper { max-width: 100% !important; padding: 0 !important; }
             .ifs-statement-card, .ifs-pnl-summary-hero {
-                box-shadow: none !important;
                 border: 1px solid #000 !important;
                 -webkit-print-color-adjust: exact;
                 print-color-adjust: exact;

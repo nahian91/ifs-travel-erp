@@ -3,53 +3,63 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-// Sub-files include
-require_once plugin_dir_path( __FILE__ ) . 'accounts/accounts-tabs.php';
-require_once plugin_dir_path( __FILE__ ) . 'accounts/invoice-list.php';
-require_once plugin_dir_path( __FILE__ ) . 'accounts/invoice-create.php';
-require_once plugin_dir_path( __FILE__ ) . 'accounts/invoice-view.php';
-require_once plugin_dir_path( __FILE__ ) . 'accounts/ledger-entry.php';
+// Sub-files include with file_exists guards
+$accounts_sub_files = array(
+    'accounts-tabs.php',
+    'accounts-income.php',
+    'accounts-expense.php',
+    'accounts-reports.php',
+);
+
+foreach ( $accounts_sub_files as $accounts_file ) {
+    $file_path = plugin_dir_path( __FILE__ ) . 'accounts/' . $accounts_file;
+    if ( file_exists( $file_path ) ) {
+        require_once $file_path;
+    }
+}
 
 /**
  * Accounts & Financial Control Router
  */
-function ifs_terp_accounts_tab() {
-    $sub_action = isset( $_GET['sub'] ) ? sanitize_text_field( $_GET['sub'] ) : 'invoices';
+if ( ! function_exists( 'ifs_terp_accounts_tab' ) ) {
+    function ifs_terp_accounts_tab() {
+        $sub_action = isset( $_GET['sub'] ) ? sanitize_key( wp_unslash( $_GET['sub'] ) ) : 'income';
 
-    echo '<div class="ifs-terp-module-wrapper" style="padding: 20px; max-width: 1200px;">';
-    
-    // Sub-Navigation Tabs
-    if ( function_exists( 'ifs_terp_accounts_render_tabs' ) ) {
-        ifs_terp_accounts_render_tabs( $sub_action );
+        echo '<div class="ifs-terp-module-wrapper" style="padding: 20px; max-width: 1400px; margin: 0 auto;">';
+        
+        // Render Sub-Navigation Tabs
+        if ( function_exists( 'ifs_terp_accounts_render_tabs' ) ) {
+            ifs_terp_accounts_render_tabs( $sub_action );
+        }
+
+        // Sub-Routing Switch
+        switch ( $sub_action ) {
+            case 'expense':
+                if ( function_exists( 'ifs_terp_accounts_expense_page' ) ) {
+                    ifs_terp_accounts_expense_page();
+                } else {
+                    echo '<div class="notice notice-error"><p>' . esc_html__( 'Accounts expense module not loaded.', 'ifs-travel-erp' ) . '</p></div>';
+                }
+                break;
+
+            case 'reports':
+                if ( function_exists( 'ifs_terp_accounts_reports_page' ) ) {
+                    ifs_terp_accounts_reports_page();
+                } else {
+                    echo '<div class="notice notice-error"><p>' . esc_html__( 'Accounts reports module not loaded.', 'ifs-travel-erp' ) . '</p></div>';
+                }
+                break;
+
+            case 'income':
+            default:
+                if ( function_exists( 'ifs_terp_accounts_income_page' ) ) {
+                    ifs_terp_accounts_income_page();
+                } else {
+                    echo '<div class="notice notice-error"><p>' . esc_html__( 'Accounts income module not loaded.', 'ifs-travel-erp' ) . '</p></div>';
+                }
+                break;
+        }
+
+        echo '</div>';
     }
-
-    // Sub-Routing
-    switch ( $sub_action ) {
-        case 'create_invoice':
-            if ( function_exists( 'ifs_terp_invoice_create_page' ) ) {
-                ifs_terp_invoice_create_page();
-            }
-            break;
-
-        case 'view_invoice':
-            if ( function_exists( 'ifs_terp_invoice_view_page' ) ) {
-                ifs_terp_invoice_view_page();
-            }
-            break;
-
-        case 'ledger':
-            if ( function_exists( 'ifs_terp_ledger_entry_page' ) ) {
-                ifs_terp_ledger_entry_page();
-            }
-            break;
-
-        case 'invoices':
-        default:
-            if ( function_exists( 'ifs_terp_invoice_list_page' ) ) {
-                ifs_terp_invoice_list_page();
-            }
-            break;
-    }
-
-    echo '</div>';
 }

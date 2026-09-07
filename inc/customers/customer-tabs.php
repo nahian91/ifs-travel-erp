@@ -4,301 +4,194 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Enterprise Ultra-Modern Segmented Sub-Navigation for Customers Module
- * @param string $active_tab The currently active sub-action
+ * Sub-Navigation Bar for Customers Module
+ * 
+ * @param string $active_tab  The currently active sub-action (list, add, edit, view)
+ * @param int    $customer_id Optional customer ID for contextual edit/view links
  */
-function ifs_terp_customer_render_tabs( $active_tab = 'list' ) {
+function ifs_terp_customer_render_tabs( $active_tab = 'list', $customer_id = 0 ) {
     global $wpdb;
     $base_url = admin_url( 'admin.php?page=ifs_travel_erp&tab=customers' );
-    
-    // Dynamic Query Metrics
+
+    // Quick customer count for badge
     $table_customers = $wpdb->prefix . 'iterp_customers';
     $total_customers = (int) $wpdb->get_var( "SELECT COUNT(id) FROM $table_customers" );
-    $retail_count    = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(id) FROM $table_customers WHERE client_type = %s", 'Retail' ) );
-    $corporate_count = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(id) FROM $table_customers WHERE client_type = %s", 'Corporate' ) );
+
+    // Tab Definitions
+    $nav_items = array(
+        'list' => array(
+            'label' => __( 'All Customers', 'ifs-travel-erp' ),
+            'icon'  => 'dashicons-groups',
+            'url'   => add_query_arg( 'sub', 'list', $base_url ),
+            'badge' => $total_customers,
+        ),
+        'add'  => array(
+            'label' => __( 'Add Customer', 'ifs-travel-erp' ),
+            'icon'  => 'dashicons-plus-alt2',
+            'url'   => add_query_arg( 'sub', 'add', $base_url ),
+        ),
+    );
+
+    // Contextual states when viewing or editing with dynamic fallback ID
+    if ( $customer_id <= 0 && isset( $_GET['id'] ) ) {
+        $customer_id = absint( sanitize_text_field( wp_unslash( $_GET['id'] ) ) );
+    }
+
+    if ( $active_tab === 'edit' ) {
+        $nav_items['edit'] = array(
+            'label' => __( 'Edit Customer', 'ifs-travel-erp' ),
+            'icon'  => 'dashicons-edit',
+            'url'   => $customer_id > 0 ? add_query_arg( array( 'sub' => 'edit', 'id' => $customer_id ), $base_url ) : '#',
+        );
+    } elseif ( $active_tab === 'view' ) {
+        $nav_items['view'] = array(
+            'label' => __( 'Customer Profile', 'ifs-travel-erp' ),
+            'icon'  => 'dashicons-id',
+            'url'   => $customer_id > 0 ? add_query_arg( array( 'sub' => 'view', 'id' => $customer_id ), $base_url ) : '#',
+        );
+    }
     ?>
-    
-    <div class="ifs-pro-tab-wrapper">
-        <!-- Top Executive Identity & Mini Analytics Header -->
-        <div class="ifs-pro-header-card">
-            <div class="ifs-pro-identity">
-                <div class="ifs-pro-icon-glow">
-                    <span class="dashicons dashicons-admin-users"></span>
-                </div>
-                <div class="ifs-pro-title-meta">
-                    <h2 class="ifs-pro-heading">Customer Directory & Profiles</h2>
-                    <p class="ifs-pro-caption">Manage passenger portfolios, passport expirations, and travel bookings</p>
-                </div>
+
+    <div class="ifs-module-header">
+        
+        <!-- Module Heading -->
+        <div class="ifs-module-title-wrap">
+            <div class="ifs-module-icon">
+                <span class="dashicons dashicons-admin-users"></span>
+            </div>
+            <div>
+                <h2 class="ifs-module-title"><?php esc_html_e( 'Customers', 'ifs-travel-erp' ); ?></h2>
+                <p class="ifs-module-subtitle"><?php esc_html_e( 'Manage traveler details, passports, and contact records', 'ifs-travel-erp' ); ?></p>
             </div>
         </div>
 
-        <!-- Glassmorphism Floating Navigation Strip -->
-        <div class="ifs-pro-nav-container">
-            <nav class="ifs-pro-nav-bar">
-                <a href="<?php echo esc_url( $base_url . '&sub=list' ); ?>" 
-                   class="ifs-pro-nav-btn <?php echo ( $active_tab === 'list' ) ? 'active-tab' : ''; ?>">
-                    <span class="dashicons dashicons-groups"></span>
-                    <span class="ifs-btn-label">All Travelers</span>
-                    <span class="ifs-pro-counter"><?php echo $total_customers; ?></span>
+        <!-- Sub-Navigation Bar -->
+        <nav class="ifs-sub-nav" aria-label="<?php esc_attr_e( 'Customers Navigation', 'ifs-travel-erp' ); ?>">
+            <?php foreach ( $nav_items as $key => $item ) : 
+                $is_active = ( $active_tab === $key );
+                ?>
+                <a href="<?php echo esc_url( $item['url'] ); ?>" 
+                   class="ifs-sub-nav-item <?php echo $is_active ? 'active' : ''; ?>">
+                    <span class="dashicons <?php echo esc_attr( $item['icon'] ); ?>"></span>
+                    <span><?php echo esc_html( $item['label'] ); ?></span>
+                    <?php if ( isset( $item['badge'] ) ) : ?>
+                        <span class="ifs-nav-badge"><?php echo esc_html( (string) $item['badge'] ); ?></span>
+                    <?php endif; ?>
                 </a>
+            <?php endforeach; ?>
+        </nav>
 
-                <a href="<?php echo esc_url( $base_url . '&sub=add' ); ?>" 
-                   class="ifs-pro-nav-btn <?php echo ( $active_tab === 'add' ) ? 'active-tab' : ''; ?>">
-                    <span class="dashicons dashicons-plus-alt2"></span>
-                    <span class="ifs-btn-label">New Customer Entry</span>
-                </a>
-
-                <?php if ( $active_tab === 'edit' ) : ?>
-                    <div class="ifs-pro-nav-btn state-active">
-                        <span class="dashicons dashicons-edit"></span>
-                        <span class="ifs-btn-label">Editing Portfolio</span>
-                        <span class="ifs-active-bubble"></span>
-                    </div>
-                <?php endif; ?>
-
-                <?php if ( $active_tab === 'view' ) : ?>
-                    <div class="ifs-pro-nav-btn state-active">
-                        <span class="dashicons dashicons-id"></span>
-                        <span class="ifs-btn-label">Profile Overview</span>
-                        <span class="ifs-active-bubble"></span>
-                    </div>
-                <?php endif; ?>
-            </nav>
-        </div>
     </div>
 
-    <!-- Ultra High-End UI Stylesheet -->
     <style>
-        .ifs-pro-tab-wrapper {
-            margin-bottom: 30px;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-        }
-
-        /* Identity Banner */
-        .ifs-pro-header-card {
+        .ifs-module-header {
             background: #ffffff;
-            border-radius: 14px;
             border: 1px solid #e2e8f0;
-            padding: 24px 28px;
+            border-radius: 12px;
+            padding: 18px 22px;
+            margin-bottom: 22px;
             display: flex;
             justify-content: space-between;
             align-items: center;
             flex-wrap: wrap;
-            gap: 20px;
-            box-shadow: 0 4px 16px -2px rgba(15, 23, 42, 0.04), 0 2px 6px -1px rgba(15, 23, 42, 0.02);
-            margin-bottom: 18px;
-            position: relative;
+            gap: 16px;
         }
 
-        .ifs-pro-identity {
+        .ifs-module-title-wrap {
             display: flex;
             align-items: center;
-            gap: 18px;
+            gap: 14px;
         }
 
-        .ifs-pro-icon-glow {
-            width: 52px;
-            height: 52px;
-            border-radius: 14px;
-            background: linear-gradient(135deg, #003376 0%, #0284c7 100%);
+        .ifs-module-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 10px;
+            background: #003376;
             display: flex;
             align-items: center;
             justify-content: center;
             color: #ffffff;
-            box-shadow: 0 8px 18px -4px rgba(0, 51, 118, 0.35);
             flex-shrink: 0;
         }
-
-        .ifs-pro-icon-glow .dashicons {
-            font-size: 26px;
-            width: 26px;
-            height: 26px;
-        }
-
-        .ifs-pro-badge-group {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            margin-bottom: 4px;
-        }
-
-        .ifs-status-dot {
-            width: 6px;
-            height: 6px;
-            border-radius: 50%;
-            background: #10b981;
-            box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
-            display: inline-block;
-        }
-
-        .ifs-meta-tag {
-            font-size: 10.5px;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            color: #64748b;
-        }
-
-        .ifs-meta-tag-blue {
-            font-size: 10px;
-            font-weight: 700;
-            text-transform: uppercase;
-            background: #f0fdf4;
-            color: #166534;
-            padding: 2px 7px;
-            border-radius: 4px;
-        }
-
-        .ifs-pro-heading {
-            margin: 0;
+        .ifs-module-icon .dashicons {
             font-size: 22px;
+            width: 22px;
+            height: 22px;
+        }
+
+        .ifs-module-title {
+            margin: 0;
+            font-size: 18px;
             font-weight: 800;
             color: #0f172a;
-            letter-spacing: -0.4px;
+            line-height: 1.2;
         }
 
-        .ifs-pro-caption {
-            margin: 3px 0 0 0;
-            font-size: 13.5px;
+        .ifs-module-subtitle {
+            margin: 2px 0 0 0;
+            font-size: 13px;
             color: #64748b;
-            font-weight: 400;
         }
 
-        /* Stats Strip */
-        .ifs-pro-stats-strip {
-            display: flex;
-            align-items: center;
-            gap: 12px;
+        /* Nav Pills */
+        .ifs-sub-nav {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 4px;
+            display: inline-flex;
+            gap: 4px;
             flex-wrap: wrap;
         }
 
-        .ifs-stat-pill {
-            background: #f8fafc;
-            border: 1px solid #e2e8f0;
-            padding: 8px 16px;
-            border-radius: 10px;
-            display: flex;
-            flex-direction: column;
-            gap: 2px;
-            min-width: 95px;
-        }
-
-        .ifs-stat-lbl {
-            font-size: 10.5px;
-            font-weight: 600;
-            color: #64748b;
-            text-transform: uppercase;
-            letter-spacing: 0.3px;
-        }
-
-        .ifs-stat-num {
-            font-size: 16px;
-            font-weight: 800;
-            letter-spacing: -0.2px;
-        }
-        .color-dark { color: #0f172a; }
-        .color-blue { color: #0284c7; }
-        .color-purple { color: #7c3aed; }
-
-        /* Floating Navigation Strip */
-        .ifs-pro-nav-container {
-            display: flex;
-            align-items: center;
-        }
-
-        .ifs-pro-nav-bar {
-            background: #f1f5f9;
-            border: 1px solid #e2e8f0;
-            padding: 5px;
-            border-radius: 12px;
+        .ifs-sub-nav-item {
             display: inline-flex;
             align-items: center;
             gap: 6px;
-            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.02);
-            max-width: 100%;
-            overflow-x: auto;
-        }
-
-        .ifs-pro-nav-btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 9px;
-            padding: 10px 20px;
-            font-size: 13.5px;
+            padding: 7px 14px;
+            font-size: 13px;
             font-weight: 600;
-            color: #64748b;
-            text-decoration: none;
-            border-radius: 9px;
-            transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
-            position: relative;
-            cursor: pointer;
-            white-space: nowrap;
-            border: 1px solid transparent;
-        }
-
-        .ifs-pro-nav-btn .dashicons {
-            font-size: 17px;
-            width: 17px;
-            height: 17px;
-            color: #64748b;
-            transition: transform 0.2s ease, color 0.2s ease;
-        }
-
-        .ifs-pro-nav-btn:hover {
-            color: #0f172a;
-            background: rgba(255, 255, 255, 0.65);
-        }
-
-        .ifs-pro-nav-btn:hover .dashicons {
-            color: #003376;
-            transform: scale(1.08);
-        }
-
-        /* Active Navigation Button */
-        .ifs-pro-nav-btn.active-tab {
-            background: #ffffff;
-            color: #003376;
-            font-weight: 700;
-            border: 1px solid rgba(0, 51, 118, 0.08);
-            box-shadow: 0 4px 12px rgba(0, 51, 118, 0.06), 0 1px 3px rgba(0, 0, 0, 0.03);
-        }
-
-        .ifs-pro-nav-btn.active-tab .dashicons {
-            color: #003376;
-        }
-
-        .ifs-pro-counter {
-            background: #e2e8f0;
             color: #475569;
-            font-size: 11px;
-            font-weight: 800;
-            padding: 2px 8px;
-            border-radius: 20px;
-            transition: all 0.2s ease;
+            text-decoration: none;
+            border-radius: 6px;
+            transition: all 0.15s ease;
         }
 
-        .ifs-pro-nav-btn.active-tab .ifs-pro-counter {
+        .ifs-sub-nav-item .dashicons {
+            font-size: 16px;
+            width: 16px;
+            height: 16px;
+            color: #64748b;
+        }
+
+        .ifs-sub-nav-item:hover {
+            color: #0f172a;
+            background: #f1f5f9;
+        }
+
+        .ifs-sub-nav-item.active {
             background: #003376;
             color: #ffffff;
         }
 
-        /* Active State Badge (For Edit & View) */
-        .ifs-pro-nav-btn.state-active {
-            background: #e0f2fe;
-            color: #0369a1;
-            border: 1px solid #bae6fd;
+        .ifs-sub-nav-item.active .dashicons {
+            color: #ffffff;
         }
 
-        .ifs-pro-nav-btn.state-active .dashicons {
-            color: #0369a1;
+        .ifs-nav-badge {
+            background: #e2e8f0;
+            color: #334155;
+            font-size: 11px;
+            font-weight: 700;
+            padding: 1px 7px;
+            border-radius: 12px;
+            margin-left: 2px;
         }
 
-        .ifs-active-bubble {
-            width: 6px;
-            height: 6px;
-            border-radius: 50%;
-            background: #0284c7;
-            display: inline-block;
+        .ifs-sub-nav-item.active .ifs-nav-badge {
+            background: rgba(255, 255, 255, 0.2);
+            color: #ffffff;
         }
     </style>
     <?php
